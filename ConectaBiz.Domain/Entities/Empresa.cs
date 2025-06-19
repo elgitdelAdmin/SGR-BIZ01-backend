@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ConectaBiz.Domain.Entities
 {
+    [Table("Empresa")]
     public class Empresa
     {
         public int Id { get; set; }
@@ -25,6 +27,7 @@ namespace ConectaBiz.Domain.Entities
         public int? IdGestor { get; set; }
         public int IdSocio { get; set; }
         public int IdPersonaResponsable { get; set; }
+        public int? codSGRCSTI { get; set; }
         
         // Propiedades de navegación
         public virtual Pais? Pais { get; set; }

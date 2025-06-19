@@ -348,6 +348,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.IdPais).HasColumnName("IdPais");
                 entity.Property(e => e.IdGestor).HasColumnName("IdGestor");
                 entity.Property(e => e.IdSocio).IsRequired().HasColumnName("IdSocio");
+                entity.Property(e => e.codSGRCSTI).HasColumnName("CodSgrCsti");
 
                 // Índices
                 entity.HasIndex(e => e.Activo).HasDatabaseName("IX_Empresa_Activo");

@@ -2,6 +2,7 @@
 using System.Text;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
+using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Authentication.Services;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
@@ -23,7 +24,8 @@ namespace ConectaBiz.Infrastructure
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
-
+            //Configuracion de BDSGRCSTI
+            Conexiones.ConnectionSGRCSTI = configuration.GetConnectionString("ConnectionSGRCSTI");
             // Repositorios
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IConsultorRepository, ConsultorRepository>();
@@ -51,6 +53,9 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IEmpresaService, EmpresaService>();
             services.AddScoped<IPaisService, PaisService>();
             services.AddScoped<IGestorService, GestorService>();
+            //Integracion
+            services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();
+            services.AddScoped<ISGRCSTIService, SGRCSTIService>();
 
             // Configuración JWT
             services.AddAuthentication(options =>
