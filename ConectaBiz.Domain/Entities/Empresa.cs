@@ -27,13 +27,13 @@ namespace ConectaBiz.Domain.Entities
         public int? IdGestor { get; set; }
         public int IdSocio { get; set; }
         public int IdPersonaResponsable { get; set; }
-        public int? codSGRCSTI { get; set; }
-        
+        public string? CargoResponsable { get; set; }
+
         // Propiedades de navegación
         public virtual Pais? Pais { get; set; }
         public virtual Gestor? Gestor { get; set; }
         public virtual Socio? Socio { get; set; }
-        public Persona PersonaResponsable { get; set; }
+        public virtual Persona? PersonaResponsable { get; set; }
     }
 
 }

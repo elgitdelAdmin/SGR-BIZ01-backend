@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -67,7 +68,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var asignacion = await _context.TicketConsultorAsignacion.FindAsync(id);
             if (asignacion == null) return false;
 
-            _context.TicketConsultorAsignacion.Remove(asignacion);
+            // Eliminación lógica
+            asignacion.Activo = false;
             await _context.SaveChangesAsync();
             return true;
         }

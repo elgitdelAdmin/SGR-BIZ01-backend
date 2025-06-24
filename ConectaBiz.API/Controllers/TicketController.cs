@@ -116,20 +116,20 @@ namespace ConectaBiz.API.Controllers
         /// <summary>
         /// Obtiene tickets por gestor asignado
         /// </summary>
-        [HttpGet("gestor/{idGestor}")]
-        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByGestor(int idGestor)
-        {
-            try
-            {
-                var tickets = await _ticketService.GetByGestorAsync(idGestor);
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener tickets por gestor: {IdGestor}", idGestor);
-                return StatusCode(500, "Error interno del servidor");
-            }
-        }
+        //[HttpGet("gestor/{idGestor}")]
+        //public async Task<ActionResult<IEnumerable<TicketDto>>> GetByGestor(int idGestor)
+        //{
+        //    try
+        //    {
+        //        var tickets = await _ticketService.GetByGestorAsync(idGestor);
+        //        return Ok(tickets);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error al obtener tickets por gestor: {IdGestor}", idGestor);
+        //        return StatusCode(500, "Error interno del servidor");
+        //    }
+        //}
 
         /// <summary>
         /// Obtiene tickets con filtros opcionales
@@ -203,10 +203,7 @@ namespace ConectaBiz.API.Controllers
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
-
-                if (id != updateDto.Id)
-                    return BadRequest("El ID del ticket no coincide");
-
+      
                 var ticket = await _ticketService.UpdateAsync(id, updateDto);
                 return Ok(ticket);
             }

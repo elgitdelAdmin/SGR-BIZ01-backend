@@ -16,12 +16,15 @@ namespace ConectaBiz.Domain.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLogin { get; set; }
         public int IdSocio { get; set; } // Clave foránea
+        public int IdRol { get; set; } // Clave foránea
+        public bool Activo { get; set; }
 
         // Propiedades de navegación
         public virtual ICollection<PersonaUser> Personas { get; set; } = new List<PersonaUser>();
         public virtual ICollection<UserRol> Roles { get; set; } = new List<UserRol>();
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public Socio Socio { get; set; }
+        public Rol Rol { get; set; }
     }
 
     public class RefreshToken
@@ -75,13 +78,19 @@ namespace ConectaBiz.Domain.Entities
     public class Rol
     {
         public int Id { get; set; }
+        public string Codigo { get; set; }
         public string Nombre { get; set; }
-        public string? Descripcion { get; set; }
+        public string Descripcion { get; set; }
         public DateTime FechaCreacion { get; set; }
+        public string UsuarioCreacion { get; set; }
+        public DateTime? FechaModificacion { get; set; }
+        public string UsuarioModificacion { get; set; }
+        public bool Activo { get; set; }
 
         // Propiedades de navegación
-        public virtual ICollection<UserRol> Users { get; set; } = new List<UserRol>();
-        public virtual ICollection<RolPermiso> Permisos { get; set; } = new List<RolPermiso>();
+        //public virtual ICollection<UserRol> Users { get; set; } = new List<UserRol>();
+        //public virtual ICollection<RolPermiso> Permisos { get; set; } = new List<RolPermiso>();
+        public ICollection<User> Users { get; set; } = new List<User>();
     }
 
     public class UserRol

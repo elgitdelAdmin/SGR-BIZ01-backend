@@ -59,7 +59,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             if (pais == null) return false;
 
             pais.Activo = false;
-            pais.FechaModificacion = DateTime.Now;
+            pais.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             pais.UsuarioModificacion = usuarioModificacion;
 
             await _context.SaveChangesAsync();

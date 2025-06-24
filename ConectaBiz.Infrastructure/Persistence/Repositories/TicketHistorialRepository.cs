@@ -50,6 +50,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             _context.TicketHistorialEstado.Remove(historial);
             await _context.SaveChangesAsync();
             return true;
+
         }
     }
 }

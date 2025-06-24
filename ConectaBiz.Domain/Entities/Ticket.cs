@@ -18,19 +18,18 @@ public class Ticket
     public int IdTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
+    public int IdGestor { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
-    public int IdPais { get; set; }
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
     public int? IdReqSgrCsti { get; set; }
     public string? CodReqSgrCsti { get; set; }
-    public bool Activo { get; set; }
+    public bool Activo { get; set; } = true;
     public DateTime? FechaCreacion { get; set; }
     public DateTime? FechaActualizacion { get; set; }
     public string? UsuarioCreacion { get; set; }
     public string? UsuarioActualizacion { get; set; }
-    public int IdGestorAsignado { get; set; }    
     public virtual ICollection<TicketConsultorAsignacion> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacion>();
     public virtual ICollection<TicketFrenteSubFrente> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrente>();
     public virtual ICollection<TicketHistorialEstado> TicketHistorialEstado { get; set; } = new List<TicketHistorialEstado>();

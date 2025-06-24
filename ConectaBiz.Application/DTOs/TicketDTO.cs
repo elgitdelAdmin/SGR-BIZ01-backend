@@ -20,7 +20,6 @@ public class TicketDto
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
-    public int IdPais { get; set; }
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
@@ -80,18 +79,17 @@ public class TicketInsertDto
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
-    public int IdPais { get; set; }
     public int IdPrioridad { get; set; }
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
-    public int IdGestorAsignado { get; set; }
+    public string UsuarioCreacion { get; set; }
+
     // Colecciones relacionadas que siempre vienen en el request
     public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
     public List<TicketFrenteSubFrenteInsertDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteInsertDto>();
 }
 public class TicketUpdateDto
 {
-    public int Id { get; set; }
     public string CodTicketInterno { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
     public DateTime FechaSolicitud { get; set; }
@@ -99,12 +97,10 @@ public class TicketUpdateDto
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
-    public int IdPais { get; set; }
     public int IdPrioridad { get; set; }
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
     public string UsuarioActualizacion { get; set; }
-    public int IdGestorAsignado { get; set; }
     public List<TicketConsultorAsignacionUpdateDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionUpdateDto>();
     public List<TicketFrenteSubFrenteUpdateDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteUpdateDto>();
 }
@@ -119,8 +115,6 @@ public class TicketFrenteSubFrenteInsertDto
 
 public class TicketFrenteSubFrenteUpdateDto
 {
-    public int Id { get; set; }
-    public int IdTicket { get; set; }
     public int IdFrente { get; set; }
     public int IdSubFrente { get; set; }
     public int Cantidad { get; set; }

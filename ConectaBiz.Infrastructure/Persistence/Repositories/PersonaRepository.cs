@@ -38,7 +38,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<Persona> CreateAsync(Persona persona)
         {
-            persona.FechaCreacion = DateTime.Now;
+            persona.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             persona.Activo = true;
 
             _context.Persona.Add(persona);
@@ -62,7 +62,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             existingPersona.Telefono = persona.Telefono;
             existingPersona.Direccion = persona.Direccion;
             existingPersona.FechaNacimiento = persona.FechaNacimiento;
-            existingPersona.FechaActualizacion = DateTime.Now;
+            existingPersona.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             existingPersona.Activo = persona.Activo;
 
             await _context.SaveChangesAsync();

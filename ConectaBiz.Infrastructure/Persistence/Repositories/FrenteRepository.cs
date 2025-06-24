@@ -76,7 +76,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var frente = await GetByIdAsync(id);
             if (frente == null) return false;
 
-            _context.Set<Frente>().Remove(frente);
+            // Eliminación lógica
+            frente.Activo = false;
+            frente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
             await _context.SaveChangesAsync();
             return true;
         }

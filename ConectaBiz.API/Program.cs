@@ -4,7 +4,9 @@ using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Mappings;
 using ConectaBiz.Application.Services;
 using ConectaBiz.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using ConectaBiz.Infrastructure.Persistence.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +32,11 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Add Application Layer
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql("Host=64.23.182.32;Port=5432;Database=conectabiz_db;Username=postgres;Password=KQW%9gVPK!+2kCh")
+           .LogTo(Console.WriteLine, LogLevel.Information)
+           .EnableSensitiveDataLogging());
 
 // Add API Layer
 builder.Services.AddEndpointsApiExplorer();

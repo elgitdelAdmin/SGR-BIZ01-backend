@@ -6,6 +6,7 @@ using ConectaBiz.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -178,7 +179,7 @@ namespace ConectaBiz.Application.Services
                 personaActual.Telefono2 = updateGestorDto.Telefono2;
                 personaActual.Correo = updateGestorDto.Correo;
                 personaActual.Direccion = updateGestorDto.Direccion;
-                personaActual.FechaNacimiento = updateGestorDto.FechaNacimiento;
+                personaActual.FechaNacimiento = updateGestorDto.FechaNacimiento.HasValue ? DateTime.SpecifyKind(updateGestorDto.FechaNacimiento.Value, DateTimeKind.Local): null;
                 personaActual.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
                 return await _personaRepository.UpdateAsync(personaActual);
