@@ -24,8 +24,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Empresas
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
-                    .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.PersonaResponsable) 
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -106,7 +105,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             if (empresa == null)
                 return false;
 
-            _context.Empresas.Remove(empresa);
+            // Eliminación lógica
+            empresa.Activo = false;
+            empresa.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
             await _context.SaveChangesAsync();
             return true;
         }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -66,7 +67,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<SubFrente> CreateAsync(SubFrente subFrente)
         {
-            subFrente.FechaRegistro = DateTime.Now;
+            subFrente.FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             _context.Set<SubFrente>().Add(subFrente);
             await _context.SaveChangesAsync();
             return subFrente;
@@ -74,7 +75,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<SubFrente> UpdateAsync(SubFrente subFrente)
         {
-            subFrente.FechaModificacion = DateTime.Now;
+            subFrente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             _context.Set<SubFrente>().Update(subFrente);
             await _context.SaveChangesAsync();
             return subFrente;
@@ -85,7 +86,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var subFrente = await GetByIdAsync(id);
             if (subFrente == null) return false;
 
-            _context.Set<SubFrente>().Remove(subFrente);
+            // Eliminación lógica
+            subFrente.Activo = false;
+            subFrente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
             await _context.SaveChangesAsync();
             return true;
         }

@@ -67,7 +67,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             if (gestor == null) return false;
 
             gestor.Activo = false;
-            gestor.FechaActualizacion = DateTime.Now;
+            gestor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             await _context.SaveChangesAsync();
             return true;
         }

@@ -2,6 +2,7 @@
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +20,43 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
+        //public async Task<IEnumerable<Ticket>> GetAllAsync()
+        //{
+        //    return await _context.Ticket
+        //        .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+        //        .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+        //        .ToListAsync();
+        //}
+
         public async Task<IEnumerable<Ticket>> GetAllAsync()
         {
-            return await _context.Ticket
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
-                .ToListAsync();
+            try
+            {
+                var tickets = await _context.Ticket
+                    .Include(t => t.ConsultorAsignaciones)
+                    .Include(t => t.FrenteSubFrentes)
+                    .ToListAsync();
+
+                foreach (var ticket in tickets)
+                {
+                    ticket.ConsultorAsignaciones = ticket.ConsultorAsignaciones?
+                        .Where(ca => ca.Activo).ToList();
+
+                    ticket.FrenteSubFrentes = ticket.FrenteSubFrentes?
+                        .Where(fsf => fsf.Activo).ToList();
+                }
+
+                return tickets;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+       
         }
+
+
 
         public async Task<Ticket?> GetByIdAsync(int id)
         {
@@ -35,8 +66,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<Ticket?> GetByIdWithRelationsAsync(int id)
         {
             return await _context.Ticket
-                .Include(t => t.ConsultorAsignaciones)
-                .Include(t => t.FrenteSubFrentes)
+                .Include(t => t.ConsultorAsignaciones.Where(fsf => fsf.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Include(t => t.TicketHistorialEstado)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
@@ -67,21 +98,65 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
-        {
-            return await _context.Ticket
-                .Where(t => t.IdGestorAsignado == idGestor)
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
+        //{
+        //    return await _context.Ticket
+        //        .Where(t => t.IdGestorAsignado == idGestor)
+        //        .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+        //        .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+        //        .ToListAsync();
+        //}
+
+        //public async Task<Ticket> CreateAsync(Ticket ticket)
+        //{
+        //    try
+        //    {
+        //        var a = ticket.Activo;
+        //        _context.Ticket.Add(ticket);
+        //        await _context.SaveChangesAsync();
+        //        return ticket;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw;
+        //    }
+   
+        //}
 
         public async Task<Ticket> CreateAsync(Ticket ticket)
         {
-            _context.Ticket.Add(ticket);
-            await _context.SaveChangesAsync();
-            return ticket;
+            var logBuilder = new StringBuilder();
+
+            // Clona las opciones del contexto actual, pero con logging en el StringBuilder
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseNpgsql("Host=64.23.182.32;Port=5432;Database=conectabiz_db;Username=postgres;Password=KQW%9gVPK!+2kCh")
+                .LogTo(s => logBuilder.AppendLine(s), LogLevel.Information)
+                .EnableSensitiveDataLogging()
+                .Options;
+
+            // Crea una instancia temporal con logging activado
+            using var context = new ApplicationDbContext(options);
+
+            try
+            {
+                ticket.Activo = true;
+                context.Ticket.Add(ticket);
+                await context.SaveChangesAsync();
+
+                // Aquí puedes obtener el SQL como string
+                var sqlGenerado = logBuilder.ToString();
+                Console.WriteLine("SQL generado:\n" + sqlGenerado);
+
+                return ticket;
+            }
+            catch (Exception ex)
+            {
+                var sqlGenerado = logBuilder.ToString();
+                Console.WriteLine("Error, SQL:\n" + sqlGenerado);
+                throw;
+            }
         }
+
 
         public async Task<Ticket> UpdateAsync(Ticket ticket)
         {
@@ -95,11 +170,13 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var ticket = await _context.Ticket.FindAsync(id);
             if (ticket == null) return false;
 
-            _context.Ticket.Remove(ticket);
+            // Eliminación lógica
+            ticket.Activo = false;
+            ticket.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
             await _context.SaveChangesAsync();
             return true;
         }
-
         public async Task<bool> ExistsAsync(string codTicket, int? excludeId = null)
         {
             return await _context.Ticket
