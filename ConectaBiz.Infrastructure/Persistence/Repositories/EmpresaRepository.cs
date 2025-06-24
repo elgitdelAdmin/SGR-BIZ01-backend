@@ -118,10 +118,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 e.IdPais == idPais);
         }
 
-
         public async Task<bool> ExistsAsync(int id)
         {
             return await _context.Empresas.AnyAsync(e => e.Id == id);
+        }
+
+        public async Task<Empresa?> GetByCodSgrCstiAsync(int codSgrCsti)
+        {
+            return await _context.Empresas
+                .FirstOrDefaultAsync(e => e.codSGRCSTI == codSgrCsti);
         }
     }
 }

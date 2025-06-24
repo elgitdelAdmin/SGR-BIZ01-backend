@@ -9,5 +9,6 @@ namespace ConectaBiz.Application.Interfaces
     public interface ISGRCSTIService
     {
         Task MigracionEmpresa();
+        Task<IEnumerable<dynamic>> MigracionRequerimientos();
     }
 }

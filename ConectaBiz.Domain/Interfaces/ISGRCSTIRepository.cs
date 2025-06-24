@@ -10,5 +10,6 @@ namespace ConectaBiz.Domain.Interfaces
     public interface ISGRCSTIRepository
     {
         Task<IEnumerable<Empresa>> ObtenerEmpresasByExcepcion(List<int> excepcion);
+        Task<IEnumerable<dynamic>> MigracionRequerimientos();
     }
 }

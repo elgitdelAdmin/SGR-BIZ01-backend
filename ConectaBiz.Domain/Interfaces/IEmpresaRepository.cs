@@ -20,6 +20,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais);
         Task<bool> ExistsAsync(int id);
+        Task<Empresa?> GetByCodSgrCstiAsync(int codSgrCsti);
     }
 
 }

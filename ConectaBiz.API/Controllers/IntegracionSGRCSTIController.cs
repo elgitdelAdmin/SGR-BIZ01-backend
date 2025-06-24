@@ -26,5 +26,19 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
             }
         }
+
+        [HttpGet("MigracionRequerimientos")]
+        public async Task<IActionResult> MigracionRequerimientos()
+        {
+            try
+            {
+                var resultado = await _sgrcstiService.MigracionRequerimientos();
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+            }
+        }
     }
 }
