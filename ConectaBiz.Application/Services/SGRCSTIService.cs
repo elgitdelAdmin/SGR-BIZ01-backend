@@ -84,17 +84,19 @@ namespace ConectaBiz.Application.Services
                     }
                 }
 
+                var tipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+
                 var ticketInsertDto = new TicketInsertDto
                 {
                     CodTicketInterno = req.codrequerimiento,
                     Titulo = req.titulo,
                     FechaSolicitud = req.fecharegistro,
-                    IdTipoTicket = req.id_tipo_servicio,
+                    IdTipoTicket = tipoTicket,
                     IdEstadoTicket = req.idestadorequerimiento,
                     IdEmpresa = idEmpresa,
                     IdUsuarioResponsableCliente = req.responsablecliente_idusuario,
                     IdPais = 1, // Asigna el país correspondiente
-                    IdPrioridad = req.idprioridad,
+                    IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                     Descripcion = req.detalle ?? "",
                     UrlArchivos = null, // Si tienes archivos, asígnalos aquí
                     IdGestorAsignado = 0, // Asigna el gestor si corresponde
@@ -107,6 +109,27 @@ namespace ConectaBiz.Application.Services
             return resultados; 
         }
 
-        
+        private string MapTipoServicioToTipoTicket(int idTipoServicio)
+        {
+            return idTipoServicio switch
+            {
+                1 => "INC", // Incidente
+                2 => "REQ", // Requerimiento
+                3 => "REQ", // Garantía también será Requerimiento
+                _ => "REQ"  // Valor por defecto
+            };
+        }
+
+        private int MapPrioridadToId(string prioridad)
+        {
+            return prioridad.ToUpper() switch
+            {
+                "BAJA" => 3,
+                "MEDIA" => 2,
+                "ALTA" => 1,
+                "CRITICA" => 4,
+                _ => 2 // Valor por defecto: Media
+            };
+        }
     }
 }
