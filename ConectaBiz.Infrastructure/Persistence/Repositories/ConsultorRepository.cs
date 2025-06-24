@@ -60,47 +60,24 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             // Actualizar propiedades
             existingConsultor.IdNivelExperiencia = consultor.IdNivelExperiencia;
             existingConsultor.IdModalidadLaboral = consultor.IdModalidadLaboral;
-            existingConsultor.FechaActualizacion = DateTime.Now;
+            existingConsultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             await _context.SaveChangesAsync();
 
             // Cargar las relaciones para devolver la entidad completa
             return await GetByIdAsync(consultor.Id);
         }
-
         public async Task<bool> DeleteAsync(int id)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                var consultor = await _context.Consultor
-                    .Include(c => c.Persona)
-                    .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+            var consultor = await _context.Consultor
+                            .Include(c => c.Persona)
+                            .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+            if (consultor == null) return false;
 
-                if (consultor == null)
-                    return false;
-
-                // Marcar como inactivo en lugar de eliminar físicamente
-                consultor.Activo = false;
-                consultor.FechaActualizacion = DateTime.Now;
-
-                // También marcar la persona como inactiva
-                if (consultor.Persona != null)
-                {
-                    consultor.Persona.Activo = false;
-                    consultor.Persona.FechaActualizacion = DateTime.Now;
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-                return true;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            consultor.Activo = false;
+            consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            await _context.SaveChangesAsync();
+            return true;
         }
-
         public async Task<bool> ExistsAsync(int id)
         {
             return await _context.Consultor

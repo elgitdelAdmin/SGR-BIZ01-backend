@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -56,7 +57,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             foreach (var item in frenteSubFrentes)
             {
                 item.Activo = false;
-                item.FechaModificacion = DateTime.Now;
+                item.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                item.FechaCreacion = DateTime.SpecifyKind(item.FechaCreacion, DateTimeKind.Local);
                 item.UsuarioModificacion = usuarioModificacion;
             }
 
@@ -69,7 +71,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var frenteSubFrente = await _context.TicketFrenteSubFrente.FindAsync(id);
             if (frenteSubFrente == null) return false;
 
-            _context.TicketFrenteSubFrente.Remove(frenteSubFrente);
+            // Eliminación lógica
+            frenteSubFrente.Activo = false;
+            frenteSubFrente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
             await _context.SaveChangesAsync();
             return true;
         }

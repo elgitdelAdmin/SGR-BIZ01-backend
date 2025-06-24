@@ -25,6 +25,9 @@ namespace ConectaBiz.Application.DTOs
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public int IdSocio { get; set; }
+        public int IdRol { get; set; }
+        public CreatePersonaDto Persona { get; set; }
     }
 
     public class AuthResponseDto

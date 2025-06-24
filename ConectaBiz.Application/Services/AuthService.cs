@@ -66,7 +66,10 @@ namespace ConectaBiz.Application.Services
                 Username = registerRequest.Username,
                 Email = registerRequest.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password),
-                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified)
+                CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                IdSocio = registerRequest.IdSocio,
+                IdRol = registerRequest.IdRol,
+                Activo = true
             };
 
             await _userRepository.CreateAsync(user);

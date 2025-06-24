@@ -17,6 +17,11 @@ namespace ConectaBiz.Application.Mappings
             // Mapeo de Persona
             CreateMap<Persona, PersonaDto>();
             CreateMap<PersonaDto, Persona>();
+            CreateMap<UpdatePersonaDto, Persona>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+            CreateMap<Persona, UpdatePersonaDto>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+
 
             // Mapeo de Consultor a ConsultorDto
             CreateMap<Consultor, ConsultorDto>()
@@ -192,8 +197,10 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.NombrePais, opt => opt.MapFrom(src => src.Pais != null ? src.Pais.Nombre : null))
                 .ForMember(dest => dest.NombreGestor, opt => opt.MapFrom(src => src.Gestor != null && src.Gestor.Persona != null
                     ? $"{src.Gestor.Persona.Nombres} {src.Gestor.Persona.ApellidoPaterno} {src.Gestor.Persona.ApellidoMaterno}".Trim()
+                    : null))
+              .ForMember(dest => dest.NombrePersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable != null
+                    ? $"{src.PersonaResponsable.Nombres} {src.PersonaResponsable.ApellidoPaterno} {src.PersonaResponsable.ApellidoMaterno}".Trim()
                     : null));
-                //.ForMember(dest => dest.NombreSocio, opt => opt.MapFrom(src => src.Socio != null ? src.Socio.NombreCompleto : null));
 
             CreateMap<CreateEmpresaDto, Empresa>()
                 .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => DateTime.UtcNow))

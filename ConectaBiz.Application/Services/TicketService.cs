@@ -3,9 +3,11 @@ using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
+using FluentValidation.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +20,7 @@ namespace ConectaBiz.Application.Services
         private readonly ITicketFrenteSubFrenteRepository _frenteSubFrenteRepository;
         private readonly ITicketHistorialRepository _historialRepository;
         private readonly IParametroRepository _parametroRepository;
+        private readonly IEmpresaRepository _empresaRepository;
         private readonly IMapper _mapper;
 
         public TicketService(
@@ -26,6 +29,7 @@ namespace ConectaBiz.Application.Services
             ITicketFrenteSubFrenteRepository frenteSubFrenteRepository,
             ITicketHistorialRepository historialRepository,
             IParametroRepository parametroRepository,
+            IEmpresaRepository empresaRepository,
             IMapper mapper
             )
         {
@@ -34,6 +38,7 @@ namespace ConectaBiz.Application.Services
             _frenteSubFrenteRepository = frenteSubFrenteRepository;
             _historialRepository = historialRepository;
             _parametroRepository = parametroRepository;
+            _empresaRepository = empresaRepository;
             _mapper = mapper;
         }
 
@@ -67,11 +72,11 @@ namespace ConectaBiz.Application.Services
             return _mapper.Map<IEnumerable<TicketDto>>(tickets);
         }
 
-        public async Task<IEnumerable<TicketDto>> GetByGestorAsync(int idGestor)
-        {
-            var tickets = await _ticketRepository.GetByGestorAsync(idGestor);
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
-        }
+        //public async Task<IEnumerable<TicketDto>> GetByGestorAsync(int idGestor)
+        //{
+        //    var tickets = await _ticketRepository.GetByGestorAsync(idGestor);
+        //    return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+        //}
 
         public async Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
         {
@@ -92,9 +97,13 @@ namespace ConectaBiz.Application.Services
             try
             {
                 // Crear el ticket principal
+                var idGestor = (await _empresaRepository.GetByIdAsync(insertDto.IdEmpresa))?.IdGestor;
                 var ticket = _mapper.Map<Ticket>(insertDto);
-                ticket.FechaCreacion = DateTime.Now;
-                ticket.UsuarioCreacion = "ecamarena";
+                ticket.IdGestor = (int)idGestor;
+                ticket.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                ticket.FechaSolicitud = DateTime.SpecifyKind(ticket.FechaSolicitud, DateTimeKind.Local);
+                ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
+                ticket.Activo = true;
                 ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
                 var createdTicket = await _ticketRepository.CreateAsync(ticket);
 
@@ -106,7 +115,6 @@ namespace ConectaBiz.Application.Services
 
                 // Crear frentes y subfrentes
                 await CreateFrenteSubFrentesAsync(createdTicket.Id, insertDto.FrenteSubFrentes);
-
                 // Obtener el ticket completo con relaciones
                 var fullTicket = await _ticketRepository.GetByIdWithRelationsAsync(createdTicket.Id);
                 return _mapper.Map<TicketDto>(fullTicket);
@@ -144,7 +152,7 @@ namespace ConectaBiz.Application.Services
                 bool consultoresChanged = await HasConsultorAsignacionesChanged(id, updateDto.ConsultorAsignaciones);
                 if (consultoresChanged)
                 {
-                    await UpdateConsultorAsignacionesAsync(updateDto.Id, updateDto.ConsultorAsignaciones, updateDto.UsuarioActualizacion);
+                    await UpdateConsultorAsignacionesAsync(id , updateDto.ConsultorAsignaciones, updateDto.UsuarioActualizacion);
                 }
 
                 // Validar y actualizar frentes y subfrentes solo si hay cambios
@@ -170,19 +178,41 @@ namespace ConectaBiz.Application.Services
         // Método para validar cambios en ConsultorAsignaciones
         private async Task<bool> HasConsultorAsignacionesChanged(int idTicket, List<TicketConsultorAsignacionUpdateDto> newAsignaciones)
         {
-            var currentAsignaciones = await _ticketRepository.GetConsultorAsignacionesActivasByTicketIdAsync(idTicket);
+            var currentAsignaciones = (await _ticketRepository.GetConsultorAsignacionesActivasByTicketIdAsync(idTicket)).ToList();
 
             // Si las cantidades son diferentes, hay cambios
-            if (currentAsignaciones.Count() != newAsignaciones.Count)
+            if (currentAsignaciones.Count != newAsignaciones.Count)
                 return true;
 
-            // Comparar cada asignación activa actual con las nuevas
-            var currentConsultorIds = currentAsignaciones.Select(x => x.IdConsultor).OrderBy(x => x).ToList();
-            var newConsultorIds = newAsignaciones.Select(x => x.IdConsultor).OrderBy(x => x).ToList();
+            // Ordenar ambas listas por una clave consistente (por ejemplo IdConsultor y FechaAsignacion)
+            var currentOrdenadas = currentAsignaciones
+                .OrderBy(x => x.IdConsultor)
+                .ThenBy(x => x.FechaAsignacion)
+                .ToList();
 
-            // Si los IDs de consultores son diferentes, hay cambios
-            return !currentConsultorIds.SequenceEqual(newConsultorIds);
+            var nuevasOrdenadas = newAsignaciones
+                .OrderBy(x => x.IdConsultor)
+                .ThenBy(x => x.FechaAsignacion)
+                .ToList();
+
+            // Comparar elemento a elemento
+            for (int i = 0; i < currentOrdenadas.Count; i++)
+            {
+                var actual = currentOrdenadas[i];
+                var nuevo = nuevasOrdenadas[i];
+
+                if (actual.IdConsultor != nuevo.IdConsultor ||
+                    actual.IdTipoActividad != nuevo.IdTipoActividad ||
+                    actual.FechaAsignacion != nuevo.FechaAsignacion ||
+                    actual.FechaDesasignacion != nuevo.FechaDesasignacion)
+                {
+                    return true; // Hay diferencias
+                }
+            }
+
+            return false; // No hay diferencias
         }
+
 
         // Método para validar cambios en FrenteSubFrente
         private async Task<bool> HasFrenteSubFrentesChanged(int idTicket, List<TicketFrenteSubFrenteUpdateDto> newFrenteSubFrentes)
@@ -285,16 +315,15 @@ namespace ConectaBiz.Application.Services
 
         private void UpdateTicketFields(Ticket existingTicket, TicketUpdateDto updateDto)
         {
-            existingTicket.FechaActualizacion = DateTime.Now;
+            existingTicket.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
             if (!string.IsNullOrEmpty(updateDto.CodTicketInterno)) existingTicket.CodTicketInterno = updateDto.CodTicketInterno;
             if (!string.IsNullOrEmpty(updateDto.Titulo)) existingTicket.Titulo = updateDto.Titulo;
-            if (updateDto.FechaSolicitud != DateTime.MinValue) existingTicket.FechaSolicitud = updateDto.FechaSolicitud;
+            if (updateDto.FechaSolicitud != DateTime.MinValue) existingTicket.FechaSolicitud = DateTime.SpecifyKind(updateDto.FechaSolicitud, DateTimeKind.Local);
             if (updateDto.IdTipoTicket > 0) existingTicket.IdTipoTicket = updateDto.IdTipoTicket;
             if (updateDto.IdEstadoTicket > 0) existingTicket.IdEstadoTicket = updateDto.IdEstadoTicket;
             if (updateDto.IdEmpresa > 0) existingTicket.IdEmpresa = updateDto.IdEmpresa;
             if (updateDto.IdUsuarioResponsableCliente > 0) existingTicket.IdUsuarioResponsableCliente = updateDto.IdUsuarioResponsableCliente;
-            if (updateDto.IdPais > 0) existingTicket.IdPais = updateDto.IdPais;
             if (updateDto.IdPrioridad > 0) existingTicket.IdPrioridad = updateDto.IdPrioridad;
             if (!string.IsNullOrEmpty(updateDto.Descripcion)) existingTicket.Descripcion = updateDto.Descripcion;
             if (!string.IsNullOrEmpty(updateDto.UrlArchivos)) existingTicket.UrlArchivos = updateDto.UrlArchivos;
@@ -328,10 +357,11 @@ namespace ConectaBiz.Application.Services
                     {
                         IdTicket = ticketId, 
                         IdConsultor = asignacionDto.IdConsultor,
-                        FechaAsignacion = asignacionDto.FechaAsignacion,
-                        FechaDesasignacion = asignacionDto.FechaDesasignacion,
+                        FechaAsignacion = DateTime.SpecifyKind(asignacionDto.FechaAsignacion, DateTimeKind.Local),
+                        FechaDesasignacion = DateTime.SpecifyKind(asignacionDto.FechaDesasignacion, DateTimeKind.Local),
+                        IdTipoActividad = asignacionDto.IdTipoActividad,
                         Activo = true,
-                    };
+                    }; 
                     await _consultorAsignacionRepository.CreateAsync(asignacion);
                 }
             }

@@ -150,17 +150,76 @@ namespace ConectaBiz.Application.Services
                 throw new KeyNotFoundException($"No se encontró la empresa con ID {id}");
             }
 
-
             // Mantener valores originales que no deben cambiar
             var fechaRegistroOriginal = existingEmpresa.FechaRegistro;
             var usuarioRegistroOriginal = existingEmpresa.UsuarioRegistro;
 
+            // Variable para almacenar el ID de la persona responsable
+            int personaId = existingEmpresa.IdPersonaResponsable; // Mantener el ID actual por defecto
+
+            // Validar y procesar información de persona
+            if (updateDto.Persona != null)
+            {
+                if (!string.IsNullOrEmpty(updateDto.Persona.NumeroDocumento))
+                {
+                    // Buscar persona existente por tipo de documento y número
+                    var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(
+                        updateDto.Persona.TipoDocumento,
+                        updateDto.Persona.NumeroDocumento);
+
+                    if (personaExistente != null)
+                    {
+                        // Si la persona existe, actualizarla con los nuevos datos
+                        personaExistente.Nombres = updateDto.Persona.Nombres;
+                        personaExistente.ApellidoMaterno = updateDto.Persona.ApellidoMaterno;
+                        personaExistente.ApellidoPaterno = updateDto.Persona.ApellidoPaterno;
+                        personaExistente.Telefono = updateDto.Persona.Telefono;
+                        personaExistente.Telefono2 = updateDto.Persona.Telefono2;
+                        personaExistente.Correo = updateDto.Persona.Correo;
+                        personaExistente.Direccion = updateDto.Persona.Direccion;
+                        personaExistente.FechaNacimiento = updateDto.Persona.FechaNacimiento.HasValue
+                            ? DateTime.SpecifyKind(updateDto.Persona.FechaNacimiento.Value, DateTimeKind.Local)
+                            : null;
+                        personaExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
+                        var personaActualizada = await _personaRepository.UpdateAsync(personaExistente);
+                        personaId = personaActualizada.Id;
+                    }
+                    else
+                    {
+                        // Si la persona no existe, crearla
+                        var nuevaPersona = _mapper.Map<Persona>(updateDto.Persona);
+                        nuevaPersona.FechaNacimiento = nuevaPersona.FechaNacimiento.HasValue
+                            ? DateTime.SpecifyKind(nuevaPersona.FechaNacimiento.Value, DateTimeKind.Local)
+                            : null;
+                        nuevaPersona.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                        nuevaPersona.FechaActualizacion = null;
+                        nuevaPersona.Activo = true;
+
+                        var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
+                        personaId = personaCreada.Id; // Cambiar al ID de la nueva persona creada
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
+                }
+            }
+
+            // Mapear el DTO a la entidad existente
             _mapper.Map(updateDto, existingEmpresa);
 
             // Restaurar valores que no deben cambiar
-            existingEmpresa.FechaRegistro = fechaRegistroOriginal;
+            existingEmpresa.FechaRegistro = DateTime.SpecifyKind(fechaRegistroOriginal, DateTimeKind.Local) ;
             existingEmpresa.UsuarioRegistro = usuarioRegistroOriginal;
 
+            existingEmpresa.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            existingEmpresa.UsuarioModificacion = updateDto.UsuarioModificacion;
+
+            // Asignar el ID de la persona responsable (puede ser el mismo o uno nuevo)
+            existingEmpresa.IdPersonaResponsable = personaId;
+
+            // Actualizar la empresa
             var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);
 
             // Obtener la empresa actualizada con las relaciones

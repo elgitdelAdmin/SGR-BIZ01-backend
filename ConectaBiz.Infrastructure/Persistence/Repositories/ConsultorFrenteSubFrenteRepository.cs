@@ -54,8 +54,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
             // Eliminación lógica
             item.Activo = false;
-            item.FechaActualizacion = DateTime.Now;
-
+            item.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -73,7 +72,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             foreach (var item in items)
             {
                 item.Activo = false;
-                item.FechaActualizacion = DateTime.Now;
+                item.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             }
 
             await _context.SaveChangesAsync();

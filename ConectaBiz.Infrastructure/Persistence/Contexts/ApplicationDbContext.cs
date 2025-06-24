@@ -67,12 +67,39 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.LastLogin).HasColumnType("timestamp");
                 entity.HasIndex(e => e.Username).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.IdSocio);
+                entity.HasIndex(e => e.IdRol);
+                entity.HasIndex(e => e.Activo);
+
                 // Relación con Socio
                 entity.HasOne(e => e.Socio)
                     .WithMany(s => s.Users)
                     .HasForeignKey(e => e.IdSocio)
                     .OnDelete(DeleteBehavior.Restrict); // evita borrar Socio si tiene Users
+
+ 
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.Users) 
+                    .HasForeignKey(e => e.IdRol)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<Rol>(entity =>
+            {
+                entity.ToTable("Rol", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).IsRequired();
+                entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.Codigo).IsUnique();
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Descripcion);
+                entity.Property(e => e.FechaCreacion).HasColumnType("imestamp without time zone").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.FechaModificacion).HasColumnType("imestamp without time zone");
+                entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+            });
+
 
             // Configuración de la entidad RefreshToken
             modelBuilder.Entity<RefreshToken>(entity =>
@@ -228,31 +255,23 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.ToTable("Ticket", "conectabiz");
                 entity.HasKey(e => e.Id).HasName("PK_Ticket");
                 entity.HasIndex(e => e.CodTicket).IsUnique().HasDatabaseName("UK_Ticket_CodTicket");
-                entity.HasIndex(e => e.IdEstadoTicket);
-                entity.HasIndex(e => e.IdTipoTicket);
-                entity.HasIndex(e => e.IdEmpresa);
-                entity.HasIndex(e => e.IdUsuarioResponsableCliente);
-                entity.HasIndex(e => e.IdPais);
-                entity.HasIndex(e => e.IdPrioridad);
-                entity.HasIndex(e => e.IdReqSgrCsti);
-                entity.Property(e => e.CodTicket).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.CodTicketInterno).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Titulo).IsRequired().HasMaxLength(121);
-                entity.Property(e => e.FechaSolicitud);
-                entity.Property(e => e.IdTipoTicket);
-                entity.Property(e => e.IdEstadoTicket);
-                entity.Property(e => e.IdEmpresa);
-                entity.Property(e => e.IdUsuarioResponsableCliente);
-                entity.Property(e => e.IdPais);
-                entity.Property(e => e.IdPrioridad);
+                entity.Property(e => e.FechaSolicitud).HasColumnType("timestamp without time zone").IsRequired();
+                entity.HasIndex(e => e.IdTipoTicket);
+                entity.HasIndex(e => e.IdEstadoTicket);
+                entity.HasIndex(e => e.IdEmpresa);
+                entity.HasIndex(e => e.IdUsuarioResponsableCliente);
+                entity.HasIndex(e => e.IdPrioridad);
                 entity.Property(e => e.Descripcion);
                 entity.Property(e => e.UrlArchivos);
                 entity.Property(e => e.IdReqSgrCsti);
+                entity.Property(e => e.IdGestor);
                 entity.Property(e => e.CodReqSgrCsti).HasMaxLength(50);
-                entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
-                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
                 entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp").HasDefaultValueSql("now()");
+                entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
                 entity.Property(e => e.UsuarioActualizacion).HasMaxLength(50);
             });
 
@@ -281,10 +300,14 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
             {
                 entity.ToTable("TicketFrenteSubFrente", "conectabiz");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
                 entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.FechaModificacion).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
                 entity.Property(e => e.Cantidad);
+                entity.Property(e => e.IdFrente).IsRequired();
+                entity.Property(e => e.IdSubFrente).IsRequired();
                 entity.HasOne(d => d.Ticket)
                     .WithMany(p => p.FrenteSubFrentes)
                     .HasForeignKey(d => d.IdTicket)
@@ -348,6 +371,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.IdPais).HasColumnName("IdPais");
                 entity.Property(e => e.IdGestor).HasColumnName("IdGestor");
                 entity.Property(e => e.IdSocio).IsRequired().HasColumnName("IdSocio");
+                entity.Property(e => e.IdPersonaResponsable).HasColumnName("IdPersonaResponsable");
+                entity.Property(e => e.CargoResponsable).HasMaxLength(100).HasColumnName("CargoResponsable");
 
                 // Índices
                 entity.HasIndex(e => e.Activo).HasDatabaseName("IX_Empresa_Activo");
