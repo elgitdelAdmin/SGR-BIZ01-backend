@@ -26,6 +26,7 @@ namespace ConectaBiz.Domain.Entities
         public int IdSocio { get; set; }
         public int IdPersonaResponsable { get; set; }
         public string? CargoResponsable { get; set; }
+        public int? IdUser { get; set; }
 
         // Propiedades de navegación
         public virtual Pais? Pais { get; set; }

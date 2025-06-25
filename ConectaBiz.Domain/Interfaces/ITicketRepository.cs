@@ -1,4 +1,5 @@
 ﻿using ConectaBiz.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,8 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Ticket?> GetByCodTicketAsync(string codTicket);
         Task<IEnumerable<Ticket>> GetByEmpresaAsync(int idEmpresa);
         Task<IEnumerable<Ticket>> GetByEstadoAsync(int idEstado);
-        //Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor);
+        Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor);
+        Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor);
         Task<Ticket> CreateAsync(Ticket ticket);
         Task<Ticket> UpdateAsync(Ticket ticket);
         Task<bool> DeleteAsync(int id);

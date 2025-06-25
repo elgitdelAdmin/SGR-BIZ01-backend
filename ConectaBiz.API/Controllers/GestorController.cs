@@ -47,45 +47,45 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult<GestorDto>> Create([FromBody] CreateGestorDto createGestorDto)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
+        //[HttpPost]
+        //public async Task<ActionResult<GestorDto>> Create([FromBody] CreateGestorDto createGestorDto)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //        {
+        //            return BadRequest(ModelState);
+        //        }
 
-                var gestor = await _gestorService.CreateAsync(createGestorDto);
-                return CreatedAtAction(nameof(GetById), new { id = gestor.Id }, gestor);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
-        }
+        //        var gestor = await _gestorService.CreateAsync(createGestorDto);
+        //        return CreatedAtAction(nameof(GetById), new { id = gestor.Id }, gestor);
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+        //    }
+        //}
 
         [HttpPut("{id}")]
         public async Task<ActionResult<GestorDto>> Update(int id, [FromBody] UpdateGestorDto updateGestorDto)
         {
             try
             {
-                if (id != updateGestorDto.Id)
-                {
-                    return BadRequest(new { message = "El ID de la URL no coincide con el ID del objeto" });
-                }
+                //if (id != updateGestorDto.Id)
+                //{
+                //    return BadRequest(new { message = "El ID de la URL no coincide con el ID del objeto" });
+                //}
 
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
-                var gestor = await _gestorService.UpdateAsync(updateGestorDto);
+                var gestor = await _gestorService.UpdateAsync(id, updateGestorDto);
                 return Ok(gestor);
             }
             catch (InvalidOperationException ex)

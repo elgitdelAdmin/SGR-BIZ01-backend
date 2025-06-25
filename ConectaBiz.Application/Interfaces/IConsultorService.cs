@@ -11,6 +11,7 @@ namespace ConectaBiz.Application.Interfaces
     {
         Task<IEnumerable<ConsultorDto>> GetAllAsync();
         Task<ConsultorDto> GetByIdAsync(int id);
+        Task<ConsultorDto> GetByIdUserAsync(int iduser);
         Task<ConsultorDto> CreateAsync(ConsultorDto consultorDto);
         Task<ConsultorDto> UpdateAsync(int id, ConsultorDto consultorDto);
         Task<bool> DeleteAsync(int id);

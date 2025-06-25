@@ -10,6 +10,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Rol> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Persona> Persona { get; set; }
         public DbSet<Consultor> Consultor { get; set; }
@@ -69,15 +70,20 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.HasIndex(e => e.IdSocio);
                 entity.HasIndex(e => e.IdRol);
+                entity.HasIndex(e => e.IdPersona);
                 entity.HasIndex(e => e.Activo);
 
                 // Relación con Socio
                 entity.HasOne(e => e.Socio)
                     .WithMany(s => s.Users)
                     .HasForeignKey(e => e.IdSocio)
-                    .OnDelete(DeleteBehavior.Restrict); // evita borrar Socio si tiene Users
+                    .OnDelete(DeleteBehavior.Restrict);
 
- 
+                entity.HasOne(e => e.Persona)
+                    .WithMany(s => s.Users)
+                    .HasForeignKey(e => e.IdPersona)
+                    .OnDelete(DeleteBehavior.Restrict); 
+
                 entity.HasOne(e => e.Rol)
                     .WithMany(r => r.Users) 
                     .HasForeignKey(e => e.IdRol)
@@ -92,10 +98,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Codigo).IsRequired().HasMaxLength(50);
                 entity.HasIndex(e => e.Codigo).IsUnique();
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Descripcion);
-                entity.Property(e => e.FechaCreacion).HasColumnType("imestamp without time zone").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.Descripcion).HasColumnType("text"); 
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
                 entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.FechaModificacion).HasColumnType("imestamp without time zone");
+                entity.Property(e => e.FechaModificacion).HasColumnType("timestamp without time zone");
                 entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
             });
@@ -133,6 +139,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.FechaNacimiento).HasColumnType("timestamp without time zone");
                 entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").IsRequired();
                 entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UsuarioCreacion).HasMaxLength(50);
+                entity.Property(e => e.UsuarioActualizacion).HasMaxLength(50);
             });
 
             // Configuración de la entidad Consultor
@@ -140,11 +148,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
             {
                 entity.ToTable("Consultor", "conectabiz");
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.IdNivelExperiencia).IsRequired();
-                entity.Property(e => e.IdModalidadLaboral).IsRequired();
+                entity.Property(e => e.IdNivelExperiencia);
+                entity.Property(e => e.IdModalidadLaboral);
                 entity.Property(e => e.IdSocio).IsRequired();
+                entity.Property(e => e.IdUser).IsRequired();
                 entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").IsRequired();
                 entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
+                entity.Property(g => g.UsuarioActualizacion).HasMaxLength(50);
+
                 // Relación uno a uno con Persona
                 entity.HasOne(e => e.Persona)
                     .WithOne(p => p.Consultor)
@@ -372,6 +384,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.IdGestor).HasColumnName("IdGestor");
                 entity.Property(e => e.IdSocio).IsRequired().HasColumnName("IdSocio");
                 entity.Property(e => e.IdPersonaResponsable).HasColumnName("IdPersonaResponsable");
+                entity.Property(e => e.IdUser).HasColumnName("IdUser");
                 entity.Property(e => e.CargoResponsable).HasMaxLength(100).HasColumnName("CargoResponsable");
 
                 // Índices
@@ -419,6 +432,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(g => g.IdNivelExperiencia).HasColumnName("IdNivelExperiencia");
                 entity.Property(g => g.IdModalidadLaboral).HasColumnName("IdModalidadLaboral");
                 entity.Property(g => g.IdSocio).HasColumnName("IdSocio").IsRequired();
+                entity.Property(e => e.IdUser).HasColumnName("IdUser").IsRequired();
                 entity.Property(g => g.UsuarioCreacion).IsRequired().HasMaxLength(50).HasColumnName("UsuarioCreacion");
                 entity.Property(g => g.FechaCreacion).IsRequired().HasColumnName("FechaCreacion").HasColumnType("timestamp without time zone");
                 entity.Property(g => g.UsuarioActualizacion).HasMaxLength(50).HasColumnName("UsuarioActualizacion");

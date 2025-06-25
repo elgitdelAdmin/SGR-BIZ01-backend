@@ -15,6 +15,7 @@ namespace ConectaBiz.Application.Services
     {
         private readonly IConsultorRepository _consultorRepository;
         private readonly IPersonaRepository _personaRepository;
+        private readonly IPersonaService _personaService;
         private readonly IUserRepository _userRepository;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
@@ -25,6 +26,7 @@ namespace ConectaBiz.Application.Services
         public ConsultorService(
             IUserRepository userRepository,
             IPersonaRepository personaRepository,
+            IPersonaService personaService,
             ITokenService tokenService,
             IMapper mapper,
             IConsultorRepository consultorRepository,
@@ -35,6 +37,7 @@ namespace ConectaBiz.Application.Services
         {
             _consultorRepository = consultorRepository;
             _personaRepository = personaRepository;
+            _personaService = personaService;
             _userRepository = userRepository;
             _tokenService = tokenService;
             _mapper = mapper;
@@ -57,83 +60,44 @@ namespace ConectaBiz.Application.Services
 
             return _mapper.Map<ConsultorDto>(consultor);
         }
+        public async Task<ConsultorDto> GetByIdUserAsync(int iduser)
+        {
+            var consultor = await _consultorRepository.GetByIdUserAsync(iduser);
+            if (consultor == null)
+                return null;
+
+            return _mapper.Map<ConsultorDto>(consultor);
+        }
 
         public async Task<ConsultorDto> CreateAsync(ConsultorDto consultorDto)
         {
             try
             {
-                // Variable para almacenar el ID de la persona
-                int personaId = consultorDto.PersonaId;
-
-                // Validar y procesar información de persona (código existente mantenido)
-                if (consultorDto.Persona != null)
+                // Validar y actalizar/crear persona
+                var personaDto = new CreatePersonaDto
                 {
-                    if (!string.IsNullOrEmpty(consultorDto.Persona.NumeroDocumento))
-                    {
-                        var personaExistente = await _personaRepository.GetByNumeroDocumentoAsync(consultorDto.Persona.NumeroDocumento);
-
-                        if (personaExistente != null)
-                        {
-                            personaId = personaExistente.Id;
-                            consultorDto.PersonaId = personaId;
-
-                            if (await _consultorRepository.ExistsByPersonaIdAsync(personaId))
-                                throw new InvalidOperationException($"Ya existe un consultor registrado para la persona con documento {consultorDto.Persona.NumeroDocumento}");
-                        }
-                        else
-                        {
-                            var nuevaPersona = _mapper.Map<Persona>(consultorDto.Persona);
-                            nuevaPersona.FechaNacimiento = nuevaPersona.FechaNacimiento.HasValue == true
-                                ? DateTime.SpecifyKind(nuevaPersona.FechaNacimiento.Value, DateTimeKind.Local)
-                                : null;
-                            nuevaPersona.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                            nuevaPersona.FechaActualizacion = nuevaPersona.FechaActualizacion.HasValue == true
-                                ? DateTime.SpecifyKind(nuevaPersona.FechaActualizacion.Value, DateTimeKind.Local)
-                                : null;
-                            nuevaPersona.Activo = true;
-
-                            var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
-                            personaId = personaCreada.Id;
-                            consultorDto.PersonaId = personaId;
-                        }
-                    }
-                    else if (consultorDto.PersonaId > 0)
-                    {
-                        var personaExistente = await _personaRepository.GetByIdAsync(consultorDto.PersonaId);
-                        if (personaExistente == null)
-                            throw new InvalidOperationException("La persona especificada no existe");
-
-                        if (await _consultorRepository.ExistsByPersonaIdAsync(consultorDto.PersonaId))
-                            throw new InvalidOperationException("La persona ya está registrada como consultor");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Se debe proporcionar un ID de persona válido o un número de documento para crear un consultor");
-                    }
-                }
-                else if (consultorDto.PersonaId > 0)
+                    Nombres = consultorDto.Persona.Nombres,
+                    ApellidoPaterno = consultorDto.Persona.ApellidoPaterno,
+                    ApellidoMaterno = consultorDto.Persona.ApellidoMaterno,
+                    NumeroDocumento = consultorDto.Persona.NumeroDocumento,
+                    TipoDocumento = consultorDto.Persona.TipoDocumento,
+                    Telefono = consultorDto.Persona.Telefono,
+                    Telefono2 = consultorDto.Persona.Telefono2,
+                    Correo = consultorDto.Persona.Correo,
+                    Direccion = consultorDto.Persona.Direccion,
+                    FechaNacimiento = DateTime.SpecifyKind((DateTime)consultorDto.Persona.FechaNacimiento, DateTimeKind.Local),
+                };
+                PersonaDto persona = await _personaService.ValidateCreateUpdate(personaDto);
+      
+                // Validar que la persona no esté asignada como gestor
+                if (await _consultorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
-                    var personaExistente = await _personaRepository.GetByIdAsync(consultorDto.PersonaId);
-                    if (personaExistente == null)
-                        throw new InvalidOperationException("La persona especificada no existe");
-
-                    if (await _consultorRepository.ExistsByPersonaIdAsync(consultorDto.PersonaId))
-                        throw new InvalidOperationException("La persona ya está registrada como consultor");
-                }
-                else
-                {
-                    throw new InvalidOperationException("Se debe proporcionar información de la persona o su ID para crear un consultor");
-                }
-
-                // Validar especializaciones antes de crear el consultor
-                if (consultorDto.Especializaciones != null && consultorDto.Especializaciones.Any())
-                {
-                    await ValidarEspecializacionesAsync(consultorDto.Especializaciones);
+                    throw new InvalidOperationException("La persona ya está asignada como gestor");
                 }
 
                 // Mapear el DTO a la entidad
                 var consultor = _mapper.Map<Consultor>(consultorDto);
-                consultor.PersonaId = personaId;
+                consultor.PersonaId = persona.Id;
                 consultor.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
                 consultor.FechaActualizacion = consultor.FechaActualizacion.HasValue == true
                     ? DateTime.SpecifyKind(consultor.FechaActualizacion.Value, DateTimeKind.Local)
@@ -170,31 +134,32 @@ namespace ConectaBiz.Application.Services
 
             // Obtener el consultor existente
             var consultorExistente = await _consultorRepository.GetByIdAsync(id);
-
-            // Validar especializaciones antes de actualizar
-            if (consultorDto.Especializaciones != null && consultorDto.Especializaciones.Any())
-            {
-                await ValidarEspecializacionesAsync(consultorDto.Especializaciones);
-            }
-
-            // Mapear el DTO a la entidad existente
+            // Actualizar el consultor
             var consultor = _mapper.Map<Consultor>(consultorDto);
             consultor.FechaCreacion = DateTime.SpecifyKind(consultorExistente.FechaCreacion, DateTimeKind.Local);
             consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            consultor.UsuarioActualizacion = consultorDto.UsuarioActualizacion;
+            var consultorActualizado = await _consultorRepository.UpdateAsync(consultor);
 
             // Actualizar datos de la persona si se incluyen
             if (consultorDto.Persona != null && consultorExistente.Persona != null)
             {
-                var persona = _mapper.Map<Persona>(consultorDto.Persona);
-                persona.Id = consultorExistente.PersonaId;
-                persona.FechaCreacion = DateTime.SpecifyKind(consultorExistente.Persona.FechaCreacion, DateTimeKind.Local);
-                persona.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                persona.FechaNacimiento = DateTime.SpecifyKind((DateTime)persona.FechaNacimiento, DateTimeKind.Local);
-                await _personaRepository.UpdateAsync(persona);
+                var personaDto = new UpdatePersonaDto
+                {
+                    Nombres = consultorDto.Persona.Nombres,
+                    ApellidoPaterno = consultorDto.Persona.ApellidoPaterno,
+                    ApellidoMaterno = consultorDto.Persona.ApellidoMaterno,
+                    NumeroDocumento = consultorDto.Persona.NumeroDocumento,
+                    TipoDocumento = consultorDto.Persona.TipoDocumento,
+                    Telefono = consultorDto.Persona.Telefono,
+                    Telefono2 = consultorDto.Persona.Telefono2,
+                    Correo = consultorDto.Persona.Correo,
+                    Direccion = consultorDto.Persona.Direccion,
+                    FechaNacimiento = DateTime.SpecifyKind((DateTime)consultorDto.Persona.FechaNacimiento, DateTimeKind.Local),
+                    UsuarioActualizacion = consultorDto.UsuarioActualizacion
+                };
+                await _personaService.ValidateUpdateAsync(personaDto);
             }
-
-            // Actualizar el consultor
-            var consultorActualizado = await _consultorRepository.UpdateAsync(consultor);
 
             // Procesar especializaciones
             await ActualizarEspecializacionesAsync(id, consultorDto.Especializaciones ?? new List<ConsultorFrenteSubFrenteDto>());
@@ -219,42 +184,46 @@ namespace ConectaBiz.Application.Services
 
         #region Métodos privados para manejo de especializaciones
 
-        private async Task ValidarEspecializacionesAsync(IEnumerable<ConsultorFrenteSubFrenteDto> especializaciones)
-        {
-            foreach (var especializacion in especializaciones)
-            {
-                // Validar que el frente existe
-                if (!await _frenteRepository.ExistsAsync(especializacion.IdFrente))
-                    throw new InvalidOperationException($"El frente con ID {especializacion.IdFrente} no existe");
+        //private async Task ValidarEspecializacionesAsync(IEnumerable<ConsultorFrenteSubFrenteDto> especializaciones)
+        //{
+        //    foreach (var especializacion in especializaciones)
+        //    {
+        //        // Validar que el frente existe
+        //        if (!await _frenteRepository.ExistsAsync(especializacion.IdFrente))
+        //            throw new InvalidOperationException($"El frente con ID {especializacion.IdFrente} no existe");
 
-                // Validar que el subfrente existe
-                if (!await _subFrenteRepository.ExistsAsync(especializacion.IdSubFrente))
-                    throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no existe");
+        //        // Validar que el subfrente existe
+        //        if (!await _subFrenteRepository.ExistsAsync(especializacion.IdSubFrente))
+        //            throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no existe");
 
-                // Validar que el subfrente pertenece al frente
-                //if (!await _subFrenteRepository.BelongsToFrenteAsync(especializacion.IdSubFrente, especializacion.IdFrente))
-                //    throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no pertenece al frente con ID {especializacion.IdFrente}");
-            }
+        //        // Validar que el subfrente pertenece al frente
+        //        //if (!await _subFrenteRepository.BelongsToFrenteAsync(especializacion.IdSubFrente, especializacion.IdFrente))
+        //        //    throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no pertenece al frente con ID {especializacion.IdFrente}");
+        //    }
 
-            // Validar que no hay duplicados en la lista
-            var duplicados = especializaciones
-                .GroupBy(e => new { e.IdFrente, e.IdSubFrente })
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key);
+        //    // Validar que no hay duplicados en la lista
+        //    var duplicados = especializaciones
+        //        .GroupBy(e => new { e.IdFrente, e.IdSubFrente })
+        //        .Where(g => g.Count() > 1)
+        //        .Select(g => g.Key);
 
-            if (duplicados.Any())
-            {
-                var duplicadosStr = string.Join(", ", duplicados.Select(d => $"Frente:{d.IdFrente}-SubFrente:{d.IdSubFrente}"));
-                throw new InvalidOperationException($"Se encontraron especializaciones duplicadas: {duplicadosStr}");
-            }
-        }
+        //    if (duplicados.Any())
+        //    {
+        //        var duplicadosStr = string.Join(", ", duplicados.Select(d => $"Frente:{d.IdFrente}-SubFrente:{d.IdSubFrente}"));
+        //        throw new InvalidOperationException($"Se encontraron especializaciones duplicadas: {duplicadosStr}");
+        //    }
+        //}
 
         private async Task ProcesarEspecializacionesAsync(int consultorId, IEnumerable<ConsultorFrenteSubFrenteDto> especializaciones)
         {
             foreach (var especializacionDto in especializaciones)
             {
                 // Verificar que no exista ya esta combinación
-                if (await _consultorFrenteSubFrenteRepository.ExistsAsync(consultorId, especializacionDto.IdFrente, especializacionDto.IdSubFrente))
+                if (await _consultorFrenteSubFrenteRepository.ExistsAsync(consultorId, 
+                    especializacionDto.IdFrente, 
+                    especializacionDto.IdSubFrente, 
+                    especializacionDto.IdNivelExperiencia,
+                    especializacionDto.EsCertificado))
                     continue; // Saltar si ya existe
 
                 var especializacion = new ConsultorFrenteSubFrente

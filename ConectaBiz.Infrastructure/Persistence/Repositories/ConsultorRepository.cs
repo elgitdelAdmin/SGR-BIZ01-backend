@@ -16,16 +16,24 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Consultor>> GetAllAsync()
         {
-            return await _context.Consultor
-                .Include(c => c.Persona)
-                .Include(c => c.Socio)
-                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
-                    .ThenInclude(cf => cf.Frente)
-                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
-                    .ThenInclude(cf => cf.SubFrente)
-                .Where(c => c.Activo)
-                .AsNoTracking()
-                .ToListAsync();
+            try
+            {
+                return await _context.Consultor
+                 .Include(c => c.Persona)
+                 .Include(c => c.Socio)
+                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                     .ThenInclude(cf => cf.Frente)
+                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                     .ThenInclude(cf => cf.SubFrente)
+                 .Where(c => c.Activo)
+                 .AsNoTracking()
+                 .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+     
         }
 
         public async Task<Consultor> GetByIdAsync(int id)
@@ -39,7 +47,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(cf => cf.SubFrente)
                 .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
         }
-
+        public async Task<Consultor> GetByIdUserAsync(int iduser)
+        {
+            return await _context.Consultor
+                .Include(c => c.Persona)
+                .Include(c => c.Socio)
+                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                    .ThenInclude(cf => cf.Frente)
+                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                    .ThenInclude(cf => cf.SubFrente)
+                .FirstOrDefaultAsync(c => c.IdUser == iduser && c.Activo);
+        }
         public async Task<Consultor> CreateAsync(Consultor consultor)
         {
             _context.Consultor.Add(consultor);
@@ -61,6 +79,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             existingConsultor.IdNivelExperiencia = consultor.IdNivelExperiencia;
             existingConsultor.IdModalidadLaboral = consultor.IdModalidadLaboral;
             existingConsultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            existingConsultor.UsuarioActualizacion = consultor.UsuarioActualizacion;
             await _context.SaveChangesAsync();
 
             // Cargar las relaciones para devolver la entidad completa

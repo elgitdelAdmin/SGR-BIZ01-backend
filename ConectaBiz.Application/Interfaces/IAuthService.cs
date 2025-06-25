@@ -1,4 +1,5 @@
 ﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,5 +14,10 @@ namespace ConectaBiz.Application.Interfaces
         Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest);
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(string refreshToken);
+        Task<IEnumerable<UserDto>> GetAllAsync();
+        Task<UserDto> GetByIdAsync(int id);
+        Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona);
+        Task<IEnumerable<RolDto>> GetAllRolAsync();
+        Task<RolDto> GetRolByCodigoAsync(string codigo);
     }
 }

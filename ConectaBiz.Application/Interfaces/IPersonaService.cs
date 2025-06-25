@@ -15,5 +15,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<PersonaDto> CreateAsync(PersonaDto personaDto);
         Task<PersonaDto> UpdateAsync(int id, PersonaDto personaDto);
         Task<bool> DeleteAsync(int id);
+        Task<PersonaDto> ValidateCreateUpdate(CreatePersonaDto createPersonaDto);
+        Task<PersonaDto> ValidateUpdateAsync(UpdatePersonaDto createPersonaDto);
     }
 }

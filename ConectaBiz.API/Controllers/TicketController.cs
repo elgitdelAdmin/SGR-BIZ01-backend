@@ -112,21 +112,35 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
-
+        [HttpGet("user/{idUser}/rol/{codRol}")]
+        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        {
+            try
+            {
+                var tickets = await _ticketService.GetByIdUserIdRolAsync(idUser, codRol);
+                return Ok(tickets);
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, "Error al obtener tickets por estado: {IdEstado}", idEstado);
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
+        
         /// <summary>
-        /// Obtiene tickets por gestor asignado
+        /// Obtiene tickets por usuario
         /// </summary>
-        //[HttpGet("gestor/{idGestor}")]
-        //public async Task<ActionResult<IEnumerable<TicketDto>>> GetByGestor(int idGestor)
+        //[HttpGet("usuario/{idUser}")]
+        //public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserAsync(int idUser)
         //{
         //    try
         //    {
-        //        var tickets = await _ticketService.GetByGestorAsync(idGestor);
+        //        var tickets = await _ticketService.GetByIdUserAsync(idUser);
         //        return Ok(tickets);
         //    }
         //    catch (Exception ex)
         //    {
-        //        _logger.LogError(ex, "Error al obtener tickets por gestor: {IdGestor}", idGestor);
+        //        _logger.LogError(ex, "Error al obtener tickets por idUsuario: {idUser}", idUser);
         //        return StatusCode(500, "Error interno del servidor");
         //    }
         //}

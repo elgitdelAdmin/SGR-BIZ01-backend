@@ -78,13 +78,14 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-
-        public async Task<bool> ExistsAsync(int consultorId, int frenteId, int subFrenteId)
+        public async Task<bool> ExistsAsync(int consultorId, int frenteId, int subFrenteId, int idNivelExperiencia, bool esCertificado)
         {
             return await _context.ConsultorFrenteSubFrente
                 .AnyAsync(c => c.ConsultorId == consultorId &&
                               c.IdFrente == frenteId &&
                               c.IdSubFrente == subFrenteId &&
+                              c.IdNivelExperiencia == idNivelExperiencia &&
+                              c.EsCertificado == esCertificado &&
                               c.Activo);
         }
     }

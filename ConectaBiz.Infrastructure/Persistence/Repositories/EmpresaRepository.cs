@@ -1,4 +1,5 @@
-﻿using ConectaBiz.Domain.Entities;
+﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +51,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 //.Include(e => e.Socio)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
-
+        public async Task<Empresa?> GetByIdUserAsync(int iduser)
+        {
+            return await _context.Empresas
+                .Include(e => e.Pais)
+                .Include(e => e.Gestor)
+                    .ThenInclude(g => g.Persona)
+                //.Include(e => e.Socio)
+                .FirstOrDefaultAsync(e => e.IdUser == iduser);
+        }
         public async Task<Empresa?> GetByCodigoAsync(string codigo)
         {
             return await _context.Empresas

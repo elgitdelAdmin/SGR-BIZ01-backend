@@ -38,7 +38,13 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
-
+        public async Task<Gestor?> GetByIdUserAsync(int iduser)
+        {
+            return await _context.Gestores
+                .Include(g => g.Persona)
+                .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
+                .FirstOrDefaultAsync(g => g.IdUser == iduser);
+        }
         public async Task<Gestor?> GetByPersonaIdAsync(int personaId)
         {
             return await _context.Gestores

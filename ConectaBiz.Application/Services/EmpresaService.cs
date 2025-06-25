@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using System;
@@ -15,15 +16,21 @@ namespace ConectaBiz.Application.Services
     {
         private readonly IEmpresaRepository _empresaRepository;
         private readonly IPersonaRepository _personaRepository;
+        private readonly IPersonaService _personaService;
+        private readonly IAuthService _userService;
         private readonly IMapper _mapper;
 
         public EmpresaService(
             IEmpresaRepository empresaRepository,
             IPersonaRepository personaRepository,
+            IPersonaService personaService,
+            IAuthService userService,
             IMapper mapper)
         {
             _empresaRepository = empresaRepository;
             _personaRepository = personaRepository;
+            _personaService = personaService;
+            _userService = userService;
             _mapper = mapper;
         }
 
@@ -43,6 +50,29 @@ namespace ConectaBiz.Application.Services
         {
             var empresa = await _empresaRepository.GetByIdAsync(id);
             return empresa != null ? _mapper.Map<EmpresaDto>(empresa) : null;
+        }
+        public async Task<EmpresaDto> GetByIdUserAsync(int iduser)
+        {
+            var empresa = await _empresaRepository.GetByIdUserAsync(iduser);
+            if (empresa == null)
+                return null;
+            return _mapper.Map<EmpresaDto>(empresa);
+        }
+        public async Task<PersonaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
+        {
+            if (string.IsNullOrEmpty(numeroDocumento))
+            {
+                throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
+            }
+
+            var persona = await _personaRepository.GetByTipoNumDocumentoAsync(idTipoDocumento, numeroDocumento);
+
+            if (persona == null)
+            {
+                throw new InvalidOperationException("No se encontró una persona con el documento proporcionado");
+            }
+            var personaDto = _mapper.Map<PersonaDto>(persona);
+            return personaDto;
         }
 
         public async Task<EmpresaDto?> GetByCodigoAsync(string codigo)
@@ -65,75 +95,43 @@ namespace ConectaBiz.Application.Services
 
         public async Task<EmpresaDto> CreateAsync(CreateEmpresaDto createDto)
         {
-            // Validar que el código no exista
-            if (await _empresaRepository.ExistsByNumDocYPaisAsync(createDto.NumDocContribuyente, createDto.IdPais))
+            var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(createDto.Persona.TipoDocumento, createDto.Persona.NumeroDocumento);
+
+            if (personaExistente == null)
             {
-                throw new InvalidOperationException($"Ya existe una empresa con el Número de Documento '{createDto.NumDocContribuyente}' que pertenece al pais seleccionado.");
+                throw new InvalidOperationException("No se encontró una persona con el número de documento proporcionado");
             }
 
-            // Variable para almacenar el ID de la persona responsable
-            int personaId = 0;
-
-            // Validar y procesar información de persona
+            PersonaDto persona = new PersonaDto();
+            // Actualizar datos de la persona si se incluyen
             if (createDto.Persona != null)
             {
-                if (!string.IsNullOrEmpty(createDto.Persona.NumeroDocumento))
+                var personaDto = new UpdatePersonaDto
                 {
-                    // Buscar persona existente por tipo de documento y número
-                    var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(
-                        createDto.Persona.TipoDocumento,
-                        createDto.Persona.NumeroDocumento);
-
-                    if (personaExistente != null)
-                    {
-                        // Si la persona existe, actualizarla con los nuevos datos
-                        personaExistente.Nombres = createDto.Persona.Nombres;
-                        personaExistente.ApellidoMaterno = createDto.Persona.ApellidoMaterno;
-                        personaExistente.ApellidoPaterno = createDto.Persona.ApellidoPaterno;
-                        personaExistente.Telefono = createDto.Persona.Telefono;
-                        personaExistente.Telefono2 = createDto.Persona.Telefono2;
-                        personaExistente.Correo = createDto.Persona.Correo;
-                        personaExistente.Direccion = createDto.Persona.Direccion;
-                        personaExistente.FechaNacimiento = createDto.Persona.FechaNacimiento.HasValue
-                            ? DateTime.SpecifyKind(createDto.Persona.FechaNacimiento.Value, DateTimeKind.Local)
-                            : null;
-                        personaExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-
-                        var personaActualizada = await _personaRepository.UpdateAsync(personaExistente);
-                        personaId = personaActualizada.Id;
-                    }
-                    else
-                    {
-                        // Si la persona no existe, crearla
-                        var nuevaPersona = _mapper.Map<Persona>(createDto.Persona);
-                        nuevaPersona.FechaNacimiento = nuevaPersona.FechaNacimiento.HasValue
-                            ? DateTime.SpecifyKind(nuevaPersona.FechaNacimiento.Value, DateTimeKind.Local)
-                            : null;
-                        nuevaPersona.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                        nuevaPersona.FechaActualizacion = null;
-                        nuevaPersona.Activo = true;
-
-                        var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
-                        personaId = personaCreada.Id;
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
-                }
+                    Nombres = createDto.Persona.Nombres,
+                    ApellidoPaterno = createDto.Persona.ApellidoPaterno,
+                    ApellidoMaterno = createDto.Persona.ApellidoMaterno,
+                    NumeroDocumento = createDto.Persona.NumeroDocumento,
+                    TipoDocumento = createDto.Persona.TipoDocumento,
+                    Telefono = createDto.Persona.Telefono,
+                    Telefono2 = createDto.Persona.Telefono2,
+                    Correo = createDto.Persona.Correo,
+                    Direccion = createDto.Persona.Direccion,
+                    FechaNacimiento = DateTime.SpecifyKind((DateTime)createDto.Persona.FechaNacimiento, DateTimeKind.Local),
+                    UsuarioActualizacion = createDto.UsuarioRegistro
+                };
+                persona = await _personaService.ValidateUpdateAsync(personaDto);
             }
-            else
-            {
-                throw new InvalidOperationException("Se debe proporcionar información de la persona responsable para crear una empresa");
-            }
+            RolDto rol = await _userService.GetRolByCodigoAsync(AppConstants.Roles.Empresa);
+            UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(createDto.IdSocio, rol.Id, persona.Id);
 
             // Mapear el DTO a la entidad Empresa
             var empresa = _mapper.Map<Empresa>(createDto);
             empresa.FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
             // Asignar el ID de la persona responsable (asumiendo que tu entidad Empresa tiene esta propiedad)
-            empresa.IdPersonaResponsable = personaId;
-
+            empresa.IdPersonaResponsable = persona.Id;
+            empresa.IdUser = usuario.Id;
             // Crear la empresa
             var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
 
@@ -157,54 +155,35 @@ namespace ConectaBiz.Application.Services
             // Variable para almacenar el ID de la persona responsable
             int personaId = existingEmpresa.IdPersonaResponsable; // Mantener el ID actual por defecto
 
-            // Validar y procesar información de persona
+            var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(updateDto.Persona.TipoDocumento, updateDto.Persona.NumeroDocumento);
+            if (personaExistente == null)
+            {
+                throw new InvalidOperationException("No se encontró una persona con el número de documento proporcionado");
+            }
+
+            PersonaDto persona = new PersonaDto();
+            // Actualizar datos de la persona si se incluyen
             if (updateDto.Persona != null)
             {
-                if (!string.IsNullOrEmpty(updateDto.Persona.NumeroDocumento))
+                var personaDto = new UpdatePersonaDto
                 {
-                    // Buscar persona existente por tipo de documento y número
-                    var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(
-                        updateDto.Persona.TipoDocumento,
-                        updateDto.Persona.NumeroDocumento);
-
-                    if (personaExistente != null)
-                    {
-                        // Si la persona existe, actualizarla con los nuevos datos
-                        personaExistente.Nombres = updateDto.Persona.Nombres;
-                        personaExistente.ApellidoMaterno = updateDto.Persona.ApellidoMaterno;
-                        personaExistente.ApellidoPaterno = updateDto.Persona.ApellidoPaterno;
-                        personaExistente.Telefono = updateDto.Persona.Telefono;
-                        personaExistente.Telefono2 = updateDto.Persona.Telefono2;
-                        personaExistente.Correo = updateDto.Persona.Correo;
-                        personaExistente.Direccion = updateDto.Persona.Direccion;
-                        personaExistente.FechaNacimiento = updateDto.Persona.FechaNacimiento.HasValue
-                            ? DateTime.SpecifyKind(updateDto.Persona.FechaNacimiento.Value, DateTimeKind.Local)
-                            : null;
-                        personaExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-
-                        var personaActualizada = await _personaRepository.UpdateAsync(personaExistente);
-                        personaId = personaActualizada.Id;
-                    }
-                    else
-                    {
-                        // Si la persona no existe, crearla
-                        var nuevaPersona = _mapper.Map<Persona>(updateDto.Persona);
-                        nuevaPersona.FechaNacimiento = nuevaPersona.FechaNacimiento.HasValue
-                            ? DateTime.SpecifyKind(nuevaPersona.FechaNacimiento.Value, DateTimeKind.Local)
-                            : null;
-                        nuevaPersona.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                        nuevaPersona.FechaActualizacion = null;
-                        nuevaPersona.Activo = true;
-
-                        var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
-                        personaId = personaCreada.Id; // Cambiar al ID de la nueva persona creada
-                    }
-                }
-                else
-                {
-                    throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
-                }
+                    Nombres = updateDto.Persona.Nombres,
+                    ApellidoPaterno = updateDto.Persona.ApellidoPaterno,
+                    ApellidoMaterno = updateDto.Persona.ApellidoMaterno,
+                    NumeroDocumento = updateDto.Persona.NumeroDocumento,
+                    TipoDocumento = updateDto.Persona.TipoDocumento,
+                    Telefono = updateDto.Persona.Telefono,
+                    Telefono2 = updateDto.Persona.Telefono2,
+                    Correo = updateDto.Persona.Correo,
+                    Direccion = updateDto.Persona.Direccion,
+                    FechaNacimiento = DateTime.SpecifyKind((DateTime)updateDto.Persona.FechaNacimiento, DateTimeKind.Local),
+                    UsuarioActualizacion = updateDto.UsuarioModificacion
+                };
+                persona = await _personaService.ValidateUpdateAsync(personaDto);
+                personaId = persona.Id;
             }
+            RolDto rol = await _userService.GetRolByCodigoAsync(AppConstants.Roles.Empresa);
+            UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(updateDto.IdSocio, rol.Id, persona.Id);
 
             // Mapear el DTO a la entidad existente
             _mapper.Map(updateDto, existingEmpresa);
