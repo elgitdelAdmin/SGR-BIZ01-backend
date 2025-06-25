@@ -211,5 +211,13 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(x => x.IdTicket == idTicket && x.Activo)
                 .ToListAsync();
         }
+
+        public async Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti)
+        {
+            return await _context.Ticket
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .FirstOrDefaultAsync(t => t.CodReqSgrCsti == codReqSgrCsti);
+        }
     }
 }

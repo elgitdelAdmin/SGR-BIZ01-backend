@@ -73,7 +73,7 @@ public class TicketHistorialEstadoDto
 public class TicketInsertDto
 {
     public string CodTicketInterno { get; set; }
-    public string Titulo { get; set;}
+    public string Titulo { get; set; }
     public DateTime FechaSolicitud { get; set; }
     public int IdTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
@@ -83,6 +83,8 @@ public class TicketInsertDto
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
     public string UsuarioCreacion { get; set; }
+    public string? CodReqSgrCsti {get;set; }
+    public int? IdReqSgrCsti { get; set; }
 
     // Colecciones relacionadas que siempre vienen en el request
     public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();

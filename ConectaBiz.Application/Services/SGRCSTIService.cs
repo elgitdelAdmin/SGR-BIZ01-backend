@@ -1,5 +1,6 @@
 ﻿using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -16,30 +17,62 @@ namespace ConectaBiz.Application.Services
         private readonly IEmpresaService _empresaService;
         private readonly IPersonaService _personaService;
         private readonly ITicketService _ticketService;
-        public SGRCSTIService(ISGRCSTIRepository sGRCSTIRepository, IEmpresaRepository empresaRepository, IEmpresaService empresaService, IPersonaService personaService, ITicketService ticketService)
+        private readonly IPersonaRepository _personaRepository;
+        public SGRCSTIService(ISGRCSTIRepository sGRCSTIRepository, IEmpresaRepository empresaRepository, IEmpresaService empresaService, IPersonaService personaService, ITicketService ticketService, IPersonaRepository personaRepository)
         {
             _sgrcstiRepository = sGRCSTIRepository;
             _empresaRepository = empresaRepository;
             _empresaService = empresaService;
             _personaService = personaService;
             _ticketService = ticketService;
+            _personaRepository = personaRepository;
         }
         public async Task MigracionEmpresa()
         {
             var Clientes=await _empresaRepository.GetAllAsync();
 
-            var ClientesSGRCSTI = await _sgrcstiRepository.ObtenerEmpresasByExcepcion(Clientes.Any(x=>x.codSGRCSTI!=null)?  Clientes.Select(x =>(int) x.codSGRCSTI).ToList():null);
+            var ClientesSGRCSTI = await _sgrcstiRepository.ObtenerEmpresasByExcepcion(Clientes.Any(x => x.CodSgrCsti != null) ? Clientes.Select(x => (int)x.CodSgrCsti).ToList() : null);
         }
 
         public async Task<IEnumerable<dynamic>> MigracionRequerimientos()
         {
             var resultados = await _sgrcstiRepository.MigracionRequerimientos();
-
-            // Obtener la persona con id 58
             var personaDto = await _personaService.GetByIdAsync(58);
-
             foreach (var req in resultados)
             {
+                // Buscar si ya existe la persona responsable por tipo y número de documento
+                var personaResponsable = await _personaRepository.GetByTipoNumDocumentoAsync(
+                    req.responsablecliente_idtipodocumento,
+                    req.responsablecliente_documento
+                );
+
+                int idPersonaResponsable;
+                if (personaResponsable == null)
+                {
+                    // Si no existe, crear la persona responsable
+                    var nuevaPersona = new Persona
+                    {
+                        Nombres = req.responsablecliente_nombres,
+                        ApellidoPaterno = req.responsablecliente_apepaterno,
+                        ApellidoMaterno = req.responsablecliente_apematerno,
+                        NumeroDocumento = req.responsablecliente_documento,
+                        TipoDocumento = req.responsablecliente_tipodocumento,
+                        Telefono = req.responsablecliente_telefonomovil,
+                        Telefono2 = req.responsablecliente_fijo,
+                        Correo = req.responsablecliente_correo,
+                        Direccion = req.responsablecliente_direccion,
+                        FechaNacimiento = req.responsablecliente_fechanacimiento,
+                        FechaCreacion = DateTime.Now,
+                        Activo = true
+                    };
+                    var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
+                    idPersonaResponsable = personaCreada.Id;
+                }
+                else
+                {
+                    idPersonaResponsable = personaResponsable.Id;
+                }
+
                 var createEmpresaDto = new DTOs.CreateEmpresaDto
                 {
                     RazonSocial = req.empresa_razonsocial,
@@ -51,10 +84,9 @@ namespace ConectaBiz.Application.Services
                     IdSocio= 1,// Pendiente de definicion
                     // Completa los campos obligatorios según tu lógica de negocio:
                     // Email = ...
-                    // IdPais = ...
-                    // IdGestor = ...
-                    // IdSocio = ...
-                    // UsuarioRegistro = "migracion",
+                    IdPais = 1,
+                    IdGestor = 4,
+                    UsuarioRegistro = "Migracion",
                     Persona = personaDto == null ? null : new DTOs.CreatePersonaDto {
                         Nombres = personaDto.Nombres,
                         ApellidoMaterno = personaDto.ApellidoMaterno,
@@ -86,37 +118,43 @@ namespace ConectaBiz.Application.Services
 
                 var tipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
 
-                var ticketInsertDto = new TicketInsertDto
+                // Validar si ya existe un ticket con ese CodReqSgrCsti
+                var ticketExistente = await _ticketService.GetByCodReqSgrCstiAsync(req.codrequerimiento);
+                if (ticketExistente == null)
                 {
-                    CodTicketInterno = req.codrequerimiento,
-                    Titulo = req.titulo,
-                    FechaSolicitud = req.fecharegistro,
-                    IdTipoTicket = tipoTicket,
-                    IdEstadoTicket = req.idestadorequerimiento,
-                    IdEmpresa = idEmpresa,
-                    IdUsuarioResponsableCliente = req.responsablecliente_idusuario,
-                    IdPais = 1, // Asigna el país correspondiente
-                    IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
-                    Descripcion = req.detalle ?? "",
-                    UrlArchivos = null, // Si tienes archivos, asígnalos aquí
-                    IdGestorAsignado = 0, // Asigna el gestor si corresponde
-                    ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
-                    FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
-                };
+                    var ticketInsertDto = new TicketInsertDto
+                    {
+                        CodReqSgrCsti = req.codrequerimiento,
+                        IdReqSgrCsti = req.idrequerimiento,
+                        CodTicketInterno = req.codrequerimiento,
+                        Titulo = req.titulo,
+                        FechaSolicitud = req.fecharegistro,
+                        IdTipoTicket = tipoTicket,
+                        IdEstadoTicket = 1,// req.idestadorequerimiento,
+                        IdEmpresa = idEmpresa,
+                        IdUsuarioResponsableCliente = idPersonaResponsable,
+                        IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
+                        Descripcion = req.detalle ?? "",
+                        UrlArchivos = null, // Si tienes archivos, asígnalos aquí
+                        UsuarioCreacion = "Migracion",
+                        ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
+                        FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
+                    };
 
-                //var ticketCreado = await _ticketService.CreateAsync(ticketInsertDto);
+                    var ticketCreado = await _ticketService.CreateAsync(ticketInsertDto);
+                }
             }
             return resultados; 
         }
 
-        private string MapTipoServicioToTipoTicket(int idTipoServicio)
+        private int MapTipoServicioToTipoTicket(int idTipoServicio)
         {
             return idTipoServicio switch
             {
-                1 => "INC", // Incidente
-                2 => "REQ", // Requerimiento
-                3 => "REQ", // Garantía también será Requerimiento
-                _ => "REQ"  // Valor por defecto
+                1 => 12, // Incidente
+                2 => 13, // Requerimiento
+                3 => 13, // Garantía también será Requerimiento
+                _ => 13  // Valor por defecto
             };
         }
 
@@ -124,11 +162,12 @@ namespace ConectaBiz.Application.Services
         {
             return prioridad.ToUpper() switch
             {
-                "BAJA" => 3,
-                "MEDIA" => 2,
-                "ALTA" => 1,
-                "CRITICA" => 4,
-                _ => 2 // Valor por defecto: Media
+                "BAJA" => 18,
+                "MEDIA" => 19,
+                "ALTA" => 20,
+                "CRITICA" => 21,
+                _ => 19 // Valor por defecto: Media
+
             };
         }
     }

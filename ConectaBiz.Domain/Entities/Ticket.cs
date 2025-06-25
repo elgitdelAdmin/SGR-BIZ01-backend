@@ -18,7 +18,7 @@ public class Ticket
     public int IdTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
-    public int IdGestor { get; set; }
+    public int? IdGestor { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }

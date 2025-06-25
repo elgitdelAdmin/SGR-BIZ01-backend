@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Forzar escuchar en IPv4 específicamente
+// Forzar escuchar en IPv4 especï¿½ficamente
 builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 // Add services to the container
@@ -32,6 +32,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Add Application Layer
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<SGRCSTIService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql("Host=64.23.182.32;Port=5432;Database=conectabiz_db;Username=postgres;Password=KQW%9gVPK!+2kCh")
@@ -44,7 +45,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ConectaBiz API", Version = "v1" });
 
-    // Configuración de Swagger para JWT
+    // Configuraciï¿½n de Swagger para JWT
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.",
@@ -70,6 +71,8 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddHostedService<MigracionRequerimientosWorker>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -82,7 +85,7 @@ app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConectaBiz API V1");
-    c.RoutePrefix = "swagger"; // Swagger estará en /swagger
+    c.RoutePrefix = "swagger"; // Swagger estarï¿½ en /swagger
 });
 
 

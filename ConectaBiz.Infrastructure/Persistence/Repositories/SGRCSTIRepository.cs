@@ -42,7 +42,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                         {
                             var empresa = new Empresa
                             {
-                                codSGRCSTI = reader.IsDBNull(reader.GetOrdinal("CodSgrCsti")) ? null : reader.GetInt32(reader.GetOrdinal("CodSgrCsti")),
+                                CodSgrCsti = reader.IsDBNull(reader.GetOrdinal("CodSgrCsti")) ? null : reader.GetInt32(reader.GetOrdinal("CodSgrCsti")),
                                 RazonSocial = reader.GetString(reader.GetOrdinal("RazonSocial")),
                                 NombreComercial = reader.IsDBNull(reader.GetOrdinal("NombreComercial")) ? null : reader.GetString(reader.GetOrdinal("NombreComercial")),
                                 NumDocContribuyente = reader.IsDBNull(reader.GetOrdinal("NumDocContribuyente")) ? null : reader.GetString(reader.GetOrdinal("NumDocContribuyente")),
@@ -65,7 +65,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var resultados = new List<dynamic>();
             using (var context = new NpgsqlConnection(_connectionString))
             {
-                string query = @"select codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,
+                string query = @"select idrequerimiento, codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,
                 r.idestadorequerimiento, r.idempresa, r.idusuario, r.idprioridad, detalle, idrequerimiento, codrequerimiento,
                 r.fecharegistro, --requerimiento
                 ts.id as tipo_servicio_id, ts.codigo as tipo_servicio_codigo, ts.descripcion as tipo_servicio_descripcion, -- tipo servicio
@@ -75,6 +75,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 u.apepaterno as ResponsableCliente_apepaterno,
                 u.tipodocumento as ResponsableCliente_tipodocumento,
                 u.idtipodocumento as ResponsableCliente_idtipodocumento,
+                u.ruc as ResponsableCliente_documento,
                 u.telefonomovil as ResponsableCliente_telefonomovil,
                 u.direccion as ResponsableCliente_direccion,
                 u.fechanacimiento as ResponsableCliente_fechanacimiento,
@@ -97,7 +98,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 left join usuario u on r.idusuario = u.idusuario
                 left join prioridad p on r.idprioridad = p.idprioridad
                 left join  empresa e2 on r.idempresa  = e2.idempresa 
-                where e.idestadorequerimiento in (-3) and r.fecharegistro >= '2025-06-18'
+                where e.idestadorequerimiento in (-3) and r.fecharegistro >= '2025-06-18' -- r.fecharegistro >= NOW() - INTERVAL '2 hours'
                 LIMIT 1;";
 
                 await context.OpenAsync();

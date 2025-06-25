@@ -20,5 +20,6 @@ namespace ConectaBiz.Application.Interfaces
         Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto);
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<TicketHistorialEstadoDto>> GetHistorialByTicketIdAsync(int idTicket);
+        Task<TicketDto?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
     }
 }

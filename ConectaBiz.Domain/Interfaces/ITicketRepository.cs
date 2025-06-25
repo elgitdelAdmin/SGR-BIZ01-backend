@@ -23,6 +23,6 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<Ticket>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
         Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket);
         Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket);
-
+        Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
     }
 }

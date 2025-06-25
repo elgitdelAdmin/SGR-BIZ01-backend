@@ -263,6 +263,12 @@ namespace ConectaBiz.Application.Services
             return _mapper.Map<IEnumerable<TicketHistorialEstadoDto>>(historial);
         }
 
+        public async Task<TicketDto?> GetByCodReqSgrCstiAsync(string codReqSgrCsti)
+        {
+            var ticket = await _ticketRepository.GetByCodReqSgrCstiAsync(codReqSgrCsti);
+            return ticket != null ? _mapper.Map<TicketDto>(ticket) : null;
+        }
+
         // ============= MÉTODOS PRIVADOS =============
 
         private async Task CreateInitialHistorialAsync(int ticketId, int estadoInicial)

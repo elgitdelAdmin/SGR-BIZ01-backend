@@ -128,7 +128,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<Empresa?> GetByCodSgrCstiAsync(int codSgrCsti)
         {
             return await _context.Empresas
-                .FirstOrDefaultAsync(e => e.codSGRCSTI == codSgrCsti);
+                .FirstOrDefaultAsync(e => e.CodSgrCsti == codSgrCsti);
         }
     }
 }
