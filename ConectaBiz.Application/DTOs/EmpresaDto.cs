@@ -31,6 +31,7 @@ namespace ConectaBiz.Application.DTOs
         public int IdPersonaResponsable { get; set; }
         public string? NombrePersonaResponsable { get; set; }
         public string? CargoResponsable { get; set; }
+        public int? IdUser { get; set; }
         //public PersonaDto Persona { get; set; }
     }
 

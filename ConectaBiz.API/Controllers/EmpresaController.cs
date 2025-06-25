@@ -51,17 +51,14 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
             }
         }
-
-        // GET: api/empresas/codigo/EMP001
-        [HttpGet("codigo/{codigo}")]
-        public async Task<ActionResult<EmpresaDto>> GetByCodigo(string codigo)
+        [HttpGet("UsuarioResponsable/tipoDocumento/{idTipoDocumento}numeroDocumento/{numeroDocumento}")]
+        public async Task<ActionResult<PersonaDto>> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento,string numeroDocumento)
         {
             try
             {
-                var empresa = await _empresaService.GetByCodigoAsync(codigo);
-
+                var empresa = await _empresaService.GetPersonaResponsableByTipoNumDoc(idTipoDocumento, numeroDocumento);
                 if (empresa == null)
-                    return NotFound(new { message = $"No se encontró la empresa con código {codigo}" });
+                    return NotFound(new { message = $"No se encontró la persona con numeroDocumento {numeroDocumento}" });
 
                 return Ok(empresa);
             }
@@ -71,35 +68,54 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
-        // GET: api/empresas/socio/5
-        [HttpGet("socio/{idSocio}")]
-        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetBySocio(int idSocio)
-        {
-            try
-            {
-                var empresas = await _empresaService.GetBySocioAsync(idSocio);
-                return Ok(empresas);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
-        }
+        //// GET: api/empresas/codigo/EMP001
+        //[HttpGet("codigo/{codigo}")]
+        //public async Task<ActionResult<EmpresaDto>> GetByCodigo(string codigo)
+        //{
+        //    try
+        //    {
+        //        var empresa = await _empresaService.GetByCodigoAsync(codigo);
+
+        //        if (empresa == null)
+        //            return NotFound(new { message = $"No se encontró la empresa con código {codigo}" });
+
+        //        return Ok(empresa);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        //    }
+        //}
+
+        //// GET: api/empresas/socio/5
+        //[HttpGet("socio/{idSocio}")]
+        //public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetBySocio(int idSocio)
+        //{
+        //    try
+        //    {
+        //        var empresas = await _empresaService.GetBySocioAsync(idSocio);
+        //        return Ok(empresas);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        //    }
+        //}
 
         // GET: api/empresas/gestor/5
-        [HttpGet("gestor/{idGestor}")]
-        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByGestor(int idGestor)
-        {
-            try
-            {
-                var empresas = await _empresaService.GetByGestorAsync(idGestor);
-                return Ok(empresas);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
-        }
+        //[HttpGet("gestor/{idGestor}")]
+        //public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByGestor(int idGestor)
+        //{
+        //    try
+        //    {
+        //        var empresas = await _empresaService.GetByGestorAsync(idGestor);
+        //        return Ok(empresas);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+        //    }
+        //}
 
         // POST: api/empresas
         [HttpPost]

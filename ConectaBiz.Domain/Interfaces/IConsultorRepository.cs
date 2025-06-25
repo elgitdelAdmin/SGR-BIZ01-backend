@@ -18,6 +18,7 @@ namespace ConectaBiz.Domain.Interfaces
         /// Obtiene un consultor por su ID
         /// </summary>
         Task<Consultor> GetByIdAsync(int id);
+        Task<Consultor> GetByIdUserAsync(int iduser);
 
         /// <summary>
         /// Crea un nuevo consultor

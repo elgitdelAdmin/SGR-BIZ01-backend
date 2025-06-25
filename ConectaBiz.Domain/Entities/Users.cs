@@ -17,6 +17,7 @@ namespace ConectaBiz.Domain.Entities
         public DateTime? LastLogin { get; set; }
         public int IdSocio { get; set; } // Clave foránea
         public int IdRol { get; set; } // Clave foránea
+        public int IdPersona { get; set; } // Clave foránea
         public bool Activo { get; set; }
 
         // Propiedades de navegación
@@ -24,6 +25,7 @@ namespace ConectaBiz.Domain.Entities
         public virtual ICollection<UserRol> Roles { get; set; } = new List<UserRol>();
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public Socio Socio { get; set; }
+        public Persona Persona { get; set; }
         public Rol Rol { get; set; }
     }
 
@@ -55,10 +57,12 @@ namespace ConectaBiz.Domain.Entities
         public DateTime? FechaNacimiento { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
+        public string UsuarioCreacion { get; set; }
+        public string? UsuarioActualizacion { get; set; }
         public bool Activo { get; set; }
 
         // Propiedades de navegación
-        public virtual ICollection<PersonaUser> Users { get; set; } = new List<PersonaUser>();
+        public virtual ICollection<User> Users { get; set; }
         public virtual Consultor? Consultor { get; set; }
     }
 
@@ -78,20 +82,17 @@ namespace ConectaBiz.Domain.Entities
     public class Rol
     {
         public int Id { get; set; }
-        public string Codigo { get; set; }
-        public string Nombre { get; set; }
-        public string Descripcion { get; set; }
+        public string Codigo { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+        public string? Descripcion { get; set; }
         public DateTime FechaCreacion { get; set; }
-        public string UsuarioCreacion { get; set; }
+        public string UsuarioCreacion { get; set; } = string.Empty;
         public DateTime? FechaModificacion { get; set; }
-        public string UsuarioModificacion { get; set; }
+        public string? UsuarioModificacion { get; set; }
         public bool Activo { get; set; }
-
-        // Propiedades de navegación
-        //public virtual ICollection<UserRol> Users { get; set; } = new List<UserRol>();
-        //public virtual ICollection<RolPermiso> Permisos { get; set; } = new List<RolPermiso>();
         public ICollection<User> Users { get; set; } = new List<User>();
     }
+
 
     public class UserRol
     {

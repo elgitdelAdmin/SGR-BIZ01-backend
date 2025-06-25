@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using FluentValidation.Internal;
@@ -21,6 +22,10 @@ namespace ConectaBiz.Application.Services
         private readonly ITicketHistorialRepository _historialRepository;
         private readonly IParametroRepository _parametroRepository;
         private readonly IEmpresaRepository _empresaRepository;
+        private readonly IAuthService _userService;
+        private readonly IGestorService _gestorService;
+        private readonly IConsultorService _consultorService;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
         public TicketService(
@@ -30,6 +35,10 @@ namespace ConectaBiz.Application.Services
             ITicketHistorialRepository historialRepository,
             IParametroRepository parametroRepository,
             IEmpresaRepository empresaRepository,
+            IAuthService userService,
+            IGestorService gestorService,
+            IConsultorService consultorService,
+            IUserRepository userRepository,
             IMapper mapper
             )
         {
@@ -39,6 +48,10 @@ namespace ConectaBiz.Application.Services
             _historialRepository = historialRepository;
             _parametroRepository = parametroRepository;
             _empresaRepository = empresaRepository;
+            _userService = userService;
+            _gestorService = gestorService;
+            _consultorService = consultorService;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -47,7 +60,6 @@ namespace ConectaBiz.Application.Services
             var tickets = await _ticketRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<TicketDto>>(tickets);
         }
-
         public async Task<TicketDto?> GetByIdAsync(int id)
         {
             var ticket = await _ticketRepository.GetByIdWithRelationsAsync(id);
@@ -71,6 +83,33 @@ namespace ConectaBiz.Application.Services
             var tickets = await _ticketRepository.GetByEstadoAsync(idEstado);
             return _mapper.Map<IEnumerable<TicketDto>>(tickets);
         }
+        public async Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        {
+            //UserDto userDto = await _userService.GetByIdAsync(idUser);
+            //var rol = await _userRepository.GetRolByIdAsync(idRol);
+            IEnumerable<TicketDto> listadoTickets = Enumerable.Empty<TicketDto>();
+
+            if (codRol == AppConstants.Roles.Gestor)
+            {
+                GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            }
+            if (codRol == AppConstants.Roles.Consultor)
+            {
+                ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
+                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            }
+            if (codRol == AppConstants.Roles.Empresa)
+            {
+                ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
+                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            }
+            return listadoTickets;
+        }
+
 
         //public async Task<IEnumerable<TicketDto>> GetByGestorAsync(int idGestor)
         //{

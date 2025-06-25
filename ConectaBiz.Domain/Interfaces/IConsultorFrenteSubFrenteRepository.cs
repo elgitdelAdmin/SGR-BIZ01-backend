@@ -14,6 +14,6 @@ namespace ConectaBiz.Domain.Interfaces
         Task<ConsultorFrenteSubFrente> CreateAsync(ConsultorFrenteSubFrente consultorFrenteSubFrente);
         Task<bool> DeleteAsync(int id);
         Task<bool> DeleteByConsultorIdAsync(int consultorId);
-        Task<bool> ExistsAsync(int consultorId, int frenteId, int subFrenteId);
+        Task<bool> ExistsAsync(int consultorId, int frenteId, int subFrenteId, int idNivelExperiencia, bool esCertificado);
     }
 }

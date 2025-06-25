@@ -1,4 +1,5 @@
-﻿using ConectaBiz.Domain.Entities;
+﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -13,18 +14,54 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             _context = context;
         }
-
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _context.Users
+                .Include(c => c.Persona)
+                .Include(c => c.Socio)
+                .Where(c => c.Activo)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<User?> GetByIdAsync(int id)
+        {
+            return await _context.Users
+                 .Include(u => u.Socio)
+                 .Include(u => u.Persona)
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+        public async Task<User?> GetByIdSocioIdRolIdPersonaAsync(int idsocio, int idrol, int idPersona)
+        {
+            return await _context.Users
+                .Include(u => u.Socio)
+                .Include(u => u.Persona)
+                .FirstOrDefaultAsync(u => u.IdPersona == idPersona && u.IdSocio == idsocio && u.IdRol == idrol);
+        }
+        public async Task<IEnumerable<Rol>> GetAllRolAsync()
+        {
+            return await _context.Roles
+                .Include(c => c.Users)
+                .Where(c => c.Activo)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        public async Task<Rol> GetRolByIdAsync(int id)
+        {
+            return await _context.Roles
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }
+        public async Task<Rol> GetRolByCodigoAsync(string codigo)
+        {
+            return await _context.Roles
+                .FirstOrDefaultAsync(u => u.Codigo == codigo);
+        }
         public async Task<User?> GetByUsernameAsync(string username)
         {
             return await _context.Users
                  .Include(u => u.Socio)
+                 .Include(u => u.Persona)
+                 .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.Username == username);
-        }
-
-        public async Task<User?> GetByIdAsync(int id)
-        {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<User> CreateAsync(User user)

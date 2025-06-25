@@ -9,7 +9,11 @@ namespace ConectaBiz.Application.Mappings
         public MappingProfile()
         {
             CreateMap<User, UserDto>()
-                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio));
+                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
+                .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
+                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol));
+
+            CreateMap<Rol, RolDto>();
 
             CreateMap<Socio, SocioDto>();
             CreateMap<RegisterUserDto, User>();

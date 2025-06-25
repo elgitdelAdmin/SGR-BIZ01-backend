@@ -63,8 +63,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             existingPersona.Direccion = persona.Direccion;
             existingPersona.FechaNacimiento = persona.FechaNacimiento;
             existingPersona.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            existingPersona.UsuarioActualizacion = persona.UsuarioActualizacion;
             existingPersona.Activo = persona.Activo;
-
             await _context.SaveChangesAsync();
             return existingPersona;
         }

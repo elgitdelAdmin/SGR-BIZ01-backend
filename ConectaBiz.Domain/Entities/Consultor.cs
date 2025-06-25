@@ -10,11 +10,14 @@ namespace ConectaBiz.Domain.Entities
     {
         public int Id { get; set; }
         public int PersonaId { get; set; }
-        public int IdNivelExperiencia { get; set; }
-        public int IdModalidadLaboral { get; set; }
+        public int? IdNivelExperiencia { get; set; }
+        public int? IdModalidadLaboral { get; set; }
         public int IdSocio { get; set; }
+        public int IdUser { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
+        public string UsuarioCreacion { get; set; }
+        public string? UsuarioActualizacion { get; set; }
         public bool Activo { get; set; }
 
         // Propiedades de navegación

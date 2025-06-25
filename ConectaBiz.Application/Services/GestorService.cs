@@ -15,17 +15,17 @@ namespace ConectaBiz.Application.Services
     public class GestorService : IGestorService
     {
         private readonly IGestorRepository _gestorRepository;
-        private readonly IPersonaRepository _personaRepository;
+        private readonly IPersonaService _personaService;
         private readonly IGestorFrenteSubFrenteRepository _gestorFrenteSubFrenteRepository;
         private readonly IMapper _mapper;
 
         public GestorService(IGestorRepository gestorRepository,
-                            IPersonaRepository personaRepository,
+                            IPersonaService personaService,
                             IGestorFrenteSubFrenteRepository gestorFrenteSubFrenteRepository,
                             IMapper mapper)
         {
             _gestorRepository = gestorRepository;
-            _personaRepository = personaRepository;
+            _personaService = personaService;
             _gestorFrenteSubFrenteRepository = gestorFrenteSubFrenteRepository;
             _mapper = mapper;
         }
@@ -41,11 +41,33 @@ namespace ConectaBiz.Application.Services
             var gestor = await _gestorRepository.GetByIdAsync(id);
             return gestor != null ? _mapper.Map<GestorDto>(gestor) : null;
         }
+        public async Task<GestorDto?> GetByIdUserAsync(int iduser)
+        {
+            var gestor = await _gestorRepository.GetByIdUserAsync(iduser);
+            return gestor != null ? _mapper.Map<GestorDto>(gestor) : null;
+        }
 
         public async Task<GestorDto> CreateAsync(CreateGestorDto createGestorDto)
         {
-            // Validar y obtener/crear persona
-            var persona = await ValidarYObtenerPersonaAsync(createGestorDto);
+            // Validar y actalizar/crear persona
+            var personaDto = new CreatePersonaDto
+            {
+                Nombres = createGestorDto.Nombres,
+                ApellidoPaterno = createGestorDto.ApellidoPaterno,
+                ApellidoMaterno = createGestorDto.ApellidoMaterno,
+                NumeroDocumento = createGestorDto.NumeroDocumento,
+                TipoDocumento = createGestorDto.TipoDocumento,
+                Telefono = createGestorDto.Telefono,
+                Telefono2 = createGestorDto.Telefono2,
+                Correo = createGestorDto.Correo,
+                Direccion = createGestorDto.Direccion,
+                FechaNacimiento = DateTime.SpecifyKind(createGestorDto.FechaNacimiento, DateTimeKind.Local),
+            };
+            PersonaDto persona = await _personaService.ValidateCreateUpdate(personaDto);
+            if (persona == null || persona.Id == 0)
+            {
+                throw new InvalidOperationException("No se pudo validar o crear la persona.");
+            }
 
             // Validar que la persona no esté asignada como gestor
             if (await _gestorRepository.ExistsByPersonaIdAsync(persona.Id))
@@ -78,21 +100,33 @@ namespace ConectaBiz.Application.Services
             return _mapper.Map<GestorDto>(gestorCompleto);
         }
 
-        public async Task<GestorDto> UpdateAsync(UpdateGestorDto updateGestorDto)
+        public async Task<GestorDto> UpdateAsync(int id, UpdateGestorDto updateGestorDto)
         {
             // Validar que el gestor exista
-            var gestorExistente = await _gestorRepository.GetByIdAsync(updateGestorDto.Id);
+            var gestorExistente = await _gestorRepository.GetByIdAsync(id);
             if (gestorExistente == null)
             {
-                throw new InvalidOperationException($"No se encontró el gestor con ID {updateGestorDto.Id}");
+                throw new InvalidOperationException($"No se encontró el gestor con ID {id}");
             }
-
-            // Validar y obtener/actualizar persona
-            var persona = await ValidarYActualizarPersonaAsync(updateGestorDto, gestorExistente.PersonaId);
+            var personaDto = new UpdatePersonaDto
+            {
+                Nombres = updateGestorDto.Nombres,
+                ApellidoPaterno = updateGestorDto.ApellidoPaterno,
+                ApellidoMaterno = updateGestorDto.ApellidoMaterno,
+                NumeroDocumento = updateGestorDto.NumeroDocumento,
+                TipoDocumento = updateGestorDto.TipoDocumento,
+                Telefono = updateGestorDto.Telefono,
+                Telefono2 = updateGestorDto.Telefono2,
+                Correo = updateGestorDto.Correo,
+                Direccion = updateGestorDto.Direccion,
+                FechaNacimiento = DateTime.SpecifyKind((DateTime)updateGestorDto.FechaNacimiento, DateTimeKind.Local),
+                UsuarioActualizacion = updateGestorDto.UsuarioActualizacion
+            };
+            PersonaDto persona = await _personaService.ValidateUpdateAsync(personaDto);
 
             // Validar que la persona no esté asignada a otro gestor
             if (persona.Id != gestorExistente.PersonaId &&
-                await _gestorRepository.ExistsByPersonaIdAsync(persona.Id, updateGestorDto.Id))
+                await _gestorRepository.ExistsByPersonaIdAsync(persona.Id, id))
             {
                 throw new InvalidOperationException("La persona ya está asignada a otro gestor");
             }
@@ -124,70 +158,6 @@ namespace ConectaBiz.Application.Services
 
             return await _gestorRepository.DeleteAsync(id);
         }
-
-        private async Task<Persona> ValidarYObtenerPersonaAsync(CreateGestorDto createGestorDto)
-        {
-            // Buscar persona existente por documento
-            var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(createGestorDto.TipoDocumento,createGestorDto.NumeroDocumento);
-
-            if (personaExistente != null)
-            {
-                return personaExistente;
-            }
-
-            // Crear nueva persona
-            var nuevaPersona = new Persona
-            {
-                Nombres = createGestorDto.Nombres,
-                ApellidoPaterno = createGestorDto.ApellidoPaterno,
-                ApellidoMaterno = createGestorDto.ApellidoMaterno,
-                NumeroDocumento = createGestorDto.NumeroDocumento,
-                TipoDocumento = createGestorDto.TipoDocumento,
-                Telefono = createGestorDto.Telefono,
-                Telefono2 = createGestorDto.Telefono2,
-                Correo = createGestorDto.Correo,
-                Direccion = createGestorDto.Direccion,
-                FechaNacimiento = DateTime.SpecifyKind(createGestorDto.FechaNacimiento, DateTimeKind.Local),
-                FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                Activo = true
-            };
-
-            return await _personaRepository.CreateAsync(nuevaPersona);
-        }
-
-        private async Task<Persona> ValidarYActualizarPersonaAsync(UpdateGestorDto updateGestorDto, int personaIdActual)
-        {
-            // Buscar persona por documento
-            var personaPorDocumento = await _personaRepository.GetByTipoNumDocumentoAsync(updateGestorDto.TipoDocumento,updateGestorDto.NumeroDocumento);
-
-            if (personaPorDocumento != null && personaPorDocumento.Id != personaIdActual)
-            {
-                // La persona ya existe y es diferente a la actual
-                return personaPorDocumento;
-            }
-
-            // Actualizar persona actual
-            var personaActual = await _personaRepository.GetByIdAsync(personaIdActual);
-            if (personaActual != null)
-            {
-                personaActual.Nombres = updateGestorDto.Nombres;
-                personaActual.ApellidoPaterno = updateGestorDto.ApellidoPaterno;
-                personaActual.ApellidoMaterno = updateGestorDto.ApellidoMaterno;
-                personaActual.NumeroDocumento = updateGestorDto.NumeroDocumento;
-                personaActual.TipoDocumento = updateGestorDto.TipoDocumento;
-                personaActual.Telefono = updateGestorDto.Telefono;
-                personaActual.Telefono2 = updateGestorDto.Telefono2;
-                personaActual.Correo = updateGestorDto.Correo;
-                personaActual.Direccion = updateGestorDto.Direccion;
-                personaActual.FechaNacimiento = updateGestorDto.FechaNacimiento.HasValue ? DateTime.SpecifyKind(updateGestorDto.FechaNacimiento.Value, DateTimeKind.Local): null;
-                personaActual.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-
-                return await _personaRepository.UpdateAsync(personaActual);
-            }
-
-            throw new InvalidOperationException("No se encontró la persona asociada al gestor");
-        }
-
         private async Task CrearGestorFrenteSubFrenteAsync(int IdGestor, List<CreateGestorFrenteSubFrenteDto> frentesSubFrente)
         {
             foreach (var item in frentesSubFrente)
@@ -207,7 +177,6 @@ namespace ConectaBiz.Application.Services
                 await _gestorFrenteSubFrenteRepository.CreateAsync(gestorFrenteSubFrente);
             }
         }
-
         private async Task GestionarGestorFrenteSubFrenteAsync(int IdGestor, List<CreateGestorFrenteSubFrenteDto> nuevosFrentesSubFrente)
         {
             // Obtener los frentes/subfrentes actuales

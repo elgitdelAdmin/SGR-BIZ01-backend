@@ -97,31 +97,23 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
-
-        //public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
-        //{
-        //    return await _context.Ticket
-        //        .Where(t => t.IdGestorAsignado == idGestor)
-        //        .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-        //        .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
-        //        .ToListAsync();
-        //}
-
-        //public async Task<Ticket> CreateAsync(Ticket ticket)
-        //{
-        //    try
-        //    {
-        //        var a = ticket.Activo;
-        //        _context.Ticket.Add(ticket);
-        //        await _context.SaveChangesAsync();
-        //        return ticket;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw;
-        //    }
-   
-        //}
+        public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
+        {
+            return await _context.Ticket
+                .Where(t => t.IdGestor == idGestor)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor)
+        {
+            return await _context.Ticket
+                .Where(t => t.Activo &&
+                           t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .ToListAsync();
+        }
 
         public async Task<Ticket> CreateAsync(Ticket ticket)
         {
@@ -140,8 +132,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             try
             {
                 ticket.Activo = true;
-                context.Ticket.Add(ticket);
-                await context.SaveChangesAsync();
+                _context.Ticket.Add(ticket);
+                await _context.SaveChangesAsync();
 
                 // Aquí puedes obtener el SQL como string
                 var sqlGenerado = logBuilder.ToString();

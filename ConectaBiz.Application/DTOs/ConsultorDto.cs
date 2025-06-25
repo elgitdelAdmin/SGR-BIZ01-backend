@@ -17,6 +17,8 @@ namespace ConectaBiz.Application.DTOs
         public int IdSocio { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
+        public string? UsuarioActualizacion { get; set; }
+        public string UsuarioCreacion { get; set; }
         public bool Activo { get; set; }
         // Datos de la persona relacionada
         public PersonaDto Persona { get; set; }
@@ -46,10 +48,11 @@ namespace ConectaBiz.Application.DTOs
     // DTO específico para actualizar un consultor
     public class UpdateConsultorDto
     {
-        public int Id { get; set; }
+        //public int Id { get; set; }
         public int IdNivelExperiencia { get; set; }
         public int IdModalidadLaboral { get; set; }
-        public int IdSocio { get; set; }
+        //public int IdSocio { get; set; }
+        public string UsuarioActualizacion { get; set; }
         public UpdatePersonaDto Persona { get; set; }
         public List<CreateConsultorEspecializacionDto> Especializaciones { get; set; } = new List<CreateConsultorEspecializacionDto>();
     }

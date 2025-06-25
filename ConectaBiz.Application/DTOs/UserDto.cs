@@ -11,7 +11,10 @@ namespace ConectaBiz.Application.DTOs
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public int IdRol { get; set; }
         public SocioDto Socio { get; set; }
+        public PersonaDto Persona { get; set; }
+        public RolDto Rol { get; set; }
     }
 
     public class LoginRequestDto
@@ -27,6 +30,8 @@ namespace ConectaBiz.Application.DTOs
         public string Password { get; set; } = string.Empty;
         public int IdSocio { get; set; }
         public int IdRol { get; set; }
+        public string UsuarioCreacion { get; set; } = string.Empty;
+        public DateTime FechaCreacion { get; set; }
         public CreatePersonaDto Persona { get; set; }
     }
 
@@ -73,6 +78,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Correo { get; set; }
         public string? Direccion { get; set; }
         public DateTime? FechaNacimiento { get; set; }
+        public string UsuarioCreacion { get; set; }
     }
     public class UpdatePersonaDto
     {
@@ -87,5 +93,19 @@ namespace ConectaBiz.Application.DTOs
         public string? Correo { get; set; }
         public string? Direccion { get; set; }
         public DateTime? FechaNacimiento { get; set; }
+        public string UsuarioActualizacion { get; set; }
     }
+    public class RolDto
+    {
+        public int Id { get; set; }
+
+        public string Codigo { get; set; } = string.Empty;
+
+        public string Nombre { get; set; } = string.Empty;
+
+        public string? Descripcion { get; set; }
+
+        public bool Activo { get; set; }
+    }
+
 }

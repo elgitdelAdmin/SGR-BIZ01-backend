@@ -61,7 +61,7 @@ namespace ConectaBiz.Application.DTOs
 
     public class UpdateGestorDto
     {
-        public int Id { get; set; }
+        //public int Id { get; set; }
         public int? IdNivelExperiencia { get; set; }
         public int? IdModalidadLaboral { get; set; }
         public string? UsuarioActualizacion { get; set; }
