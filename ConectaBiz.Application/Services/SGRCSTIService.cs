@@ -41,37 +41,37 @@ namespace ConectaBiz.Application.Services
             foreach (var req in resultados)
             {
                 // Buscar si ya existe la persona responsable por tipo y número de documento
-                var personaResponsable = await _personaRepository.GetByTipoNumDocumentoAsync(
-                    req.responsablecliente_idtipodocumento,
-                    req.responsablecliente_documento
-                );
+                //var personaResponsable = await _personaRepository.GetByTipoNumDocumentoAsync(
+                //    req.responsablecliente_idtipodocumento,
+                //    req.responsablecliente_documento
+                //);
 
-                int idPersonaResponsable;
-                if (personaResponsable == null)
-                {
-                    // Si no existe, crear la persona responsable
-                    var nuevaPersona = new Persona
-                    {
-                        Nombres = req.responsablecliente_nombres,
-                        ApellidoPaterno = req.responsablecliente_apepaterno,
-                        ApellidoMaterno = req.responsablecliente_apematerno,
-                        NumeroDocumento = req.responsablecliente_documento,
-                        TipoDocumento = req.responsablecliente_tipodocumento,
-                        Telefono = req.responsablecliente_telefonomovil,
-                        Telefono2 = req.responsablecliente_fijo,
-                        Correo = req.responsablecliente_correo,
-                        Direccion = req.responsablecliente_direccion,
-                        FechaNacimiento = req.responsablecliente_fechanacimiento,
-                        FechaCreacion = DateTime.Now,
-                        Activo = true
-                    };
-                    var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
-                    idPersonaResponsable = personaCreada.Id;
-                }
-                else
-                {
-                    idPersonaResponsable = personaResponsable.Id;
-                }
+                //int idPersonaResponsable;
+                //if (personaResponsable == null)
+                //{
+                //    // Si no existe, crear la persona responsable
+                //    var nuevaPersona = new Persona
+                //    {
+                //        Nombres = req.responsablecliente_nombres,
+                //        ApellidoPaterno = req.responsablecliente_apepaterno,
+                //        ApellidoMaterno = req.responsablecliente_apematerno,
+                //        NumeroDocumento = req.responsablecliente_documento,
+                //        TipoDocumento = req.responsablecliente_tipodocumento,
+                //        Telefono = req.responsablecliente_telefonomovil,
+                //        Telefono2 = req.responsablecliente_fijo,
+                //        Correo = req.responsablecliente_correo,
+                //        Direccion = req.responsablecliente_direccion,
+                //        FechaNacimiento = req.responsablecliente_fechanacimiento,
+                //        FechaCreacion = DateTime.Now,
+                //        Activo = true
+                //    };
+                //    var personaCreada = await _personaRepository.CreateAsync(nuevaPersona);
+                //    idPersonaResponsable = personaCreada.Id;
+                //}
+                //else
+                //{
+                //    idPersonaResponsable = personaResponsable.Id;
+                //}
 
                 var createEmpresaDto = new DTOs.CreateEmpresaDto
                 {
@@ -85,7 +85,7 @@ namespace ConectaBiz.Application.Services
                     // Completa los campos obligatorios según tu lógica de negocio:
                     // Email = ...
                     IdPais = 1,
-                    IdGestor = 4,
+                    IdGestor = 22,
                     UsuarioRegistro = "Migracion",
                     Persona = personaDto == null ? null : new DTOs.CreatePersonaDto {
                         Nombres = personaDto.Nombres,
@@ -132,7 +132,7 @@ namespace ConectaBiz.Application.Services
                         IdTipoTicket = tipoTicket,
                         IdEstadoTicket = 1,// req.idestadorequerimiento,
                         IdEmpresa = idEmpresa,
-                        IdUsuarioResponsableCliente = idPersonaResponsable,
+                        IdUsuarioResponsableCliente = personaDto.Id,
                         IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, // Si tienes archivos, asígnalos aquí
