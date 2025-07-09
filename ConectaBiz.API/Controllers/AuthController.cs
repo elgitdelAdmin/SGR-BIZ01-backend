@@ -41,6 +41,42 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
+        [HttpGet("usuario/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<UserDto>> GetById(int id)
+        {
+            try
+            {
+                var userDto = await _authService.GetByIdAsync(id);
+                if (userDto == null)
+                {
+                    return NotFound("Usuario no encontrado");
+                }
+                return Ok(userDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener usuario por ID: {Id}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+
+        [HttpGet("usuarioByIdSocio/{idSocio}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsuarioByIdSocio(int idSocio)
+        {
+            try
+            {
+                var usersDto = await _authService.GetAllUsuarioByIdSocio(idSocio);
+                return Ok(usersDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener todos los consultores");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
 
         [HttpGet("roles")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -57,7 +93,58 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
+        [HttpPut("UpdateUser/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto updateUserDto)
+        {
+            try
+            {
+                if (id != updateUserDto.Id)
+                {
+                    return BadRequest("El ID del usuario no coincide");
+                }
 
+                var userDto = await _authService.UpdateUserAsync(updateUserDto);
+                if (userDto == null)
+                {
+                    return NotFound("Usuario no encontrado");
+                }
+
+                return Ok(userDto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar usuario: {Id}", id);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+        [HttpDelete("DeleteUser/{id}")]
+        public async Task<ActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var result = await _authService.DeleteUserAsync(id);
+                if (!result)
+                {
+                    return NotFound(new { message = $"No se encontró el Usario con ID {id}" });
+                }
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
+            }
+        }
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterUserDto registerDto)
         {

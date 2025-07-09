@@ -32,7 +32,7 @@ namespace ConectaBiz.Application.DTOs
         public string? NombrePersonaResponsable { get; set; }
         public string? CargoResponsable { get; set; }
         public int? IdUser { get; set; }
-        //public PersonaDto Persona { get; set; }
+        public PersonaDto PersonaResponsable { get; set; }
     }
 
     public class CreateEmpresaDto
@@ -50,6 +50,7 @@ namespace ConectaBiz.Application.DTOs
         public int? IdPais { get; set; }
         public int? IdGestor { get; set; }
         public int IdSocio { get; set; }
+        public int? IdUser { get; set; }
         public CreatePersonaDto? Persona { get; set; }
         public int? CodSgrCsti {  get; set; }
     }
@@ -67,6 +68,7 @@ namespace ConectaBiz.Application.DTOs
         public int? IdPais { get; set; }
         public int? IdGestor { get; set; }
         public int IdSocio { get; set; }
+        public int? IdUser { get; set; }
         public string? CargoResponsable { get; set; }
         public UpdatePersonaDto Persona { get; set; }
     }

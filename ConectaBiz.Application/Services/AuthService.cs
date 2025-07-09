@@ -37,6 +37,11 @@ namespace ConectaBiz.Application.Services
             var users = await _userRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
+        public async Task<IEnumerable<UserDto>> GetAllUsuarioByIdSocio(int idSocio)
+        {
+            var users = await _userRepository.GetAllUsuarioByIdSocio(idSocio);
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
         public async Task<UserDto> GetByIdAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
@@ -50,7 +55,8 @@ namespace ConectaBiz.Application.Services
         public async Task<IEnumerable<RolDto>> GetAllRolAsync()
         {
             var roles = await _userRepository.GetAllRolAsync();
-            return _mapper.Map<IEnumerable<RolDto>>(roles);
+            var rolesDto = _mapper.Map<IEnumerable<RolDto>>(roles);
+            return rolesDto.Where(r => r.Codigo != AppConstants.Roles.SuperAdmin);
         }
         public async Task<RolDto> GetRolByIdAsync(int id)
         {
@@ -152,22 +158,6 @@ namespace ConectaBiz.Application.Services
                 };
                 await _consultorRepository.CreateAsync(consultor);
             }
-            //if (rol.Codigo == AppConstants.Roles.Empresa)
-            //{
-            //    var consultor = new Consultor
-            //    {
-            //        PersonaId = persona.Id,
-            //        IdNivelExperiencia = null,
-            //        IdModalidadLaboral = null,
-            //        IdSocio = registerRequest.IdSocio,
-            //        IdUser = userCreado.Id,
-            //        UsuarioCreacion = registerRequest.UsuarioCreacion,
-            //        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-            //        Activo = true
-            //    };
-            //    await _consultorRepository.CreateAsync(consultor);
-            //}
-
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();
 
@@ -188,7 +178,66 @@ namespace ConectaBiz.Application.Services
                 User = _mapper.Map<UserDto>(user)
             };
         }
+        public async Task<UserDto?> UpdateUserAsync(UpdateUserDto updateUserDto)
+        {
+            var existingUser = await _userRepository.GetByIdAsync(updateUserDto.Id);
+            if (existingUser == null)
+            {
+                return null;
+            }
 
+            // Verificar si el username ya existe para otro usuario
+            if (existingUser.Username != updateUserDto.Username)
+            {
+                var userWithSameUsername = await _userRepository.GetByUsernameAsync(updateUserDto.Username);
+                if (userWithSameUsername != null && userWithSameUsername.Id != updateUserDto.Id)
+                {
+                    throw new InvalidOperationException("El nombre de usuario ya está en uso");
+                }
+            }
+
+            // Actualizar datos del usuario
+            //existingUser.Username = updateUserDto.Username;
+            //existingUser.Email = updateUserDto.Email;
+            //existingUser.IdSocio = updateUserDto.IdSocio;
+            //existingUser.IdRol = updateUserDto.IdRol;
+
+            // Actualizar contraseña si se proporciona
+            if (!string.IsNullOrEmpty(updateUserDto.Password))
+            {
+                existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserDto.Password);
+            }
+
+            // Actualizar datos de la persona si se incluyen
+            if (updateUserDto.Persona != null && existingUser.Persona != null)
+            {
+                var personaDto = new UpdatePersonaDto
+                {
+                    Id = existingUser.IdPersona,
+                    Nombres = updateUserDto.Persona.Nombres,
+                    ApellidoPaterno = updateUserDto.Persona.ApellidoPaterno,
+                    ApellidoMaterno = updateUserDto.Persona.ApellidoMaterno,
+                    NumeroDocumento = updateUserDto.Persona.NumeroDocumento,
+                    TipoDocumento = updateUserDto.Persona.TipoDocumento,
+                    Telefono = updateUserDto.Persona.Telefono,
+                    Telefono2 = updateUserDto.Persona.Telefono2,
+                    Correo = updateUserDto.Persona.Correo,
+                    Direccion = updateUserDto.Persona.Direccion,
+                    FechaNacimiento = updateUserDto.Persona.FechaNacimiento.HasValue
+                        ? DateTime.SpecifyKind((DateTime)updateUserDto.Persona.FechaNacimiento, DateTimeKind.Local)
+                        : null,
+                    UsuarioActualizacion = updateUserDto.UsuarioActualizacion
+                };
+                await _personaService.ValidateUpdateAsync(personaDto);
+            }
+
+            var updatedUser = await _userRepository.UpdateUserAsync(existingUser);
+            return _mapper.Map<UserDto>(updatedUser);
+        }
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            return await _userRepository.DeleteUserAsync(id);
+        }
         public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken)
         {
             var storedToken = await _userRepository.GetRefreshTokenAsync(refreshToken);

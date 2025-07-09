@@ -23,13 +23,25 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<IEnumerable<User>> GetAllUsuarioByIdSocio(int idSocio)
+        {
+            return await _context.Users
+                .Where(c => c.Activo && c.IdSocio == idSocio)
+                .Include(c => c.Persona)
+                .Include(c => c.Socio)
+                .Where(c => c.Activo)
+                .AsNoTracking()
+                .ToListAsync();
+        }
         public async Task<User?> GetByIdAsync(int id)
         {
             return await _context.Users
                  .Include(u => u.Socio)
                  .Include(u => u.Persona)
+                                 .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
+
         public async Task<User?> GetByIdSocioIdRolIdPersonaAsync(int idsocio, int idrol, int idPersona)
         {
             return await _context.Users
@@ -76,7 +88,26 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
+        
+        public async Task<User> UpdateUserAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
 
+            // Eliminación lógica
+            user.Activo = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
         public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
         {
             return await _context.RefreshTokens
@@ -101,6 +132,5 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 await _context.SaveChangesAsync();
             }
         }
-
     }
 }

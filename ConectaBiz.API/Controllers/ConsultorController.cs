@@ -98,6 +98,31 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [HttpGet("byIdSocio/{idSocio}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetByIdSocio(int idSocio)
+        {
+            try
+            {
+                _logger.LogInformation("Obteniendo consultor con idSocio: {idSocio}", idSocio);
+
+                var consultoresDto = await _consultorService.GetByIdSocioAsync(idSocio);
+
+                if (consultoresDto == null)
+                {
+                    _logger.LogWarning("Consultor no encontrado con ID: {Id}", idSocio);
+                    return NotFound($"Consultor con ID {idSocio} no encontrado");
+                }
+                var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
+                return Ok(consultoresListDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener consultor con ID: {Id}", idSocio);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
         /// <summary>
         /// Crea un nuevo consultor
         /// </summary>

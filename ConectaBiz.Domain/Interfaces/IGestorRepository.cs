@@ -10,6 +10,7 @@ namespace ConectaBiz.Domain.Interfaces
     public interface IGestorRepository
     {
         Task<IEnumerable<Gestor>> GetAllAsync();
+        Task<IEnumerable<Gestor>> GetByIdSocio(int idSocio);
         Task<Gestor?> GetByIdAsync(int id);
         Task<Gestor?> GetByIdUserAsync(int iduser);
         Task<Gestor?> GetByPersonaIdAsync(int personaId);

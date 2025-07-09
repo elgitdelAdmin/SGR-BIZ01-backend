@@ -15,22 +15,22 @@ public class MigracionRequerimientosWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var sgrcstiService = scope.ServiceProvider.GetRequiredService<SGRCSTIService>();
-                    await sgrcstiService.MigracionRequerimientos();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Aquí puedes loguear el error si tienes un logger
-            }
+        //while (!stoppingToken.IsCancellationRequested)
+        //{
+        //    try
+        //    {
+        //        using (var scope = _serviceProvider.CreateScope())
+        //        {
+        //            var sgrcstiService = scope.ServiceProvider.GetRequiredService<SGRCSTIService>();
+        //            await sgrcstiService.MigracionRequerimientos();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Aquí puedes loguear el error si tienes un logger
+        //    }
 
-            await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
-        }
+        //    await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+        //}
     }
 } 

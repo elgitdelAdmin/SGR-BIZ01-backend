@@ -35,7 +35,11 @@ namespace ConectaBiz.Application.Services
             var gestores = await _gestorRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<GestorDto>>(gestores);
         }
-
+        public async Task<IEnumerable<GestorDto>> GetByIdSocio(int idSocio)
+        {
+            var gestores = await _gestorRepository.GetByIdSocio(idSocio);
+            return _mapper.Map<IEnumerable<GestorDto>>(gestores);
+        }
         public async Task<GestorDto?> GetByIdAsync(int id)
         {
             var gestor = await _gestorRepository.GetByIdAsync(id);

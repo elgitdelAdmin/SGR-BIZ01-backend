@@ -10,6 +10,7 @@ namespace ConectaBiz.Domain.Interfaces
     public interface IEmpresaRepository
     {
         Task<IEnumerable<Empresa>> GetAllAsync();
+        Task<IEnumerable<Empresa>> GetByIdSocio(int idSocio);
         Task<IEnumerable<Empresa>> GetAllActiveAsync();
         Task<Empresa?> GetByIdAsync(int id);
         Task<Empresa> GetByIdUserAsync(int iduser);

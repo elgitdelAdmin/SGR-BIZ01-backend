@@ -39,7 +39,11 @@ namespace ConectaBiz.Application.Services
             var empresas = await _empresaRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
         }
-
+        public async Task<IEnumerable<EmpresaDto>> GetByIdSocio(int idSocio)
+        {
+            var empresas = await _empresaRepository.GetByIdSocio(idSocio);
+            return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+        }
         public async Task<IEnumerable<EmpresaDto>> GetAllActiveAsync()
         {
             var empresas = await _empresaRepository.GetAllActiveAsync();
@@ -58,20 +62,20 @@ namespace ConectaBiz.Application.Services
                 return null;
             return _mapper.Map<EmpresaDto>(empresa);
         }
-        public async Task<PersonaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
+        public async Task<PersonaConUsuariosEmpresaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
         {
             if (string.IsNullOrEmpty(numeroDocumento))
             {
                 throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
             }
 
-            var persona = await _personaRepository.GetByTipoNumDocumentoAsync(idTipoDocumento, numeroDocumento);
+            var persona = await _personaRepository.GetByResponsableTipoNumDocumentoAsync(idTipoDocumento, numeroDocumento, AppConstants.Roles.Empresa);
 
             if (persona == null)
             {
                 throw new InvalidOperationException("No se encontró una persona con el documento proporcionado");
             }
-            var personaDto = _mapper.Map<PersonaDto>(persona);
+            var personaDto = _mapper.Map<PersonaConUsuariosEmpresaDto>(persona);
             return personaDto;
         }
 
@@ -123,7 +127,7 @@ namespace ConectaBiz.Application.Services
                 persona = await _personaService.ValidateUpdateAsync(personaDto);
             }
             RolDto rol = await _userService.GetRolByCodigoAsync(AppConstants.Roles.Empresa);
-            UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(createDto.IdSocio, rol.Id, persona.Id);
+            //UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(createDto.IdSocio, rol.Id, persona.Id);
 
             // Mapear el DTO a la entidad Empresa
             var empresa = _mapper.Map<Empresa>(createDto);
@@ -131,7 +135,7 @@ namespace ConectaBiz.Application.Services
 
             // Asignar el ID de la persona responsable (asumiendo que tu entidad Empresa tiene esta propiedad)
             empresa.IdPersonaResponsable = persona.Id;
-            empresa.IdUser = usuario.Id;
+            empresa.IdUser = createDto.IdUser;
             // Crear la empresa
             var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
 
@@ -197,6 +201,7 @@ namespace ConectaBiz.Application.Services
 
             // Asignar el ID de la persona responsable (puede ser el mismo o uno nuevo)
             existingEmpresa.IdPersonaResponsable = personaId;
+            existingEmpresa.IdUser = updateDto.IdUser;
 
             // Actualizar la empresa
             var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);

@@ -42,6 +42,9 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IPaisRepository, PaisRepository>();
             services.AddScoped<IGestorRepository, GestorRepository>();
             services.AddScoped<IGestorFrenteSubFrenteRepository, GestorFrenteSubFrenteRepository>();
+            services.AddScoped<IModuloRepository, ModuloRepository>();
+            services.AddScoped<ISocioRepository, SocioRepository>();
+
             // Servicios
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IConsultorService, ConsultorService>();
@@ -53,6 +56,9 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IEmpresaService, EmpresaService>();
             services.AddScoped<IPaisService, PaisService>();
             services.AddScoped<IGestorService, GestorService>();
+            services.AddScoped<IModuloService, ModuloService>();
+            services.AddScoped<ISocioService, SocioService>();
+
             //Integracion
             services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();
             services.AddScoped<ISGRCSTIService, SGRCSTIService>();

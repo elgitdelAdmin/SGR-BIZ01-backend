@@ -32,7 +32,20 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
             }
         }
+        [HttpGet("byIdSocio/{idSocio}")]
+        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdSocio(int idSocio)
+        {
+            try
+            {
+                var empresas = await _empresaService.GetByIdSocio(idSocio);
 
+                return Ok(empresas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+            }
+        }
         // GET: api/empresas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<EmpresaDto>> GetById(int id)

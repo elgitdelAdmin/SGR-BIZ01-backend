@@ -18,5 +18,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<bool> ExistsAsync(int id);
         Task<bool> ExistsByTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, int? excludeId = null);
         Task<Persona?> GetByTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento);
+        Task<Persona> GetByResponsableTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, string codigoRol);
+
     }
 }
