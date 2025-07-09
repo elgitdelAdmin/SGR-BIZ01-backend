@@ -17,6 +17,7 @@ namespace ConectaBiz.Domain.Entities
         public string? Color { get; set; }
         public string? Icono { get; set; }
         public short Orden { get; set; } = 0;
+        public string? Valor1 { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime FechaRegistro { get; set; }
         public DateTime? FechaModificacion { get; set; }

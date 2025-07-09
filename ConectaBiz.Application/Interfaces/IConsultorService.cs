@@ -1,4 +1,6 @@
 ﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.Services;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +13,7 @@ namespace ConectaBiz.Application.Interfaces
     {
         Task<IEnumerable<ConsultorDto>> GetAllAsync();
         Task<ConsultorDto> GetByIdAsync(int id);
+        Task<IEnumerable<ConsultorDto>> GetByIdSocioAsync(int idSocio);
         Task<ConsultorDto> GetByIdUserAsync(int iduser);
         Task<ConsultorDto> CreateAsync(ConsultorDto consultorDto);
         Task<ConsultorDto> UpdateAsync(int id, ConsultorDto consultorDto);

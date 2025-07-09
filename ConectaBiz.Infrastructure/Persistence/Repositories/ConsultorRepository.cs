@@ -33,7 +33,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             {
                 throw;
             }
-     
         }
 
         public async Task<Consultor> GetByIdAsync(int id)
@@ -46,6 +45,26 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                     .ThenInclude(cf => cf.SubFrente)
                 .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+        }
+        public async Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio)
+        {
+            try
+            {
+                return await _context.Consultor
+                 .Include(c => c.Persona)
+                 .Include(c => c.Socio)
+                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                     .ThenInclude(cf => cf.Frente)
+                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                     .ThenInclude(cf => cf.SubFrente)
+                 .Where(c => c.Activo && c.IdSocio == idSocio)
+                 .AsNoTracking()
+                 .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
         public async Task<Consultor> GetByIdUserAsync(int iduser)
         {

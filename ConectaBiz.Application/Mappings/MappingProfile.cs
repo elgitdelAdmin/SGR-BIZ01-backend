@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Entities;
+using System.Text.Json;
 
 namespace ConectaBiz.Application.Mappings
 {
@@ -21,6 +22,11 @@ namespace ConectaBiz.Application.Mappings
             // Mapeo de Persona
             CreateMap<Persona, PersonaDto>();
             CreateMap<PersonaDto, Persona>();
+            CreateMap<Persona, PersonaConUsuariosEmpresaDto>()
+                .ForMember(dest => dest.Users, opt => opt.MapFrom(src => src.Users));
+            CreateMap<User, UserEmpresaDto>()
+                .ForMember(dest => dest.RolCodigo, opt => opt.MapFrom(src => src.Rol.Codigo));
+
             CreateMap<UpdatePersonaDto, Persona>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
             CreateMap<Persona, UpdatePersonaDto>()
@@ -204,7 +210,9 @@ namespace ConectaBiz.Application.Mappings
                     : null))
               .ForMember(dest => dest.NombrePersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable != null
                     ? $"{src.PersonaResponsable.Nombres} {src.PersonaResponsable.ApellidoPaterno} {src.PersonaResponsable.ApellidoMaterno}".Trim()
-                    : null));
+                    : null))
+                 .ForMember(dest => dest.PersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable));
+
 
             CreateMap<CreateEmpresaDto, Empresa>()
                 .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => DateTime.UtcNow))
@@ -237,6 +245,28 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<CreateGestorFrenteSubFrenteDto, GestorFrenteSubFrente>()
                 .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => DateTime.Now))
                 .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => true));
+
+            CreateMap<RolPermisoModulo, ModuloPermisoDto>()
+          .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Modulo.Id))
+          .ForMember(dest => dest.Codigo, opt => opt.MapFrom(src => src.Modulo.Codigo))
+          .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Modulo.Nombre))
+          .ForMember(dest => dest.Icono, opt => opt.MapFrom(src => src.Modulo.Icono))
+          .ForMember(dest => dest.Ruta, opt => opt.MapFrom(src => src.Modulo.Ruta))
+          .ForMember(dest => dest.DivsOcultos, opt => opt.MapFrom(src => ParseJsonArray(src.DivsOcultos)))
+          .ForMember(dest => dest.ControlesBloqueados, opt => opt.MapFrom(src => ParseJsonArray(src.ControlesBloqueados)))
+          .ForMember(dest => dest.ControlesOcultos, opt => opt.MapFrom(src => ParseJsonArray(src.ControlesOcultos)));
+    }
+        private static List<string> ParseJsonArray(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return new();
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(json!) ?? new();
+            }
+            catch
+            {
+                return new();
+            }
         }
     }
 }

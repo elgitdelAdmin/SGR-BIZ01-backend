@@ -12,9 +12,12 @@ namespace ConectaBiz.Application.Interfaces
     {
         Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest);
         Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest);
+        Task<UserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
+        Task<bool> DeleteUserAsync(int id);
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(string refreshToken);
         Task<IEnumerable<UserDto>> GetAllAsync();
+        Task<IEnumerable<UserDto>> GetAllUsuarioByIdSocio(int idSocio);
         Task<UserDto> GetByIdAsync(int id);
         Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona);
         Task<IEnumerable<RolDto>> GetAllRolAsync();

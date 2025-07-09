@@ -17,6 +17,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Color { get; set; }
         public string? Icono { get; set; }
         public short Orden { get; set; }
+        public string? Valor1 { get; set; }
         public bool Activo { get; set; }
         public DateTime FechaRegistro { get; set; }
         public DateTime? FechaModificacion { get; set; }

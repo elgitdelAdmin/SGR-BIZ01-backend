@@ -29,6 +29,16 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Empresa>> GetByIdSocio(int idSocio)
+        {
+            return await _context.Empresas
+                .Where(e => e.Activo && e.IdSocio == idSocio)
+                .Include(e => e.Pais)
+                .Include(e => e.Gestor)
+                .Include(e => e.PersonaResponsable)
+                .OrderBy(e => e.RazonSocial)
+                .ToListAsync();
+        }
 
         public async Task<IEnumerable<Empresa>> GetAllActiveAsync()
         {
@@ -36,7 +46,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(e => e.Activo)
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
-                    .ThenInclude(g => g.Persona)
+                .ThenInclude(g => g.Persona)
                 //.Include(e => e.Socio)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
@@ -47,7 +57,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Empresas
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
-                    .ThenInclude(g => g.Persona)
+                .Include(e => e.PersonaResponsable)
+                //.ThenInclude(g => g.Persona)
                 //.Include(e => e.Socio)
                 .FirstOrDefaultAsync(e => e.Id == id);
         }

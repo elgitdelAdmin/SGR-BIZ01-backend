@@ -1,4 +1,5 @@
-﻿using ConectaBiz.Domain.Entities;
+﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -105,6 +106,26 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .FirstOrDefaultAsync(p => p.TipoDocumento == tipoDocumento &&
                                          p.NumeroDocumento == numeroDocumento);
         }
+        //public async Task<Persona?> GetByResponsableTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, string codigoRol)
+        //{
+        //    return await _context.Persona
+        //        .Include(p => p.Users.Where(u => u.Activo && u.Rol.Codigo == codigoRol))
+        //        .FirstOrDefaultAsync(p => p.TipoDocumento == tipoDocumento &&
+        //                                  p.NumeroDocumento == numeroDocumento);
+        //}
+
+
+        public async Task<Persona> GetByResponsableTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, string codigoRol)
+        {
+            return await _context.Persona
+                .Include(p => p.Users.Where(u => u.Activo && u.Rol.Codigo == codigoRol))
+                    .ThenInclude(u => u.Rol)
+                .FirstOrDefaultAsync(p =>
+                    p.TipoDocumento == tipoDocumento &&
+                    p.NumeroDocumento == numeroDocumento);
+        }
+
+
         public async Task<bool> ExistsByTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, int? excludeId = null)
         {
             var query = _context.Persona.Where(p => p.TipoDocumento == tipoDocumento &&

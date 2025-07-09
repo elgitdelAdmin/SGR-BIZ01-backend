@@ -107,6 +107,11 @@ namespace ConectaBiz.Application.Services
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
+            else
+            {
+                var tickets = await _ticketRepository.GetAllAsync();
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            }
             return listadoTickets;
         }
 

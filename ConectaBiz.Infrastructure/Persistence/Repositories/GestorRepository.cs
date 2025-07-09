@@ -30,7 +30,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .ThenBy(g => g.Persona.ApellidoPaterno)
                 .ToListAsync();
         }
-
+        public async Task<IEnumerable<Gestor>> GetByIdSocio(int idSocio)
+        {
+            return await _context.Gestores
+                .Include(g => g.Persona)
+                .Include(g => g.Socio)
+                .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
+                .Where(g => g.Activo && g.IdSocio == idSocio)
+                .OrderBy(g => g.Persona.Nombres)
+                .ThenBy(g => g.Persona.ApellidoPaterno)
+                .ToListAsync();
+        }
         public async Task<Gestor?> GetByIdAsync(int id)
         {
             return await _context.Gestores

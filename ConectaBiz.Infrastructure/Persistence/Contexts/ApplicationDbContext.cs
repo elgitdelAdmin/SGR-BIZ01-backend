@@ -26,6 +26,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<Gestor> Gestores { get; set; }
         public DbSet<GestorFrenteSubFrente> GestorFrenteSubFrente { get; set; }
+        public DbSet<Modulo> Modulos { get; set; }
+        public DbSet<RolPermisoModulo> RolPermisoModulos { get; set; }
+        public DbSet<Socio> Socios { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -249,6 +253,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Color).HasColumnName("Color").HasMaxLength(7);
                 entity.Property(e => e.Icono).HasColumnName("Icono").HasMaxLength(50);
                 entity.Property(e => e.Orden).HasColumnName("Orden").IsRequired().HasDefaultValue((short)0);
+                entity.Property(e => e.Valor1).HasColumnName("Valor1").HasMaxLength(50);
                 entity.Property(e => e.Activo).HasColumnName("Activo").IsRequired().HasDefaultValue(true);
                 entity.Property(e => e.FechaRegistro).HasColumnName("FechaRegistro").HasColumnType("timestamp").IsRequired().HasDefaultValueSql("now()");
                 entity.Property(e => e.FechaModificacion).HasColumnName("FechaModificacion").HasColumnType("timestamp");
@@ -504,6 +509,34 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasConstraintName("FK_GFSF_SubFrente");
 
             });
+
+            modelBuilder.Entity<Modulo>(entity =>
+            {
+                entity.ToTable("Modulo", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Codigo).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Nombre).HasMaxLength(150).IsRequired();
+                entity.Property(e => e.Icono).HasMaxLength(100);
+                entity.Property(e => e.Ruta).HasMaxLength(150);
+                entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
+            });
+
+            modelBuilder.Entity<RolPermisoModulo>(entity =>
+            {
+                entity.ToTable("RolPermisoModulo", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.IdRol, e.IdModulo }).IsUnique();
+
+                entity.Property(e => e.DivsOcultos).IsRequired();
+                entity.Property(e => e.ControlesBloqueados).IsRequired();
+                entity.Property(e => e.ControlesOcultos).IsRequired();
+
+                entity.HasOne(e => e.Modulo)
+                      .WithMany(m => m.Permisos)
+                      .HasForeignKey(e => e.IdModulo)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
         }
     }
 }

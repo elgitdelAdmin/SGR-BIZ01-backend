@@ -11,9 +11,10 @@ namespace ConectaBiz.Application.Interfaces
     public interface IEmpresaService
     {
         Task<IEnumerable<EmpresaDto>> GetAllAsync();
+        Task<IEnumerable<EmpresaDto>> GetByIdSocio(int idSocio);
         Task<IEnumerable<EmpresaDto>> GetAllActiveAsync();
         Task<EmpresaDto?> GetByIdAsync(int id);
-        Task<PersonaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento);
+        Task<PersonaConUsuariosEmpresaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento);
         Task<EmpresaDto?> GetByCodigoAsync(string codigo);
         Task<IEnumerable<EmpresaDto>> GetBySocioAsync(int idSocio);
         Task<IEnumerable<EmpresaDto>> GetByGestorAsync(int idGestor);
