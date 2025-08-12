@@ -22,6 +22,7 @@ namespace ConectaBiz.Application.Services
         private readonly IConsultorFrenteSubFrenteRepository _consultorFrenteSubFrenteRepository;
         private readonly IFrenteRepository _frenteRepository;
         private readonly ISubFrenteRepository _subFrenteRepository;
+        private readonly IAuthService _userService;
 
         public ConsultorService(
             IUserRepository userRepository,
@@ -32,7 +33,8 @@ namespace ConectaBiz.Application.Services
             IConsultorRepository consultorRepository,
             IConsultorFrenteSubFrenteRepository consultorFrenteSubFrenteRepository,
             IFrenteRepository frenteRepository,
-            ISubFrenteRepository subFrenteRepository
+            ISubFrenteRepository subFrenteRepository,
+            IAuthService userService
             )
         {
             _consultorRepository = consultorRepository;
@@ -44,6 +46,7 @@ namespace ConectaBiz.Application.Services
             _consultorFrenteSubFrenteRepository = consultorFrenteSubFrenteRepository;
             _frenteRepository = frenteRepository;
             _subFrenteRepository = subFrenteRepository;
+            _userService = userService;
         }
 
         public async Task<IEnumerable<ConsultorDto>> GetAllAsync()
@@ -55,6 +58,14 @@ namespace ConectaBiz.Application.Services
         public async Task<ConsultorDto> GetByIdAsync(int id)
         {
             var consultor = await _consultorRepository.GetByIdAsync(id);
+            if (consultor == null)
+                return null;
+
+            return _mapper.Map<ConsultorDto>(consultor);
+        }
+        public async Task<ConsultorDto> GetByIdPersonaAsync(int idPersona)
+        {
+            var consultor = await _consultorRepository.GetByIdPersonaAsync(idPersona);
             if (consultor == null)
                 return null;
 
@@ -180,13 +191,17 @@ namespace ConectaBiz.Application.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            if (!await _consultorRepository.ExistsAsync(id))
-                return false;
+            // Validar que el gestor exista
+            var consultor = await _consultorRepository.GetByIdAsync(id);
+            if (consultor != null)
+            {
+                await _userRepository.DeleteUserAsync(consultor.IdUser); // <-- AWAIT AQUÍ
+            }
+            else
+            {
+                throw new InvalidOperationException($"No se encontró el consultor con ID {id}");
+            }
 
-            // Eliminar especializaciones primero
-            await _consultorFrenteSubFrenteRepository.DeleteByConsultorIdAsync(id);
-
-            // Eliminar el consultor
             return await _consultorRepository.DeleteAsync(id);
         }
 

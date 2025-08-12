@@ -15,19 +15,22 @@ namespace ConectaBiz.Application.Services
     public class GestorService : IGestorService
     {
         private readonly IGestorRepository _gestorRepository;
+
+        
         private readonly IPersonaService _personaService;
         private readonly IGestorFrenteSubFrenteRepository _gestorFrenteSubFrenteRepository;
         private readonly IMapper _mapper;
-
+        private readonly IAuthService _userService;
         public GestorService(IGestorRepository gestorRepository,
                             IPersonaService personaService,
                             IGestorFrenteSubFrenteRepository gestorFrenteSubFrenteRepository,
-                            IMapper mapper)
+                            IMapper mapper, IAuthService userService)
         {
             _gestorRepository = gestorRepository;
             _personaService = personaService;
             _gestorFrenteSubFrenteRepository = gestorFrenteSubFrenteRepository;
             _mapper = mapper;
+            _userService = userService;
         }
 
         public async Task<IEnumerable<GestorDto>> GetAllAsync()
@@ -155,7 +158,12 @@ namespace ConectaBiz.Application.Services
         public async Task<bool> DeleteAsync(int id)
         {
             // Validar que el gestor exista
-            if (!await _gestorRepository.ExistsByIdAsync(id))
+            var gestor = await _gestorRepository.GetByIdAsync(id);
+            if (gestor != null)
+            {
+                await _userService.DeleteUserAsync(gestor.IdUser); // <-- AWAIT AQUÍ
+            }
+            else
             {
                 throw new InvalidOperationException($"No se encontró el gestor con ID {id}");
             }

@@ -25,6 +25,7 @@ namespace ConectaBiz.Application.Services
         private readonly IAuthService _userService;
         private readonly IGestorService _gestorService;
         private readonly IConsultorService _consultorService;
+        private readonly IEmpresaService _empresaService;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
@@ -38,6 +39,7 @@ namespace ConectaBiz.Application.Services
             IAuthService userService,
             IGestorService gestorService,
             IConsultorService consultorService,
+            IEmpresaService empresaService,
             IUserRepository userRepository,
             IMapper mapper
             )
@@ -51,6 +53,7 @@ namespace ConectaBiz.Application.Services
             _userService = userService;
             _gestorService = gestorService;
             _consultorService = consultorService;
+            _empresaService = empresaService;
             _userRepository = userRepository;
             _mapper = mapper;
         }
@@ -95,16 +98,16 @@ namespace ConectaBiz.Application.Services
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
-            if (codRol == AppConstants.Roles.Consultor)
+            else if (codRol == AppConstants.Roles.Consultor)
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
-            if (codRol == AppConstants.Roles.Empresa)
+            else if (codRol == AppConstants.Roles.Empresa)
             {
-                ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
-                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
+                EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
+                var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
             else

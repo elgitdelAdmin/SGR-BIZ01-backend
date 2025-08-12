@@ -46,6 +46,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(cf => cf.SubFrente)
                 .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
         }
+        public async Task<Consultor> GetByIdPersonaAsync(int idPersona)
+        {
+            return await _context.Consultor
+                .Include(c => c.Persona)
+                .Include(c => c.Socio)
+                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                    .ThenInclude(cf => cf.Frente)
+                .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                    .ThenInclude(cf => cf.SubFrente)
+                .FirstOrDefaultAsync(c => c.PersonaId == idPersona && c.Activo);
+        }
         public async Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio)
         {
             try
@@ -95,8 +106,27 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 return null;
 
             // Actualizar propiedades
-            existingConsultor.IdNivelExperiencia = consultor.IdNivelExperiencia;
-            existingConsultor.IdModalidadLaboral = consultor.IdModalidadLaboral;
+            if (consultor.IdNivelExperiencia != null)
+                existingConsultor.IdNivelExperiencia = consultor.IdNivelExperiencia;
+            if (consultor.IdModalidadLaboral != null)
+                existingConsultor.IdModalidadLaboral = consultor.IdModalidadLaboral;
+            if (consultor.IdUser > 0)
+                existingConsultor.IdUser = consultor.IdUser;
+            existingConsultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            existingConsultor.UsuarioActualizacion = consultor.UsuarioActualizacion;
+            await _context.SaveChangesAsync();
+
+            // Cargar las relaciones para devolver la entidad completa
+            return await GetByIdAsync(consultor.Id);
+        }
+        public async Task<Consultor> UpdateUserAsync(Consultor consultor)
+        {
+            var existingConsultor = await _context.Consultor
+                .FirstOrDefaultAsync(c => c.Id == consultor.Id && c.Activo);
+
+            // Actualizar propiedades
+            if (consultor.IdUser > 0)
+                existingConsultor.IdUser = consultor.IdUser;
             existingConsultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
             existingConsultor.UsuarioActualizacion = consultor.UsuarioActualizacion;
             await _context.SaveChangesAsync();

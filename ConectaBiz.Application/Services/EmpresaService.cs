@@ -213,11 +213,16 @@ namespace ConectaBiz.Application.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
-            if (!await _empresaRepository.ExistsAsync(id))
+            // Validar que el gestor exista
+            var empresa = await _empresaRepository.GetByIdAsync(id);
+            if (empresa?.IdUser != null)
             {
-                throw new KeyNotFoundException($"No se encontró la empresa con ID {id}");
+                await _userService.DeleteUserAsync(empresa.IdUser.Value); // <-- AWAIT AQUÍ
             }
-
+            else
+            {
+                throw new InvalidOperationException($"No se encontró la empresa con ID {id}");
+            }
             return await _empresaRepository.DeleteAsync(id);
         }
 

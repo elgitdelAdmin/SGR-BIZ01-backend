@@ -130,33 +130,62 @@ namespace ConectaBiz.Application.Services
 
             if (rol.Codigo == AppConstants.Roles.Gestor)
             {
-                var gestor = new Gestor
+                if (!await _gestorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
-                    PersonaId = persona.Id,
-                    IdNivelExperiencia = null,
-                    IdModalidadLaboral = null,
-                    IdSocio = registerRequest.IdSocio,
-                    IdUser = userCreado.Id,
-                    UsuarioCreacion = registerRequest.UsuarioCreacion,
-                    FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                    Activo = true
-                };
-                await _gestorRepository.CreateAsync(gestor);
+                    var gestor = new Gestor
+                    {
+                        PersonaId = persona.Id,
+                        IdNivelExperiencia = null,
+                        IdModalidadLaboral = null,
+                        IdSocio = registerRequest.IdSocio,
+                        IdUser = userCreado.Id,
+                        UsuarioCreacion = registerRequest.UsuarioCreacion,
+                        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                        Activo = true
+                    };
+                    await _gestorRepository.CreateAsync(gestor);
+                }
+                else {
+                    var Gestor = await _gestorRepository.GetByIdPersonaAsync(persona.Id);
+                    var gestor = new Gestor
+                    {
+                        Id = Gestor.Id,
+                        IdUser = userCreado.Id,
+                        UsuarioActualizacion = registerRequest.UsuarioCreacion,
+                        FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local)
+                    };
+                    await _gestorRepository.UpdateAsync(gestor);
+                }
             }
             if (rol.Codigo == AppConstants.Roles.Consultor)
             {
-                var consultor = new Consultor
+                if (!await _consultorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
-                    PersonaId = persona.Id,
-                    IdNivelExperiencia = null,
-                    IdModalidadLaboral = null,
-                    IdSocio = registerRequest.IdSocio,
-                    IdUser = userCreado.Id,
-                    UsuarioCreacion = registerRequest.UsuarioCreacion,
-                    FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                    Activo = true
-                };
-                await _consultorRepository.CreateAsync(consultor);
+                    var consultor = new Consultor
+                    {
+                        PersonaId = persona.Id,
+                        IdNivelExperiencia = null,
+                        IdModalidadLaboral = null,
+                        IdSocio = registerRequest.IdSocio,
+                        IdUser = userCreado.Id,
+                        UsuarioCreacion = registerRequest.UsuarioCreacion,
+                        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                        Activo = true
+                    };
+                    await _consultorRepository.CreateAsync(consultor);
+                }
+                else
+                {
+                    var Consultor = await _consultorRepository.GetByIdPersonaAsync(persona.Id);
+                    var consultor = new Consultor
+                    {
+                        Id = Consultor.Id,
+                        IdUser = userCreado.Id,
+                        UsuarioActualizacion = registerRequest.UsuarioCreacion,
+                        FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                    };
+                    await _consultorRepository.UpdateUserAsync(consultor);
+                }
             }
             var accessToken = _tokenService.GenerateAccessToken(user);
             var refreshToken = _tokenService.GenerateRefreshToken();

@@ -254,6 +254,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Icono).HasColumnName("Icono").HasMaxLength(50);
                 entity.Property(e => e.Orden).HasColumnName("Orden").IsRequired().HasDefaultValue((short)0);
                 entity.Property(e => e.Valor1).HasColumnName("Valor1").HasMaxLength(50);
+                entity.Property(e => e.Valor2).HasColumnName("Valor2").HasMaxLength(50);
+                entity.Property(e => e.Valor3).HasColumnName("Valor3").HasMaxLength(50);
                 entity.Property(e => e.Activo).HasColumnName("Activo").IsRequired().HasDefaultValue(true);
                 entity.Property(e => e.FechaRegistro).HasColumnName("FechaRegistro").HasColumnType("timestamp").IsRequired().HasDefaultValueSql("now()");
                 entity.Property(e => e.FechaModificacion).HasColumnName("FechaModificacion").HasColumnType("timestamp");
