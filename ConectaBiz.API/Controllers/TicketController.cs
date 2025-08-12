@@ -185,7 +185,7 @@ namespace ConectaBiz.API.Controllers
         /// Crea un nuevo ticket
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<TicketDto>> Create([FromBody] TicketInsertDto insertDto)
+        public async Task<ActionResult<TicketDto>> Create([FromForm] TicketInsertDto insertDto)
         {
             try
             {
@@ -211,7 +211,7 @@ namespace ConectaBiz.API.Controllers
         /// Actualiza un ticket existente
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<ActionResult<TicketDto>> Update(int id, [FromBody] TicketUpdateDto updateDto)
+        public async Task<ActionResult<TicketDto>> Update(int id, [FromForm] TicketUpdateDto updateDto)
         {
             try
             {
