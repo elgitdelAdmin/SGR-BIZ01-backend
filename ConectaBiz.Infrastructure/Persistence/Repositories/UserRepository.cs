@@ -41,6 +41,16 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                                  .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
+        public async Task<IEnumerable<User>> GetUsersByIdAsync(int[] ids)
+        {
+            return await _context.Users
+                .Include(u => u.Socio)
+                .Include(u => u.Persona)
+                .Include(u => u.Rol)
+                .Where(u => ids.Contains(u.Id))
+                .ToListAsync();
+        }
+
 
         public async Task<User?> GetByIdSocioIdRolIdPersonaAsync(int idsocio, int idrol, int idPersona)
         {

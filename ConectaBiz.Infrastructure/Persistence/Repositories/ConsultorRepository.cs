@@ -77,6 +77,28 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 throw;
             }
         }
+        public async Task<IEnumerable<Consultor>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente)
+        {
+            try
+            {
+                return await _context.Consultor
+                    .Include(c => c.Persona)
+                    .Include(c => c.Socio)
+                    .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                        .ThenInclude(cf => cf.Frente)
+                    .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                        .ThenInclude(cf => cf.SubFrente)
+                    .Where(c => c.Activo && c.Socio.NumDocContribuyente == numDocContribuyente)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Puedes loggear el error si necesitas
+                throw;
+            }
+        }
+
         public async Task<Consultor> GetByIdUserAsync(int iduser)
         {
             return await _context.Consultor

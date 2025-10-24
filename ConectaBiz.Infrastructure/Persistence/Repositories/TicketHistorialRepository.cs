@@ -2,6 +2,7 @@
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,11 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
     public class TicketHistorialRepository : ITicketHistorialRepository
     {
         private readonly ApplicationDbContext _context;
-
-        public TicketHistorialRepository(ApplicationDbContext context)
+        private readonly string _rutaLog;
+        public TicketHistorialRepository(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _rutaLog = configuration["Logging:LogFilePath"];
         }
 
         public async Task<IEnumerable<TicketHistorialEstado>> GetByTicketIdAsync(int idTicket)

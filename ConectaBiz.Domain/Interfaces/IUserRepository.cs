@@ -11,6 +11,7 @@ namespace ConectaBiz.Domain.Interfaces
     {
         Task<User?> GetByUsernameAsync(string username);
         Task<User?> GetByIdAsync(int id);
+        Task<IEnumerable<User>> GetUsersByIdAsync(int[] ids);
         Task<User> GetByIdSocioIdRolIdPersonaAsync(int idsocio, int idrol, int idpersona);
         Task<User> CreateAsync(User user);
         Task UpdateAsync(User user);

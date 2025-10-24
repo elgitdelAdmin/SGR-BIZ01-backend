@@ -27,4 +27,31 @@ namespace ConectaBiz.Application.DTOs
         // Si necesitas mostrar los usuarios relacionados:
         //public List<UserDto> Users { get; set; }
     }
+    public class SocioCreateDto
+    {
+        public string RazonSocial { get; set; }
+        public string? Codigo { get; set; }
+        public string? Nombre { get; set; }
+        public string? NombreComercial { get; set; }
+        public string? NumDocContribuyente { get; set; }
+        public string? Direccion { get; set; }
+        public string? Telefono1 { get; set; }
+        public string? Telefono2 { get; set; }
+        public string? Email { get; set; }
+        public string? UsuarioRegistro { get; set; }
+    }
+
+    // DTOs/SocioUpdateDto.cs
+    public class SocioUpdateDto
+    {
+        public string RazonSocial { get; set; }
+        public string? Codigo { get; set; }
+        public string? Nombre { get; set; }
+        public string? NombreComercial { get; set; }
+        public string? Direccion { get; set; }
+        public string? Telefono1 { get; set; }
+        public string? Telefono2 { get; set; }
+        public string? Email { get; set; }
+        public string? UsuarioModificacion { get; set; }
+    }
 }

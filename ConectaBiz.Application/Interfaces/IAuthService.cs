@@ -19,6 +19,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<IEnumerable<UserDto>> GetAllUsuarioByIdSocio(int idSocio);
         Task<UserDto> GetByIdAsync(int id);
+        Task<IEnumerable<UserDto>> GetUsersByIdAsync(int[] ids);
         Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona);
         Task<IEnumerable<RolDto>> GetAllRolAsync();
         Task<RolDto> GetRolByCodigoAsync(string codigo);

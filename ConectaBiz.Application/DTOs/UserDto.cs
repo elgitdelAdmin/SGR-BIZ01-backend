@@ -50,7 +50,9 @@ namespace ConectaBiz.Application.DTOs
         public string AccessToken { get; set; } = string.Empty;
         public string RefreshToken { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
+        public int? IdConsultor { get; set; }
         public UserDto User { get; set; } = new UserDto();
+        public List<NotificacionTicketDto>? NotificacionTicket { get; set; } = new List<NotificacionTicketDto>();
     }
 
     public class RefreshTokenRequestDto

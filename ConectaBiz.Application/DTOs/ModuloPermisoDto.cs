@@ -14,6 +14,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Icono { get; set; }
         public string? Ruta { get; set; }
         public List<string> DivsOcultos { get; set; } = new();
+        public List<string> DivsBloqueados { get; set; } = new();
         public List<string> ControlesBloqueados { get; set; } = new();
         public List<string> ControlesOcultos { get; set; } = new();
     }

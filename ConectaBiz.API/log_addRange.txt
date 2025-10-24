@@ -1,0 +1,68 @@
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-12 11:40:25
+GetUsersByIdAsync ms=237
+Filtrar destinatarios ms=0 (count=4)
+Mensaje global preparado.
+❌ ERROR: Error al enviar correos: The SMTP server requires a secure connection or the client was not authenticated. The server response was: 5.7.57 Client not authenticated to send mail. Error: 535 5.7.139 Authentication unsuccessful, SmtpClientAuthentication is disabled for the Tenant. Visit https://aka.ms/smtp_auth_disabled for more information. [SCYP215CA0064.LAMP215.PROD.OUTLOOK.COM 2025-10-12T16:41:36.897Z 08DE0906190BD7E2]
+   at ConectaBiz.Application.Services.EmailService.EnviarCorreosAsync(IEnumerable`1 destinatarios, String asunto, String mensajeTexto) in C:\Users\Usuario\Desktop\Proyectos\GESTION DE TICKETS\PROYECTO\ConectaBack\ConectaBiz.Application\Services\EmailService.cs:line 96
+   at ConectaBiz.Application.Services.NotificacionTicketService.AddRangeAsync(IEnumerable`1 dtos) in C:\Users\Usuario\Desktop\Proyectos\GESTION DE TICKETS\PROYECTO\ConectaBack\ConectaBiz.Application\Services\NotificacionTicketService.cs:line 163
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-12 11:54:33
+GetUsersByIdAsync ms=152
+Filtrar destinatarios ms=0 (count=4)
+Mensaje global preparado.
+❌ ERROR: Error al enviar correos: The SMTP server requires a secure connection or the client was not authenticated. The server response was: 5.7.57 Client not authenticated to send mail. Error: 535 5.7.139 Authentication unsuccessful, SmtpClientAuthentication is disabled for the Tenant. Visit https://aka.ms/smtp_auth_disabled for more information. [SCZP215CA0023.LAMP215.PROD.OUTLOOK.COM 2025-10-12T16:58:57.270Z 08DE09369B78878C]
+   at ConectaBiz.Application.Services.EmailService.EnviarCorreosAsync(IEnumerable`1 destinatarios, String asunto, String mensajeTexto) in C:\Users\Usuario\Desktop\Proyectos\GESTION DE TICKETS\PROYECTO\ConectaBack\ConectaBiz.Application\Services\EmailService.cs:line 96
+   at ConectaBiz.Application.Services.NotificacionTicketService.AddRangeAsync(IEnumerable`1 dtos) in C:\Users\Usuario\Desktop\Proyectos\GESTION DE TICKETS\PROYECTO\ConectaBack\ConectaBiz.Application\Services\NotificacionTicketService.cs:line 163
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-12 11:57:18
+GetUsersByIdAsync ms=181
+Filtrar destinatarios ms=0 (count=4)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=4)
+Repository.AddRangeAsync ms=395
+✅ FIN EXITOSO (total ms=578)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-12 12:10:02
+GetUsersByIdAsync ms=167
+Filtrar destinatarios ms=1 (count=5)
+Mensaje global preparado.
+EnviarCorreosAsync ms=535
+Construcción notificaciones ms=596 (count=5)
+Repository.AddRangeAsync ms=2384
+✅ FIN EXITOSO (total ms=26444)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-14 16:05:24
+GetUsersByIdAsync ms=279
+Filtrar destinatarios ms=1 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=8 (count=3)
+Repository.AddRangeAsync ms=347
+✅ FIN EXITOSO (total ms=3443)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-14 16:05:37
+GetUsersByIdAsync ms=148
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=307
+✅ FIN EXITOSO (total ms=455)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-18 16:22:36
+GetUsersByIdAsync ms=190
+Filtrar destinatarios ms=1 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=1)
+Repository.AddRangeAsync ms=210
+✅ FIN EXITOSO (total ms=402)
+========== FIN AddRangeAsync ==========

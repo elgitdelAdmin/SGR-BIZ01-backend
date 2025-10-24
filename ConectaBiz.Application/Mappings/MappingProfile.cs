@@ -17,6 +17,21 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<Rol, RolDto>();
 
             CreateMap<Socio, SocioDto>();
+            CreateMap<SocioCreateDto, Socio>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Activo, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.UsuarioModificacion, opt => opt.Ignore());
+
+            CreateMap<SocioUpdateDto, Socio>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.NumDocContribuyente, opt => opt.Ignore()) // NO SE MODIFICA
+                .ForMember(dest => dest.Activo, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.UsuarioRegistro, opt => opt.Ignore());
+
             CreateMap<RegisterUserDto, User>();
 
             // Mapeo de Persona
@@ -155,7 +170,8 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<Ticket, TicketDto>()
                 .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.MapFrom(src => src.ConsultorAsignaciones))
                 .ForMember(dest => dest.FrenteSubFrentes, opt => opt.MapFrom(src => src.FrenteSubFrentes))
-                .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.TicketHistorialEstado));
+                .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.TicketHistorialEstado))
+                .ForMember(dest => dest.Empresa, opt => opt.MapFrom(src => src.Empresa));
 
             CreateMap<TicketDto, Ticket>()
                 .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.Ignore())
@@ -177,6 +193,21 @@ namespace ConectaBiz.Application.Mappings
 
             CreateMap<TicketConsultorAsignacionInsertDto, TicketConsultorAsignacion>()
                 .ForMember(dest => dest.Ticket, opt => opt.Ignore());
+            CreateMap<TicketConsultorAsignacionUpdateDto, TicketConsultorAsignacion>()
+                .ForMember(dest => dest.Ticket, opt => opt.Ignore()) 
+                .ForMember(dest => dest.DetalleTareasConsultor, opt => opt.Ignore()); 
+
+            CreateMap<TicketConsultorAsignacion, TicketConsultorAsignacionUpdateDto>();
+
+            // DetalleTareasConsultor <-> DTO
+            CreateMap<DetalleTareasConsultor, DetalleTareasConsultorDto>();
+            CreateMap<DetalleTareasConsultorDto, DetalleTareasConsultor>()
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
+
+            // Para updates específicamente
+            CreateMap<DetalleTareasConsultorUpdateDto, DetalleTareasConsultor>()
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
+            CreateMap<DetalleTareasConsultor, DetalleTareasConsultorUpdateDto>();
 
             // Mapeos de TicketFrenteSubFrente
             CreateMap<TicketFrenteSubFrente, TicketFrenteSubFrenteDto>();
@@ -186,6 +217,10 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<TicketFrenteSubFrenteInsertDto, TicketFrenteSubFrente>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Ticket, opt => opt.Ignore());
+
+            CreateMap<TicketFrenteSubFrenteUpdateDto, TicketFrenteSubFrente>()
+                .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+                .ForMember(dest => dest.UsuarioCreacion, opt => opt.Ignore());
 
             // Mapeos de TicketHistorialEstado
             CreateMap<TicketHistorialEstado, TicketHistorialEstadoDto>();
@@ -253,6 +288,7 @@ namespace ConectaBiz.Application.Mappings
           .ForMember(dest => dest.Icono, opt => opt.MapFrom(src => src.Modulo.Icono))
           .ForMember(dest => dest.Ruta, opt => opt.MapFrom(src => src.Modulo.Ruta))
           .ForMember(dest => dest.DivsOcultos, opt => opt.MapFrom(src => ParseJsonArray(src.DivsOcultos)))
+          .ForMember(dest => dest.DivsBloqueados, opt => opt.MapFrom(src => ParseJsonArray(src.DivsBloqueados)))
           .ForMember(dest => dest.ControlesBloqueados, opt => opt.MapFrom(src => ParseJsonArray(src.ControlesBloqueados)))
           .ForMember(dest => dest.ControlesOcultos, opt => opt.MapFrom(src => ParseJsonArray(src.ControlesOcultos)));
     }

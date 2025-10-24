@@ -2,37 +2,27 @@
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace ConectaBiz.Infrastructure.Persistence.Repositories
 {
     public class TicketRepository : ITicketRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly string _rutaLog;
 
-        public TicketRepository(ApplicationDbContext context)
+        public TicketRepository(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _rutaLog = configuration["Logging:LogFilePath"];
         }
-
-        //public async Task<IEnumerable<Ticket>> GetAllAsync()
-        //{
-        //    return await _context.Ticket
-        //        .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-        //        .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
-        //        .ToListAsync();
-        //}
 
         public async Task<IEnumerable<Ticket>> GetAllAsync()
         {
             try
             {
                 var tickets = await _context.Ticket
+                    .Include(t => t.Empresa)
                     .Include(t => t.ConsultorAsignaciones)
                     .Include(t => t.FrenteSubFrentes)
                     .ToListAsync();
@@ -66,7 +56,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<Ticket?> GetByIdWithRelationsAsync(int id)
         {
             return await _context.Ticket
-                .Include(t => t.ConsultorAsignaciones.Where(fsf => fsf.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(fsf => fsf.Activo)).ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Include(t => t.TicketHistorialEstado)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -84,11 +74,39 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Ticket
                 .Where(t => t.IdEmpresa == idEmpresa)
+                .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
-
+        public async Task<IEnumerable<Ticket>> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp)
+        {
+            return await _context.Ticket
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .Where(t =>
+                    t.Empresa != null &&
+                    t.Empresa.IdSocio == idSocio &&
+                    t.Empresa.NumDocContribuyente == numContribuyenteEmp)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Ticket>> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp)
+        {
+            return await _context.Ticket
+                .Where(t =>
+                    t.Empresa != null &&
+                    t.Empresa.Socio != null &&
+                    t.Empresa.Socio.NumDocContribuyente == numContribuyenteSocio &&
+                    t.Empresa.NumDocContribuyente == numContribuyenteEmp &&
+                    t.Activo)
+                .Select(t => new Ticket
+                {
+                    CodTicketInterno = t.CodTicketInterno
+                })
+                .AsNoTracking()
+                .ToListAsync();
+        }
         public async Task<IEnumerable<Ticket>> GetByEstadoAsync(int idEstado)
         {
             return await _context.Ticket
@@ -101,6 +119,16 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Ticket
                 .Where(t => t.IdGestor == idGestor)
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
+        {
+            return await _context.Ticket
+                .Where(t => t.IdGestorConsultoria == idGestor)
+                .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
@@ -109,52 +137,99 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Ticket
                 .Where(t => t.Activo &&
-                           t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor
+                        .Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
 
+
         public async Task<Ticket> CreateAsync(Ticket ticket)
         {
-            var logBuilder = new StringBuilder();
-
-            // Clona las opciones del contexto actual, pero con logging en el StringBuilder
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseNpgsql("Host=64.23.182.32;Port=5432;Database=conectabiz_db;Username=postgres;Password=KQW%9gVPK!+2kCh")
-                .LogTo(s => logBuilder.AppendLine(s), LogLevel.Information)
-                .EnableSensitiveDataLogging()
-                .Options;
-
-            // Crea una instancia temporal con logging activado
-            using var context = new ApplicationDbContext(options);
-
             try
             {
                 ticket.Activo = true;
                 _context.Ticket.Add(ticket);
                 await _context.SaveChangesAsync();
-
-                // Aquí puedes obtener el SQL como string
-                var sqlGenerado = logBuilder.ToString();
-                Console.WriteLine("SQL generado:\n" + sqlGenerado);
-
                 return ticket;
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
-                var sqlGenerado = logBuilder.ToString();
-                Console.WriteLine("Error, SQL:\n" + sqlGenerado);
+                await File.AppendAllTextAsync(_rutaLog, ex.InnerException?.Message);
                 throw;
+            }
+        }
+        public async Task<List<Ticket>> CreateRangeAsync(List<Ticket> tickets)
+        {
+            if (tickets == null || !tickets.Any())
+                return new List<Ticket>();
+
+            try
+            {
+                tickets.ForEach(t => t.Activo = true);
+                _context.Ticket.AddRange(tickets);
+                await _context.SaveChangesAsync();
+                return tickets;
+            }
+            catch (DbUpdateException ex)
+            {
+                // Ruta del archivo de log
+                var rutaLog = Path.Combine(AppContext.BaseDirectory, "tickets_error_log.txt");
+
+                // Acumulamos todo el texto en un StringBuilder
+                var sb = new System.Text.StringBuilder();
+
+                foreach (var t in tickets)
+                {
+                    foreach (var prop in t.GetType().GetProperties())
+                    {
+                        // Solo propiedades string y que NO sean Descripcion
+                        if (prop.PropertyType == typeof(string) && prop.Name != "Descripcion")
+                        {
+                            var value = prop.GetValue(t)?.ToString() ?? "";
+                            if (value.Length > 50) // Solo los que pueden exceder varchar(50)
+                            {
+                                sb.AppendLine($"Posible problema: {prop.Name} = '{value}' ({value.Length} chars)");
+                            }
+                        }
+                    }
+                }
+                var ff = sb.ToString();
+                // Escribir todo el log **una sola vez**
+                await File.AppendAllTextAsync(rutaLog, sb.ToString() + Environment.NewLine);
+
+                throw; // Re-lanzamos la excepción para que la Web API la maneje
             }
         }
 
 
+
+
+
         public async Task<Ticket> UpdateAsync(Ticket ticket)
         {
-            _context.Ticket.Update(ticket);
+            try
+            {
+                _context.Ticket.Update(ticket);
+                await _context.SaveChangesAsync();
+                return ticket;
+            }
+            catch (DbUpdateException ex)
+            {
+                await File.AppendAllTextAsync(_rutaLog, ex.InnerException?.Message);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Ticket>> UpdateRangeAsync(IEnumerable<Ticket> tickets)
+        {
+            _context.Ticket.UpdateRange(tickets);
             await _context.SaveChangesAsync();
-            return ticket;
+            return tickets;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -192,7 +267,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket)
         {
-            return await _context.Set<TicketConsultorAsignacion>()
+            return await _context.TicketConsultorAsignacion
+                .AsNoTracking() // 👈 Esto evita el rastreo
                 .Where(x => x.IdTicket == idTicket && x.Activo)
                 .ToListAsync();
         }

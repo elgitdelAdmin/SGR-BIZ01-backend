@@ -7,6 +7,7 @@ using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Authentication.Services;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using ConectaBiz.Infrastructure.Persistence.Repositories;
+using ConectaBiz.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,12 +21,18 @@ namespace ConectaBiz.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // Configuración de la base de datos
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(
+            services.AddDbContext<ApplicationDbContext>(
+                options => options.UseNpgsql(
                     configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)),
+                contextLifetime: ServiceLifetime.Scoped,  // Lifetime del DbContext
+                optionsLifetime: ServiceLifetime.Scoped   // Lifetime de DbContextOptions
+            );
+
             //Configuracion de BDSGRCSTI
             Conexiones.ConnectionSGRCSTI = configuration.GetConnectionString("ConnectionSGRCSTI");
+
+
             // Repositorios
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IConsultorRepository, ConsultorRepository>();
@@ -44,6 +51,8 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IGestorFrenteSubFrenteRepository, GestorFrenteSubFrenteRepository>();
             services.AddScoped<IModuloRepository, ModuloRepository>();
             services.AddScoped<ISocioRepository, SocioRepository>();
+            services.AddScoped<INotificacionTicketRepository, NotificacionTicketRepository>();
+            services.AddScoped<ICargaMasivaTicketsRepository, CargaMasivaTicketsRepository>();
 
             // Servicios
             services.AddScoped<ITokenService, TokenService>();
@@ -58,6 +67,20 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IGestorService, GestorService>();
             services.AddScoped<IModuloService, ModuloService>();
             services.AddScoped<ISocioService, SocioService>();
+            services.AddScoped<INotificacionTicketService, NotificacionTicketService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+
+            services.AddScoped(provider =>
+                new Lazy<INotificacionTicketService>(
+                    () => provider.GetRequiredService<INotificacionTicketService>()
+                )
+            );
+            services.AddScoped(provider =>
+                new Lazy<ITicketService>(() =>
+                    provider.GetRequiredService<ITicketService>()
+                )
+            );
 
             //Integracion
             services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();

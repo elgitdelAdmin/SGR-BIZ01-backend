@@ -46,6 +46,19 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
             }
         }
+        [HttpGet("user/{idUser}/rol/{codRol}")]
+        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        {
+            try
+            {
+                var empresas = await _empresaService.GetByIdUserIdRolAsync(idUser, codRol);
+                return Ok(empresas);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+            }
+        }
         // GET: api/empresas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<EmpresaDto>> GetById(int id)
@@ -64,22 +77,50 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
             }
         }
-        [HttpGet("UsuarioResponsable/tipoDocumento/{idTipoDocumento}numeroDocumento/{numeroDocumento}")]
-        public async Task<ActionResult<PersonaDto>> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento,string numeroDocumento)
+        [HttpGet("UsuarioResponsable/tipoDocumento/{idTipoDocumento}/numeroDocumento/{numeroDocumento}")]
+        public async Task<IActionResult> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
         {
             try
             {
-                var empresa = await _empresaService.GetPersonaResponsableByTipoNumDoc(idTipoDocumento, numeroDocumento);
-                if (empresa == null)
-                    return NotFound(new { message = $"No se encontró la persona con numeroDocumento {numeroDocumento}" });
+                var persona = await _empresaService.GetPersonaResponsableByTipoNumDoc(idTipoDocumento, numeroDocumento);
 
-                return Ok(empresa);
+                if (persona == null)
+                {
+                    return Ok(new
+                    {
+                        success = false,
+                        message = $"No se encontró una persona con el número de documento {numeroDocumento}."
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Persona encontrada correctamente.",
+                    data = persona
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Si el número de documento es inválido, devolvemos 200 pero con mensaje claro
+                return Ok(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+                // Solo errores realmente inesperados se devuelven como 500
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Error interno del servidor",
+                    details = ex.Message
+                });
             }
         }
+
 
         //// GET: api/empresas/codigo/EMP001
         //[HttpGet("codigo/{codigo}")]

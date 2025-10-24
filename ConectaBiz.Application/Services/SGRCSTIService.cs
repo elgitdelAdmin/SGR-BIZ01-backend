@@ -137,8 +137,8 @@ namespace ConectaBiz.Application.Services
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, // Si tienes archivos, asígnalos aquí
                         UsuarioCreacion = "Migracion",
-                        ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
-                        FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
+                        //ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
+                        //FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
                     };
 
                     var ticketCreado = await _ticketService.CreateAsync(ticketInsertDto);

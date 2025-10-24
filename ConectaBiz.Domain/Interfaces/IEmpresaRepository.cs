@@ -11,9 +11,12 @@ namespace ConectaBiz.Domain.Interfaces
     {
         Task<IEnumerable<Empresa>> GetAllAsync();
         Task<IEnumerable<Empresa>> GetByIdSocio(int idSocio);
+        Task<IEnumerable<Empresa>> GetByIdGestorCuenta(int idGestorCuenta, int IdSocio);
         Task<IEnumerable<Empresa>> GetAllActiveAsync();
         Task<Empresa?> GetByIdAsync(int id);
+        Task<Empresa?> GetByIdAsync2(int id);
         Task<Empresa> GetByIdUserAsync(int iduser);
+        Task<Empresa?> GetByNumDocContribuyenteAsync(string numDocContribuyente, string numDocSocio);
         Task<Empresa?> GetByCodigoAsync(string codigo);
         Task<IEnumerable<Empresa>> GetBySocioAsync(int idSocio);
         Task<IEnumerable<Empresa>> GetByGestorAsync(int idGestor);
