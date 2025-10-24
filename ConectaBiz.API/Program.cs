@@ -68,7 +68,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddHostedService<MigracionRequerimientosWorker>();
+builder.Services.AddHostedService<ConectaBiz.API.Jobs.RecurringJobWorker>();
 
 var app = builder.Build();
 
