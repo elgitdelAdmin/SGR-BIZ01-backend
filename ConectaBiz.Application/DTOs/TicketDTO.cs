@@ -130,6 +130,7 @@ public class TicketInsertDto
 
     // Nuevo campo para el .zip
     public IFormFile? ZipFile { get; set; }
+    public bool? EsCargaMasiva { get; set; }
 
     // Colecciones relacionadas que siempre vienen en el request
     //public string consultorAsignaciones { get; set; }    

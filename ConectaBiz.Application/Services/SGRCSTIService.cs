@@ -85,7 +85,7 @@ namespace ConectaBiz.Application.Services
                     // Completa los campos obligatorios según tu lógica de negocio:
                     // Email = ...
                     IdPais = 1,
-                    IdGestor = 22,
+                    IdGestor = 47,
                     UsuarioRegistro = "Migracion",
                     Persona = personaDto == null ? null : new DTOs.CreatePersonaDto {
                         Nombres = personaDto.Nombres,
@@ -137,6 +137,7 @@ namespace ConectaBiz.Application.Services
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, // Si tienes archivos, asígnalos aquí
                         UsuarioCreacion = "Migracion",
+                        EsCargaMasiva = true
                         //ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
                         //FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
                     };
