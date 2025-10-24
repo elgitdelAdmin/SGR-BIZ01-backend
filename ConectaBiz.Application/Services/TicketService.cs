@@ -25,6 +25,7 @@ namespace ConectaBiz.Application.Services
         private readonly IAuthService _userService;
         private readonly IGestorService _gestorService;
         private readonly IConsultorService _consultorService;
+        private readonly IEmpresaService _empresaService;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
@@ -38,6 +39,7 @@ namespace ConectaBiz.Application.Services
             IAuthService userService,
             IGestorService gestorService,
             IConsultorService consultorService,
+            IEmpresaService empresaService,
             IUserRepository userRepository,
             IMapper mapper
             )
@@ -51,6 +53,7 @@ namespace ConectaBiz.Application.Services
             _userService = userService;
             _gestorService = gestorService;
             _consultorService = consultorService;
+            _empresaService = empresaService;
             _userRepository = userRepository;
             _mapper = mapper;
         }
@@ -95,16 +98,16 @@ namespace ConectaBiz.Application.Services
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
-            if (codRol == AppConstants.Roles.Consultor)
+            else if (codRol == AppConstants.Roles.Consultor)
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
-            if (codRol == AppConstants.Roles.Empresa)
+            else if (codRol == AppConstants.Roles.Empresa)
             {
-                ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
-                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
+                EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
+                var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
             }
             else
@@ -148,8 +151,41 @@ namespace ConectaBiz.Application.Services
                 ticket.FechaSolicitud = DateTime.SpecifyKind(ticket.FechaSolicitud, DateTimeKind.Local);
                 ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
                 ticket.Activo = true;
+                ticket.UrlArchivos = null;
                 ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
                 var createdTicket = await _ticketRepository.CreateAsync(ticket);
+
+                if (insertDto.ZipFile != null && insertDto.ZipFile.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "Uploads",
+                        "Empresa",
+                        insertDto.IdEmpresa.ToString()
+                    );
+                    Directory.CreateDirectory(uploadsFolder);
+
+                    var fileName = $"{createdTicket.Id}_{Path.GetFileName(insertDto.ZipFile.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await insertDto.ZipFile.CopyToAsync(stream);
+                    }
+
+                    var zipFileDto = new TicketZipFileDto
+                    {
+                        Orden = 1,
+                        Url = Path.Combine("Uploads", "Empresa", insertDto.IdEmpresa.ToString(), fileName).Replace("\\", "/"),
+                        FechaInsert = DateTime.Now
+                    };
+
+                    // Serializar como JSON
+                    var zipFilesList = new List<TicketZipFileDto> { zipFileDto };
+                    createdTicket.UrlArchivos = System.Text.Json.JsonSerializer.Serialize(zipFilesList);
+
+                    await _ticketRepository.UpdateAsync(createdTicket);
+                }
 
                 // Crear historial inicial de estado
                 await CreateInitialHistorialAsync(createdTicket.Id, insertDto.IdEstadoTicket);
@@ -204,6 +240,46 @@ namespace ConectaBiz.Application.Services
                 if (frentesChanged)
                 {
                     await UpdateFrenteSubFrentesAsync(id, updateDto.FrenteSubFrentes, updateDto.UsuarioActualizacion);
+                }
+
+
+                // 📌 Manejo del ZIP adicional
+                if (updateDto.ZipFile != null && updateDto.ZipFile.Length > 0)
+                {
+                    // 1. Leer lista existente de archivos desde JSON
+                    var listaZips = string.IsNullOrEmpty(existingTicket.UrlArchivos)
+                        ? new List<TicketZipFileDto>()
+                        : System.Text.Json.JsonSerializer.Deserialize<List<TicketZipFileDto>>(existingTicket.UrlArchivos);
+
+                    // 2. Guardar el nuevo ZIP
+                    var uploadsFolder = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "Uploads",
+                        "Empresa",
+                        existingTicket.IdEmpresa.ToString()
+                    );
+                    Directory.CreateDirectory(uploadsFolder);
+
+                    var fileName = $"{existingTicket.Id}_{Path.GetFileName(updateDto.ZipFile.FileName)}";
+                    var filePath = Path.Combine(uploadsFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await updateDto.ZipFile.CopyToAsync(stream);
+                    }
+
+                    // 3. Agregar a la lista con el siguiente orden
+                    var nuevoZip = new TicketZipFileDto
+                    {
+                        Orden = listaZips.Count + 1,
+                        Url = Path.Combine("Uploads", "Empresa", existingTicket.IdEmpresa.ToString(), fileName).Replace("\\", "/"),
+                        FechaInsert = DateTime.Now
+                    };
+
+                    listaZips.Add(nuevoZip);
+
+                    // 4. Serializar de nuevo
+                    existingTicket.UrlArchivos = System.Text.Json.JsonSerializer.Serialize(listaZips);
                 }
 
                 // Guardar cambios del ticket principal
@@ -376,7 +452,6 @@ namespace ConectaBiz.Application.Services
             if (updateDto.IdUsuarioResponsableCliente > 0) existingTicket.IdUsuarioResponsableCliente = updateDto.IdUsuarioResponsableCliente;
             if (updateDto.IdPrioridad > 0) existingTicket.IdPrioridad = updateDto.IdPrioridad;
             if (!string.IsNullOrEmpty(updateDto.Descripcion)) existingTicket.Descripcion = updateDto.Descripcion;
-            if (!string.IsNullOrEmpty(updateDto.UrlArchivos)) existingTicket.UrlArchivos = updateDto.UrlArchivos;
             if (!string.IsNullOrEmpty(updateDto.UsuarioActualizacion)) existingTicket.UsuarioActualizacion = updateDto.UsuarioActualizacion;
         }
 

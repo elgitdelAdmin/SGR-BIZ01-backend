@@ -18,6 +18,8 @@ namespace ConectaBiz.Domain.Interfaces
         /// Obtiene un consultor por su ID
         /// </summary>
         Task<Consultor> GetByIdAsync(int id);
+        Task<Consultor> GetByIdPersonaAsync(int idPersona);
+
         Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio);
         Task<Consultor> GetByIdUserAsync(int iduser);
 
@@ -30,6 +32,7 @@ namespace ConectaBiz.Domain.Interfaces
         /// Actualiza un consultor existente
         /// </summary>
         Task<Consultor> UpdateAsync(Consultor consultor);
+        Task<Consultor> UpdateUserAsync(Consultor consultor);
 
         /// <summary>
         /// Elimina lógicamente un consultor por su ID

@@ -12,6 +12,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<Gestor>> GetAllAsync();
         Task<IEnumerable<Gestor>> GetByIdSocio(int idSocio);
         Task<Gestor?> GetByIdAsync(int id);
+        Task<Gestor?> GetByIdPersonaAsync(int idPersona);
         Task<Gestor?> GetByIdUserAsync(int iduser);
         Task<Gestor?> GetByPersonaIdAsync(int personaId);
         Task<Gestor> CreateAsync(Gestor gestor);

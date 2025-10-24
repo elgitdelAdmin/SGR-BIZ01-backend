@@ -1,4 +1,5 @@
 ﻿using ConectaBiz.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -70,6 +71,14 @@ public class TicketHistorialEstadoDto
 }
 
 // ===== TICKET DTOs =====
+
+public class TicketZipFileDto
+{
+    public int Orden { get; set; }
+    public string Url { get; set; }
+    public DateTime FechaInsert{ get; set; }
+}
+
 public class TicketInsertDto
 {
     public string CodTicketInterno { get; set; }
@@ -86,10 +95,14 @@ public class TicketInsertDto
     public string? CodReqSgrCsti {get;set; }
     public int? IdReqSgrCsti { get; set; }
 
+    // Nuevo campo para el .zip
+    public IFormFile? ZipFile { get; set; }
+
     // Colecciones relacionadas que siempre vienen en el request
     public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
     public List<TicketFrenteSubFrenteInsertDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteInsertDto>();
 }
+
 public class TicketUpdateDto
 {
     public string CodTicketInterno { get; set; } = string.Empty;
@@ -102,6 +115,8 @@ public class TicketUpdateDto
     public int IdPrioridad { get; set; }
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
+    // Nuevo campo para el .zip
+    public IFormFile? ZipFile { get; set; }
     public string UsuarioActualizacion { get; set; }
     public List<TicketConsultorAsignacionUpdateDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionUpdateDto>();
     public List<TicketFrenteSubFrenteUpdateDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteUpdateDto>();

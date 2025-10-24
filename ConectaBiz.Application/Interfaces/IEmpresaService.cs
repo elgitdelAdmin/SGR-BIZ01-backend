@@ -16,6 +16,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<EmpresaDto?> GetByIdAsync(int id);
         Task<PersonaConUsuariosEmpresaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento);
         Task<EmpresaDto?> GetByCodigoAsync(string codigo);
+        Task<EmpresaDto> GetByIdUserAsync(int iduser);
         Task<IEnumerable<EmpresaDto>> GetBySocioAsync(int idSocio);
         Task<IEnumerable<EmpresaDto>> GetByGestorAsync(int idGestor);
         Task<EmpresaDto> CreateAsync(CreateEmpresaDto createDto);

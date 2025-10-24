@@ -73,6 +73,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                  .Include(u => u.Socio)
                  .Include(u => u.Persona)
                  .Include(u => u.Rol)
+                 .Where(c => c.Activo)
                 .FirstOrDefaultAsync(u => u.Username == username);
         }
 
