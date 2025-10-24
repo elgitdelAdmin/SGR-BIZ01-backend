@@ -13,6 +13,7 @@ namespace ConectaBiz.Domain.Entities
         public int IdModulo { get; set; }
 
         public string DivsOcultos { get; set; } = "[]";
+        public string DivsBloqueados { get; set; } = "[]";
         public string ControlesBloqueados { get; set; } = "[]";
         public string ControlesOcultos { get; set; } = "[]";
 

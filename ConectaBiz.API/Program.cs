@@ -34,10 +34,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<SGRCSTIService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql("Host=64.23.182.32;Port=5432;Database=conectabiz_db;Username=postgres;Password=KQW%9gVPK!+2kCh")
-           .LogTo(Console.WriteLine, LogLevel.Information)
-           .EnableSensitiveDataLogging());
+
 
 // Add API Layer
 builder.Services.AddEndpointsApiExplorer();
@@ -76,11 +73,6 @@ builder.Services.AddHostedService<ConectaBiz.API.Jobs.RecurringJobWorker>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -88,8 +80,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger"; // Swagger estar� en /swagger
 });
 
-
-//app.UseHttpsRedirection();
 
 // Global error handling middleware
 app.UseMiddleware<ErrorHandlerMiddleware>();

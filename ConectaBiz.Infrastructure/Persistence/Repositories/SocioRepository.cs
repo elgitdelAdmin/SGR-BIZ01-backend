@@ -27,6 +27,67 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .OrderBy(s => s.RazonSocial)
                 .ToListAsync();
         }
+
+        public async Task<Socio?> ObtenerPorIdAsync(int id)
+        {
+            return await _context.Socios
+                .FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        public async Task<Socio?> ObtenerPorNumDocAsync(string numDoc)
+        {
+            if (string.IsNullOrWhiteSpace(numDoc))
+                return null;
+
+            return await _context.Socios
+                .FirstOrDefaultAsync(s => s.NumDocContribuyente == numDoc);
+        }
+
+        public async Task<Socio> CrearAsync(Socio socio)
+        {
+            _context.Socios.Add(socio);
+            await _context.SaveChangesAsync();
+            return socio;
+        }
+
+        public async Task<Socio> ActualizarAsync(Socio socio)
+        {
+            _context.Socios.Update(socio);
+            await _context.SaveChangesAsync();
+            return socio;
+        }
+
+        public async Task<bool> EliminarAsync(int id)
+        {
+            var socio = await _context.Socios.FindAsync(id);
+            if (socio == null)
+                return false;
+
+            // Eliminación lógica
+            socio.Activo = false;
+            socio.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ExisteNumDocAsync(string numDoc)
+        {
+            if (string.IsNullOrWhiteSpace(numDoc))
+                return false;
+
+            return await _context.Socios
+                .AnyAsync(s => s.NumDocContribuyente == numDoc && s.Activo);
+        }
+
+        public async Task<bool> ExisteNumDocAsync(string numDoc, int idExcluir)
+        {
+            if (string.IsNullOrWhiteSpace(numDoc))
+                return false;
+
+            return await _context.Socios
+                .AnyAsync(s => s.NumDocContribuyente == numDoc && s.Id != idExcluir && s.Activo);
+        }
     }
 
 }

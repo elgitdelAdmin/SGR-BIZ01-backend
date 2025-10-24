@@ -87,6 +87,14 @@ namespace ConectaBiz.Application.Services
 
             return _mapper.Map<ConsultorDto>(consultor);
         }
+        public async Task<IEnumerable<ConsultorDto>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente)
+        {
+            var consultor = await _consultorRepository.GetByNumDocContribuyenteSocioAsync(numDocContribuyente);
+            if (consultor == null)
+                return null;
+
+            return _mapper.Map<IEnumerable<ConsultorDto>>(consultor);
+        }
 
         public async Task<ConsultorDto> CreateAsync(ConsultorDto consultorDto)
         {

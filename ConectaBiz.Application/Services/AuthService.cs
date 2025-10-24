@@ -16,14 +16,18 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
-
+        private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
+        private readonly Lazy<ITicketService> _ticketService;
         public AuthService(
             IUserRepository userRepository, 
             IGestorRepository gestorRepository,
             IConsultorRepository consultorRepository,
             ITokenService tokenService, 
             IMapper mapper, 
-            IPersonaService personaService)
+            IPersonaService personaService,
+            Lazy<INotificacionTicketService> notificacionTicketService,
+            Lazy<ITicketService> ticketService
+        )
         {
             _userRepository = userRepository;
             _gestorRepository = gestorRepository;
@@ -31,6 +35,10 @@ namespace ConectaBiz.Application.Services
             _tokenService = tokenService;
             _mapper = mapper;
             _personaService = personaService;
+            _notificacionTicketService = notificacionTicketService;
+            _ticketService = ticketService;
+            _notificacionTicketService = notificacionTicketService;
+            _ticketService = ticketService;
         }
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
@@ -47,6 +55,12 @@ namespace ConectaBiz.Application.Services
             var user = await _userRepository.GetByIdAsync(id);
             return _mapper.Map<UserDto>(user);
         }
+        public async Task<IEnumerable<UserDto>> GetUsersByIdAsync(int[] ids)
+        {
+            var users = await _userRepository.GetUsersByIdAsync(ids);
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
+
         public async Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona)
         {
             var user = await _userRepository.GetByIdSocioIdRolIdPersonaAsync(idsocio, idrol, idpersona);
@@ -71,6 +85,9 @@ namespace ConectaBiz.Application.Services
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
+            await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
+
+            var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash))
             {
@@ -92,12 +109,15 @@ namespace ConectaBiz.Application.Services
 
             await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
 
+            var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
             return new AuthResponseDto
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddHours(1),
-                User = _mapper.Map<UserDto>(user)
+                User = _mapper.Map<UserDto>(user),
+                IdConsultor = consultor?.Id,
+                NotificacionTicket = notificacionTicketDto.ToList()
             };
         }
 
@@ -128,7 +148,7 @@ namespace ConectaBiz.Application.Services
             var userCreado = await _userRepository.CreateAsync(user);
             var rol = await _userRepository.GetRolByIdAsync(registerRequest.IdRol);
 
-            if (rol.Codigo == AppConstants.Roles.Gestor)
+            if (rol.Codigo == AppConstants.Roles.GestorCuenta || rol.Codigo == AppConstants.Roles.GestorConsultoria)
             {
                 if (!await _gestorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
@@ -146,15 +166,11 @@ namespace ConectaBiz.Application.Services
                     await _gestorRepository.CreateAsync(gestor);
                 }
                 else {
-                    var Gestor = await _gestorRepository.GetByIdPersonaAsync(persona.Id);
-                    var gestor = new Gestor
-                    {
-                        Id = Gestor.Id,
-                        IdUser = userCreado.Id,
-                        UsuarioActualizacion = registerRequest.UsuarioCreacion,
-                        FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local)
-                    };
-                    await _gestorRepository.UpdateAsync(gestor);
+                    var gestorExistente = await _gestorRepository.GetByIdPersonaAsync(persona.Id);
+                    gestorExistente.IdUser = userCreado.Id;
+                    gestorExistente.UsuarioActualizacion = registerRequest.UsuarioCreacion;
+                    gestorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _gestorRepository.UpdateAsync(gestorExistente);
                 }
             }
             if (rol.Codigo == AppConstants.Roles.Consultor)
@@ -176,15 +192,11 @@ namespace ConectaBiz.Application.Services
                 }
                 else
                 {
-                    var Consultor = await _consultorRepository.GetByIdPersonaAsync(persona.Id);
-                    var consultor = new Consultor
-                    {
-                        Id = Consultor.Id,
-                        IdUser = userCreado.Id,
-                        UsuarioActualizacion = registerRequest.UsuarioCreacion,
-                        FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                    };
-                    await _consultorRepository.UpdateUserAsync(consultor);
+                    var consultorexistente = await _consultorRepository.GetByIdPersonaAsync(persona.Id);
+                    consultorexistente.IdUser = userCreado.Id;
+                    consultorexistente.UsuarioActualizacion = registerRequest.UsuarioCreacion;
+                    consultorexistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _consultorRepository.UpdateUserAsync(consultorexistente);
                 }
             }
             var accessToken = _tokenService.GenerateAccessToken(user);

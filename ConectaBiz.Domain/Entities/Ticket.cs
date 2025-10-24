@@ -19,6 +19,7 @@ public class Ticket
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int? IdGestor { get; set; }
+    public int? IdGestorConsultoria { get; set; }    
     public int IdUsuarioResponsableCliente { get; set; }
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }
@@ -30,6 +31,11 @@ public class Ticket
     public DateTime? FechaActualizacion { get; set; }
     public string? UsuarioCreacion { get; set; }
     public string? UsuarioActualizacion { get; set; }
+    public bool EsCargaMasiva { get; set; } = false;
+    public string? DatosCargaMasiva { get; set; }
+
+    [ForeignKey(nameof(IdEmpresa))]
+    public virtual Empresa Empresa { get; set; }
     public virtual ICollection<TicketConsultorAsignacion> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacion>();
     public virtual ICollection<TicketFrenteSubFrente> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrente>();
     public virtual ICollection<TicketHistorialEstado> TicketHistorialEstado { get; set; } = new List<TicketHistorialEstado>();
@@ -45,8 +51,19 @@ public class TicketConsultorAsignacion
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
     public virtual Ticket Ticket { get; set; } = null!;
+    public ICollection<DetalleTareasConsultor> DetalleTareasConsultor { get; set; } = new List<DetalleTareasConsultor>();
 }
-
+public class DetalleTareasConsultor
+{
+    public int Id { get; set; }
+    public int IdTicketConsultorAsignacion { get; set; }
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFin { get; set; }
+    public int Horas { get; set; }
+    public string Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+    public TicketConsultorAsignacion TicketConsultorAsignacion { get; set; }
+}
 public class TicketFrenteSubFrente
 {
     public int Id { get; set; }
@@ -54,6 +71,8 @@ public class TicketFrenteSubFrente
     public int IdFrente { get; set; }
     public int IdSubFrente { get; set; }
     public int Cantidad { get; set; }
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFin { get; set; }
     public DateTime FechaCreacion { get; set; }
     public string UsuarioCreacion { get; set; }
     public DateTime? FechaModificacion { get; set; }

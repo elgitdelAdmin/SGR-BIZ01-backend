@@ -17,6 +17,7 @@ namespace ConectaBiz.Application.Services
         private readonly IEmpresaRepository _empresaRepository;
         private readonly IPersonaRepository _personaRepository;
         private readonly IPersonaService _personaService;
+        private readonly IGestorService _gestorService;
         private readonly IAuthService _userService;
         private readonly IMapper _mapper;
 
@@ -24,12 +25,14 @@ namespace ConectaBiz.Application.Services
             IEmpresaRepository empresaRepository,
             IPersonaRepository personaRepository,
             IPersonaService personaService,
+            IGestorService gestorService,
             IAuthService userService,
             IMapper mapper)
         {
             _empresaRepository = empresaRepository;
             _personaRepository = personaRepository;
             _personaService = personaService;
+            _gestorService = gestorService;
             _userService = userService;
             _mapper = mapper;
         }
@@ -44,6 +47,24 @@ namespace ConectaBiz.Application.Services
             var empresas = await _empresaRepository.GetByIdSocio(idSocio);
             return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
         }
+        public async Task<IEnumerable<EmpresaDto>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        {
+            IEnumerable<EmpresaDto> listadoEmpresas= Enumerable.Empty<EmpresaDto>();
+            if (codRol == AppConstants.Roles.GestorCuenta)
+            {
+                GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                var empresas = await _empresaRepository.GetByIdGestorCuenta(gestorDto.Id, gestorDto.IdSocio);
+                listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+            }
+            else
+            {
+                UserDto userDto = await _userService.GetByIdAsync(idUser);
+                var empresas = await _empresaRepository.GetByIdSocio(userDto.Socio.Id);
+                listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+            }
+            return listadoEmpresas;
+        }
+
         public async Task<IEnumerable<EmpresaDto>> GetAllActiveAsync()
         {
             var empresas = await _empresaRepository.GetAllActiveAsync();
@@ -62,22 +83,34 @@ namespace ConectaBiz.Application.Services
                 return null;
             return _mapper.Map<EmpresaDto>(empresa);
         }
+        public async Task<EmpresaDto> GetByNumDocContribuyenteAsync(string numDocContribuyente, string numDocSocio)
+        {
+            var empresa = await _empresaRepository.GetByNumDocContribuyenteAsync(numDocContribuyente, numDocSocio);
+            if (empresa == null)
+                return null;
+            return _mapper.Map<EmpresaDto>(empresa);
+        }
         public async Task<PersonaConUsuariosEmpresaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
         {
             if (string.IsNullOrEmpty(numeroDocumento))
             {
-                throw new InvalidOperationException("Se debe proporcionar un número de documento válido para la persona responsable");
+                throw new InvalidOperationException("Debe proporcionar un número de documento válido.");
             }
 
-            var persona = await _personaRepository.GetByResponsableTipoNumDocumentoAsync(idTipoDocumento, numeroDocumento, AppConstants.Roles.Empresa);
+            var persona = await _personaRepository.GetByResponsableTipoNumDocumentoAsync(
+                idTipoDocumento,
+                numeroDocumento,
+                AppConstants.Roles.Empresa
+            );
 
             if (persona == null)
             {
-                throw new InvalidOperationException("No se encontró una persona con el documento proporcionado");
+                return null; // 👈 no lanzamos excepción, devolvemos null
             }
-            var personaDto = _mapper.Map<PersonaConUsuariosEmpresaDto>(persona);
-            return personaDto;
+
+            return _mapper.Map<PersonaConUsuariosEmpresaDto>(persona);
         }
+
 
         public async Task<EmpresaDto?> GetByCodigoAsync(string codigo)
         {

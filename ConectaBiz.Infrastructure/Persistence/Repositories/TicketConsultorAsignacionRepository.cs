@@ -36,16 +36,141 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<TicketConsultorAsignacion> CreateAsync(TicketConsultorAsignacion asignacion)
         {
-            _context.TicketConsultorAsignacion.Add(asignacion);
-            await _context.SaveChangesAsync();
-            return asignacion;
+            try
+            {
+                _context.TicketConsultorAsignacion.Add(asignacion);
+                await _context.SaveChangesAsync();
+                return asignacion;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
+        public async Task<IEnumerable<TicketConsultorAsignacion>> CreateRangeAsync(List<TicketConsultorAsignacion> asignaciones)
+        {
+            try
+            {
+                if (asignaciones == null || asignaciones.Count == 0)
+                    return new List<TicketConsultorAsignacion>();
+
+                // Si quieres, puedes asegurar que ninguna entidad con el mismo Id ya esté siendo rastreada
+                var ids = asignaciones.Where(a => a.Id != 0).Select(x => x.Id).ToList();
+                var trackedEntities = _context.ChangeTracker.Entries<TicketConsultorAsignacion>()
+                    .Where(e => ids.Contains(e.Entity.Id))
+                    .ToList();
+
+                foreach (var entity in trackedEntities)
+                {
+                    entity.State = EntityState.Detached;
+                }
+
+                await _context.TicketConsultorAsignacion.AddRangeAsync(asignaciones);
+                await _context.SaveChangesAsync();
+
+                return asignaciones;
+            }
+            catch (Exception ex)
+            {
+                // Aquí podrías loggear ex antes de relanzar
+                throw;
+            }
+        }
+
+
+        public async Task<IEnumerable<DetalleTareasConsultor>> CreateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas)
+        {
+            try
+            {
+                if (detallesTareas == null || detallesTareas.Count == 0)
+                    return new List<DetalleTareasConsultor>();
+
+                // Asegúrate que todos los Id sean 0 para inserción
+                foreach (var tarea in detallesTareas)
+                {
+                    tarea.Id = 0; // Forzar inserción
+                }
+                await _context.DetalleTareasConsultor.AddRangeAsync(detallesTareas);
+                await _context.SaveChangesAsync();
+
+                return detallesTareas;
+            }
+            catch (Exception ex)
+            {
+                // Log del error con más detalle
+                Console.WriteLine($"Error al guardar tareas: {ex.Message}");
+                Console.WriteLine($"Cantidad de tareas: {detallesTareas?.Count ?? 0}");
+                throw;
+            }
+        }
+
 
         public async Task<TicketConsultorAsignacion> UpdateAsync(TicketConsultorAsignacion asignacion)
         {
             _context.TicketConsultorAsignacion.Update(asignacion);
             await _context.SaveChangesAsync();
             return asignacion;
+        }
+        public async Task<IEnumerable<TicketConsultorAsignacion>> UpdateRangeAsync(List<TicketConsultorAsignacion> asignaciones)
+        {
+            try
+            {
+                if (asignaciones == null || asignaciones.Count == 0)
+                    return new List<TicketConsultorAsignacion>();
+
+                // Obtener los IDs que vamos a actualizar
+                var ids = asignaciones.Select(x => x.Id).ToList();
+
+                // Detach las entidades que podrían estar siendo rastreadas
+                var trackedEntities = _context.ChangeTracker.Entries<TicketConsultorAsignacion>()
+                    .Where(e => ids.Contains(e.Entity.Id))
+                    .ToList();
+
+                foreach (var entity in trackedEntities)
+                {
+                    entity.State = EntityState.Detached;
+                }
+
+                _context.TicketConsultorAsignacion.UpdateRange(asignaciones);
+                await _context.SaveChangesAsync();
+                return asignaciones;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        public async Task<IEnumerable<DetalleTareasConsultor>> UpdateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas)
+        {
+            try
+            {
+                if (detallesTareas == null || detallesTareas.Count == 0)
+                    return new List<DetalleTareasConsultor>();
+
+                // Obtener los IDs que vamos a actualizar
+                var ids = detallesTareas.Select(x => x.Id).ToList();
+
+                // Detach las entidades que podrían estar siendo rastreadas
+                var trackedEntities = _context.ChangeTracker.Entries<DetalleTareasConsultor>()
+                    .Where(e => ids.Contains(e.Entity.Id))
+                    .ToList();
+
+                foreach (var entity in trackedEntities)
+                {
+                    entity.State = EntityState.Detached;
+                }
+
+                _context.DetalleTareasConsultor.UpdateRange(detallesTareas);
+                await _context.SaveChangesAsync();
+
+                return detallesTareas;
+            }
+            catch (Exception ex)
+            {
+                // Aquí puedes loggear ex si lo deseas
+                throw;
+            }
         }
 
         public async Task<bool> DeactivateAllByTicketIdAsync(int idTicket, string usuarioDesasignacion)

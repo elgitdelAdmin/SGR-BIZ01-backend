@@ -40,13 +40,72 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             await _context.SaveChangesAsync();
             return frenteSubFrente;
         }
-
         public async Task<TicketFrenteSubFrente> UpdateAsync(TicketFrenteSubFrente frenteSubFrente)
         {
             _context.TicketFrenteSubFrente.Update(frenteSubFrente);
             await _context.SaveChangesAsync();
             return frenteSubFrente;
         }
+
+        public async Task<IEnumerable<TicketFrenteSubFrente>> CreateRangeAsync(IEnumerable<TicketFrenteSubFrente> frentesSubFrentes)
+        {
+            if (frentesSubFrentes == null || !frentesSubFrentes.Any())
+                throw new ArgumentException("La lista no puede estar vacía.");
+
+            await _context.TicketFrenteSubFrente.AddRangeAsync(frentesSubFrentes);
+            await _context.SaveChangesAsync();
+
+            return frentesSubFrentes;
+        }
+
+        public async Task<IEnumerable<TicketFrenteSubFrente>> UpdateRangeAsync(IEnumerable<TicketFrenteSubFrente> frentesSubFrentes)
+        {
+            try
+            {
+                if (frentesSubFrentes == null || !frentesSubFrentes.Any())
+                    throw new ArgumentException("La lista no puede estar vacía.");
+
+                // Iteramos sobre las entidades mapeadas
+                foreach (var entidad in frentesSubFrentes)
+                {
+                    // Verificamos si ya hay una entidad con el mismo Id trackeada
+                    var tracked = _context.ChangeTracker.Entries<TicketFrenteSubFrente>()
+                        .FirstOrDefault(e => e.Entity.Id == entidad.Id);
+
+                    if (tracked != null)
+                    {
+                        // Sobrescribimos los valores de la entidad trackeada con los del mapper
+                        tracked.CurrentValues.SetValues(entidad);
+
+                        // Indicamos que los campos de creación no se deben modificar
+                        tracked.Property(x => x.UsuarioCreacion).IsModified = false;
+                        tracked.Property(x => x.FechaCreacion).IsModified = false;
+                    }
+                    else
+                    {
+                        // Si no está trackeada, la adjuntamos y marcamos como Modified
+                        _context.TicketFrenteSubFrente.Attach(entidad);
+                        _context.Entry(entidad).State = EntityState.Modified;
+
+                        // Evitamos modificar los campos de creación
+                        _context.Entry(entidad).Property(x => x.UsuarioCreacion).IsModified = false;
+                        _context.Entry(entidad).Property(x => x.FechaCreacion).IsModified = false;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                return frentesSubFrentes;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+
+
+
 
         public async Task<bool> DeactivateAllByTicketIdAsync(int idTicket, string usuarioModificacion)
         {

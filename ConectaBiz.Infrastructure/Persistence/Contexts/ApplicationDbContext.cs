@@ -20,6 +20,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Parametro> Parametros { get; set; }
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<TicketConsultorAsignacion> TicketConsultorAsignacion { get; set; }
+        public DbSet<DetalleTareasConsultor> DetalleTareasConsultor { get; set; }
         public DbSet<TicketFrenteSubFrente> TicketFrenteSubFrente { get; set; }
         public DbSet<TicketHistorialEstado> TicketHistorialEstado { get; set; }
         public DbSet<Pais> Pais { get; set; }
@@ -29,6 +30,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Modulo> Modulos { get; set; }
         public DbSet<RolPermisoModulo> RolPermisoModulos { get; set; }
         public DbSet<Socio> Socios { get; set; }
+        public DbSet<NotificacionTicket> NotificacionTickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -275,7 +277,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasKey(e => e.Id).HasName("PK_Ticket");
                 entity.HasIndex(e => e.CodTicket).IsUnique().HasDatabaseName("UK_Ticket_CodTicket");
                 entity.Property(e => e.CodTicketInterno).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Titulo).IsRequired().HasMaxLength(121);
+                entity.Property(e => e.Titulo).IsRequired();
                 entity.Property(e => e.FechaSolicitud).HasColumnType("timestamp without time zone").IsRequired();
                 entity.HasIndex(e => e.IdTipoTicket);
                 entity.HasIndex(e => e.IdEstadoTicket);
@@ -286,12 +288,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UrlArchivos);
                 entity.Property(e => e.IdReqSgrCsti);
                 entity.Property(e => e.IdGestor);
+                entity.Property(e => e.IdGestorConsultoria);
                 entity.Property(e => e.CodReqSgrCsti).HasMaxLength(50);
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
                 entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
                 entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
                 entity.Property(e => e.UsuarioActualizacion).HasMaxLength(50);
+                entity.Property(e => e.EsCargaMasiva).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.DatosCargaMasiva);
             });
 
             // Configuración de TicketConsultorAsignacion
@@ -311,8 +316,25 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .WithMany(p => p.ConsultorAsignaciones)
                     .HasForeignKey(d => d.IdTicket)
                     .OnDelete(DeleteBehavior.Cascade);
-
             });
+
+            modelBuilder.Entity<DetalleTareasConsultor>(entity =>
+            {
+                entity.ToTable("DetalleTareasConsultor", "conectabiz");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.FechaInicio).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.FechaFin).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.Horas).IsRequired();
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
+
+                entity.HasOne(d => d.TicketConsultorAsignacion)
+                    .WithMany(p => p.DetalleTareasConsultor)
+                    .HasForeignKey(d => d.IdTicketConsultorAsignacion)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // Configuración de TicketFrenteSubFrente
             modelBuilder.Entity<TicketFrenteSubFrente>(entity =>
@@ -325,6 +347,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
                 entity.Property(e => e.Cantidad);
+                entity.Property(e => e.FechaInicio).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.FechaFin).HasColumnType("timestamp without time zone");
                 entity.Property(e => e.IdFrente).IsRequired();
                 entity.Property(e => e.IdSubFrente).IsRequired();
                 entity.HasOne(d => d.Ticket)
@@ -530,6 +554,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasIndex(e => new { e.IdRol, e.IdModulo }).IsUnique();
 
                 entity.Property(e => e.DivsOcultos).IsRequired();
+                entity.Property(e => e.DivsBloqueados).IsRequired();
                 entity.Property(e => e.ControlesBloqueados).IsRequired();
                 entity.Property(e => e.ControlesOcultos).IsRequired();
 
@@ -538,7 +563,33 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                       .HasForeignKey(e => e.IdModulo)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+            modelBuilder.Entity<NotificacionTicket>(entity =>
+            {
+                entity.ToTable("NotificacionTicket", "conectabiz");
+                entity.HasKey(e => e.Id);
 
+                entity.Property(e => e.IdTicket).IsRequired();
+                entity.Property(e => e.IdUser).IsRequired();
+                //entity.Property(e => e.TipoDestinatario).IsRequired().HasMaxLength(50);
+                //entity.Property(e => e.Titulo).HasMaxLength(200);
+                entity.Property(e => e.Mensaje).HasColumnType("text");
+                entity.Property(e => e.Leido).IsRequired().HasDefaultValue(false);
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").IsRequired().HasDefaultValueSql("now()");
+                entity.Property(e => e.FechaLectura).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+
+                // Índices para mejorar rendimiento
+                entity.HasIndex(e => e.IdUser).HasDatabaseName("IX_NotificacionTicket_IdUser");
+                entity.HasIndex(e => e.IdTicket).HasDatabaseName("IX_NotificacionTicket_IdTicket");
+                entity.HasIndex(e => new { e.IdUser, e.Leido }).HasDatabaseName("IX_NotificacionTicket_User_Leido");
+
+                // Relación con Ticket
+                entity.HasOne(e => e.Ticket)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdTicket)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_NotificacionTicket_Ticket");
+            });
         }
     }
 }

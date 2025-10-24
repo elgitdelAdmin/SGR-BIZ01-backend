@@ -1,5 +1,6 @@
 ﻿using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
@@ -185,6 +186,7 @@ namespace ConectaBiz.API.Controllers
         /// Crea un nuevo ticket
         /// </summary>
         [HttpPost]
+        [RequestTimeout(120000)] // 2 minutos
         public async Task<ActionResult<TicketDto>> Create([FromForm] TicketInsertDto insertDto)
         {
             try
@@ -203,10 +205,51 @@ namespace ConectaBiz.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear el ticket");
-                return StatusCode(500, "Error interno del servidor");
+                return StatusCode(500, ex.Message);
             }
         }
+        //[HttpPost]
+        //public async Task<ActionResult<TicketDto>> CrearTicket([FromBody] TicketInsertDto insertDto)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //            return BadRequest(ModelState);
 
+        //        var ticket = await _ticketService.CreateAsync(insertDto);
+        //        return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        _logger.LogWarning(ex, "Error de validación al crear ticket");
+        //        return BadRequest(ex.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error al crear el ticket");
+        //        return StatusCode(500, "Error interno del servidor");
+        //    }
+        //}
+        //// Subir ZIP
+        //[HttpPost("subir-archivo/{ticketId}")]
+        //public async Task<ActionResult<TicketZipFileDto>> SubirArchivo(int ticketId, IFormFile zipFile)
+        //{
+        //    try
+        //    {
+        //        var result = await _ticketService.UploadZipFileAsync(ticketId, zipFile);
+        //        return Ok(result);
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        _logger.LogWarning(ex, "Error al subir archivo");
+        //        return BadRequest(ex.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Error interno al subir archivo");
+        //        return StatusCode(500, "Error interno del servidor");
+        //    }
+        //}
         /// <summary>
         /// Actualiza un ticket existente
         /// </summary>
@@ -229,7 +272,7 @@ namespace ConectaBiz.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al actualizar el ticket: {Id}", id);
-                return StatusCode(500, "Error interno del servidor");
+                return StatusCode(500, ex.Message);
             }
         }
 

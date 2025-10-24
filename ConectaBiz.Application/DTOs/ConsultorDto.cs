@@ -15,6 +15,7 @@ namespace ConectaBiz.Application.DTOs
         public int IdNivelExperiencia { get; set; }
         public int IdModalidadLaboral { get; set; }
         public int IdSocio { get; set; }
+        public int IdUser { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
         public string? UsuarioActualizacion { get; set; }

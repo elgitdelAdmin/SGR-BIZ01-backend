@@ -2,6 +2,7 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
+using ConectaBiz.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,19 +13,21 @@ namespace ConectaBiz.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly INotificacionTicketService _notificacionTicketService;        
         private readonly ILogger<AuthController> _logger;
         private readonly IMapper _mapper;
 
         public AuthController(IAuthService authService,
+                        INotificacionTicketService notificacionTicketService,
                         ILogger<AuthController> logger,
                         IMapper mapper
         )
         {
             _authService = authService;
+            _notificacionTicketService = notificacionTicketService;
             _logger = logger;
             _mapper = mapper;
         }
-
 
         [HttpGet("usuario")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -49,6 +52,7 @@ namespace ConectaBiz.API.Controllers
             try
             {
                 var userDto = await _authService.GetByIdAsync(id);
+
                 if (userDto == null)
                 {
                     return NotFound("Usuario no encontrado");
@@ -166,6 +170,19 @@ namespace ConectaBiz.API.Controllers
                 throw;
             }
            
+        }
+        [HttpPost("MarcarNotificacionComoLeida")]
+        public async Task<ActionResult<AuthResponseDto>> MarcarComoLeidaAsync(int idUser, int[] idsNotificaciones)
+        {
+            try
+            {
+                var response = await _notificacionTicketService.MarcarComoLeidaAsync(idUser, idsNotificaciones);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
 
         [HttpPost("refresh-token")]

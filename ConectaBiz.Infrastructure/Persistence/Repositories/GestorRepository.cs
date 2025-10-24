@@ -1,4 +1,5 @@
-﻿using ConectaBiz.Domain.Entities;
+﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,26 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
+        public async Task<IEnumerable<Gestor>> GetByIdsAsync(int[] ids)
+        {
+            return await _context.Gestores
+                .Where(g => ids.Contains(g.Id))                
+                .Include(g => g.Persona)
+                .Include(g => g.GestorFrenteSubFrente
+                               .Where(gf => gf.Activo))        
+                .AsNoTracking()                                
+                .ToListAsync();                                
+        }
+
+
+        public async Task<IEnumerable<Gestor>> GetByIdRolAsync(int idRol)
+        {
+            return await _context.Gestores
+                .Include(g => g.Persona)
+                .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
+                .Where(g => g.Persona.Users.Any(u => u.IdRol == idRol && u.Activo))
+                .ToListAsync();
+        }
         public async Task<Gestor?> GetByIdPersonaAsync(int idPersona)
         {
             return await _context.Gestores
@@ -79,9 +100,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<Gestor> UpdateAsync(Gestor gestor)
         {
-            _context.Entry(gestor).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return gestor;
+            try
+            {
+                _context.Entry(gestor).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return gestor;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+           
         }
 
         public async Task<bool> DeleteAsync(int id)
