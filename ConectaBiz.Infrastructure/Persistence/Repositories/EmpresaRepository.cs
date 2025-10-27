@@ -109,6 +109,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                                           && e.Socio.NumDocContribuyente == numDocSocio);
         }
 
+        public async Task<Empresa?> GetByNumDocContribuyenteDatAsync(string numDocContribuyente)
+        {
+            return await _context.Empresas
+                .Where(e => e.Activo)
+                .Include(e => e.Pais)
+                .Include(e => e.Gestor)
+                    .ThenInclude(g => g.Persona)
+                .Include(e => e.Socio)
+                .FirstOrDefaultAsync(e => e.NumDocContribuyente == numDocContribuyente);
+        }
+
         public async Task<Empresa?> GetByCodigoAsync(string codigo)
         {
             return await _context.Empresas

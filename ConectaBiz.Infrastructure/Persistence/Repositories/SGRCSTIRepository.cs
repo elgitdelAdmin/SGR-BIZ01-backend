@@ -98,9 +98,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 left join usuario u on r.idusuario = u.idusuario
                 left join prioridad p on r.idprioridad = p.idprioridad
                 left join  empresa e2 on r.idempresa  = e2.idempresa 
-                --where e.idestadorequerimiento in (-3) AND r.fecharegistro >= '2025-06-18'
-                where e.idestadorequerimiento in (-3) and r.fecharegistro >= NOW() - INTERVAL '20 minutes'
-                --LIMIT 2;
+                where e.idestadorequerimiento in (-3) AND r.fecharegistro >= DATE_TRUNC('day', NOW())
                 ";
 
                 await context.OpenAsync();
