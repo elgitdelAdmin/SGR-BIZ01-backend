@@ -177,6 +177,7 @@ namespace ConectaBiz.Application.DTOs
         public string Descripcion { get; set; }
         public string UsuarioCreacion { get; set; }
         public int? IdGestor { get; set; }
+        public int? IdGestorConsultoria { get; set; }        
         public bool EsCargaMasiva { get; set; } = false;
         public string? DatosCargaMasiva { get; set; }
         public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
