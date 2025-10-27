@@ -3,6 +3,7 @@ using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace ConectaBiz.Infrastructure.Persistence.Repositories
 {
@@ -117,13 +118,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
         {
+            // Lista de gestores válidos: el recibido por parámetro y el 47 fijo
+            var idsGestores = new List<int> { idGestor, 47 };
+
             return await _context.Ticket
-                .Where(t => t.IdGestor == idGestor)
+                .Where(t => t.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value)) 
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
+
         public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
         {
             return await _context.Ticket

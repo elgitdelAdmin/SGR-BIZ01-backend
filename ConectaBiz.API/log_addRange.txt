@@ -66,3 +66,13 @@ Construcción notificaciones ms=1 (count=1)
 Repository.AddRangeAsync ms=210
 ✅ FIN EXITOSO (total ms=402)
 ========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2025-10-24 13:37:35
+GetUsersByIdAsync ms=203
+Filtrar destinatarios ms=0 (count=4)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=4)
+Repository.AddRangeAsync ms=421
+✅ FIN EXITOSO (total ms=625)
+========== FIN AddRangeAsync ==========

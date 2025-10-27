@@ -66,12 +66,12 @@ namespace ConectaBiz.Domain.Constants
             public static class TipoCargaMasivaTicketExcelia
             {
                 public const string Incidentes = "INC";
-                public const string Requerimientos = "REQ";
+                public const string Solicitud = "SOL";
             }
             public static class TipoCargaMasivaTicketRansa
             {
-                public const string Incidentes = "300_";
-                public const string Requerimientos = "100_";
+                public const string Incidentes = "300";
+                public const string Requerimientos = "100";
             }
         }
         public static class TipoActividad

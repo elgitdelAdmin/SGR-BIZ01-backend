@@ -130,14 +130,15 @@ namespace ConectaBiz.Application.Services
                         Titulo = req.titulo,
                         FechaSolicitud = req.fecharegistro,
                         IdTipoTicket = tipoTicket,
-                        IdEstadoTicket = 1,// req.idestadorequerimiento,
+                        IdEstadoTicket = 59,// req.idestadorequerimiento,
                         IdEmpresa = idEmpresa,
                         IdUsuarioResponsableCliente = personaDto.Id,
                         IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, // Si tienes archivos, asígnalos aquí
                         UsuarioCreacion = "Migracion",
-                        EsCargaMasiva = true
+                        EsCargaMasiva = true,
+                        IdGestorConsultoria = 32
                         //ConsultorAsignaciones = new List<TicketConsultorAsignacionInsertDto>(), // Llena si corresponde
                         //FrenteSubFrentes = new List<TicketFrenteSubFrenteInsertDto>() // Llena si corresponde
                     };
