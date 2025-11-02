@@ -63,6 +63,8 @@ namespace ConectaBiz.Domain.Constants
             public const string RequerimientosAlicorp = "REQ_ALICORP";
             public const string TicketsExcelia = "TKT_EXCELIA";
             public const string TicketsRansa = "TKT_RANSA";
+            public const string TicketsIasa= "TKT_IASA";
+
             public static class TipoCargaMasivaTicketExcelia
             {
                 public const string Incidentes = "INC";
@@ -72,6 +74,11 @@ namespace ConectaBiz.Domain.Constants
             {
                 public const string Incidentes = "300";
                 public const string Requerimientos = "100";
+            }
+            public static class TipoCargaMasivaTicketIasa
+            {
+                public const string Incidentes = "Incidente";
+                public const string Requerimientos = "Solicitud";
             }
         }
         public static class TipoActividad
@@ -98,6 +105,7 @@ namespace ConectaBiz.Domain.Constants
             public const string AlicorpNumDocContribuyente = "20100055237";
             public const string ExceliaNumDocContribuyente = "20100039037";
             public const string RansaNumDocContribuyente = "20100039027";
+            public const string IasaNumDocContribuyente = "10232330290";
         }
         public static class Socios
         {
