@@ -26,7 +26,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(n => n.Ticket)
                 .Where(n => n.IdUser == idUser && n.Activo)
                 .OrderByDescending(n => n.FechaCreacion)
-                .Take(3)
+                .Take(20)
                 .ToListAsync();
         }
 

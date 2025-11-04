@@ -213,10 +213,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             }
         }
 
-
-
-
-
         public async Task<Ticket> UpdateAsync(Ticket ticket)
         {
             try

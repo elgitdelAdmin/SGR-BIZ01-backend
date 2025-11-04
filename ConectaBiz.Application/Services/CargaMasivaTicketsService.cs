@@ -134,6 +134,28 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             .Select(p => p.Trim().ToLower())
             .ToList();
 
+        // 🔹 Palabras prohibidas o que deben eliminarse
+        var palabrasNoDeseadas = new List<string>
+        {
+            "csti_facturación",
+            "csti_finanzas",
+            "csti_compras",
+            "csti_rrhh",
+            "csti_abap",
+            "csti_pp",
+            "csti_controlling",
+            "csti_" // este último elimina cualquier palabra que empiece con "csti_"
+        };
+
+        // 🔹 Filtrar las palabras no deseadas
+        partes = partes
+            .Where(p => !palabrasNoDeseadas.Any(nd => p.Contains(nd)))
+            .ToList();
+
+        // 🔹 Si después de limpiar no queda nada, retornar null
+        if (partes.Count == 0)
+            return null;
+
         foreach (var consultor in _listaConsultores)
         {
             var persona = consultor.Persona;
@@ -326,6 +348,15 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             { "Closed", "CERRADO" }
         };
         }
+        else if(_tipoCarga == AppConstants.TipoCargaMasiva.TicketsIasa)
+        {
+            mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Pending", "PENDIENTE_APROBACION" },
+            { "En proceso", "EN_EJECUCION" },
+            { "Por disponibilidad del usuario", "PENDIENTE_CLIENTE" }
+        };
+        }
         // --- 🔹 Otros casos ---
         else
         {
@@ -363,11 +394,11 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         var mapeoNombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // --- Ransa ---
-        if (_tipoCarga == AppConstants.TipoCargaMasiva.TicketsRansa)
+        if (_tipoCarga == AppConstants.TipoCargaMasiva.TicketsRansa || _tipoCarga == AppConstants.TipoCargaMasiva.TicketsIasa)
         {
-            mapeoNombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        mapeoNombres = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "medium", "Media" },
+            { "Medium", "Media" },
             { "Low", "Baja" },
             { "High", "Alta" },
             { "Critical", "Crítica" }

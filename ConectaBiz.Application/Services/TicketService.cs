@@ -5,6 +5,8 @@ using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
+using NPOI.SS.Formula;
+using NPOI.SS.Formula.Functions;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -117,8 +119,8 @@ namespace ConectaBiz.Application.Services
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByGestorConsultoriaAsync(gestorDto.Id);
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+               .Where(t => t.FrenteSubFrentes != null && t.FrenteSubFrentes.Count > 0)
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
@@ -344,7 +346,7 @@ namespace ConectaBiz.Application.Services
                 log.AppendLine($"✅ FIN EXITOSO (total ms={sw.ElapsedMilliseconds})");
 
                 // IMPORTANTE: Log también secuencial (sin Task.Run)
-                await File.AppendAllTextAsync(_rutaLog, log.ToString());
+                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
                 return _mapper.Map<TicketDto>(createdTicket);
             }
             catch (Exception ex)
@@ -438,7 +440,7 @@ namespace ConectaBiz.Application.Services
                 }
 
                 log.AppendLine($"✅ FIN EXITOSO (total ms={sw.ElapsedMilliseconds})");
-                await File.AppendAllTextAsync(_rutaLog, log.ToString());
+                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
             }
             catch (Exception ex)
             {
@@ -519,6 +521,8 @@ namespace ConectaBiz.Application.Services
         {
             try
             {
+                var lstNotificaciones = new List<CrearNotificacionDto>();
+
                 var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones);
                 updateDto.ConsultorAsignaciones = consultores;
 
@@ -585,23 +589,25 @@ namespace ConectaBiz.Application.Services
 
                 // Validar y actualizar frentes y subfrentes solo si hay cambios
                 var (frenteSubFrentesmodificados, frenteSubFrentesagregados) = await GetConsulFrenteSubFrentesfAsync(id, updateDto.FrenteSubFrentes);
+                var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
 
                 if (frenteSubFrentesmodificados.Count > 0)
                 {
+                    lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha modificado una asignación al ticket {existingTicket.CodTicket}"));
                     var listaModificados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesmodificados).Select(x => { x.IdTicket = id; x.UsuarioModificacion = updateDto.UsuarioActualizacion; x.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); return x; }).ToList();
                     await _frenteSubFrenteRepository.UpdateRangeAsync(listaModificados);
                 }
                 if (frenteSubFrentesagregados.Count > 0)
                 {
+                    lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha agregado una asignación al ticket {existingTicket.CodTicket}"));
                     var listaAgregados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesagregados).Select(x => { x.IdTicket = id; x.UsuarioCreacion = updateDto.UsuarioActualizacion; x.Id = 0; x.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); x.FechaModificacion = null; return x; }).ToList();
                     await _frenteSubFrenteRepository.CreateRangeAsync(listaAgregados);
                 }
 
-                //bool frentesChanged = await HasFrenteSubFrentesChanged(id, updateDto.FrenteSubFrentes);
-                //if (frentesChanged)
-                //{
-                //    await UpdateFrenteSubFrentesAsync(id, updateDto.FrenteSubFrentes, updateDto.UsuarioActualizacion);
-                //}
+                if (lstNotificaciones.Any())
+                {
+                    await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
+                }
 
 
                 // 📌 Manejo del ZIP adicional
