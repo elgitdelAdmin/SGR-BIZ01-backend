@@ -463,13 +463,16 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
         // ✅ DEFINIR COLUMNAS OBLIGATORIAS (ajusta según tus necesidades)
         var columnasObligatorias = new HashSet<string>
-    {
-        "CodTicket",
-        "Titulo",
-        "FechaSolicitud",
-        "EstadoTicket"
-        // Agrega más columnas obligatorias si lo necesitas
-    };
+        {
+            "CodTicket",
+            "Titulo",
+            "FechaSolicitud",
+            "EstadoTicket",
+            "IdPrioridad",
+            "Descripcion",
+            "Descripcion",
+            "Asignado"
+        };
 
         var formatter = new DataFormatter();
 
@@ -622,32 +625,35 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
                 // 🔹 Parsear fecha
                 DateTime fechaAsignacion;
-                try
-                {
-                    if (!string.IsNullOrWhiteSpace(i.FechaSolicitud))
-                    {
-                        bool parseoExitoso = DateTime.TryParseExact(
-                            i.FechaSolicitud.Trim(),
-                            new[] { "dd-MMM-yyyy", "dd/MM/yyyy HH:mm:ss" }, // múltiples formatos
-                            new CultureInfo("es-PE"),
-                            DateTimeStyles.None,
-                            out fechaAsignacion
-                        );
 
-                        if (!parseoExitoso)
-                            fechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                        else
-                            fechaAsignacion = DateTime.SpecifyKind(fechaAsignacion, DateTimeKind.Local);
-                    }
-                    else
-                    {
-                        fechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                    }
-                }
-                catch (Exception ex)
+                if (string.IsNullOrWhiteSpace(i.FechaSolicitud))
                 {
-                    throw new Exception($"Error parseando fecha Creado '{i.FechaSolicitud}' para ticket {i.CodTicket}: {ex.Message}");
+                    throw new Exception($"Fecha vacía o nula para ticket {i.CodTicket}");
                 }
+
+                bool parseoExitoso = DateTime.TryParseExact(
+                    i.FechaSolicitud.Trim(),
+                    new[] {
+                        "yyyy-MM-dd HH:mm:ss",      // 2025-11-05 16:53:00
+                        "yyyy-M-d HH:mm:ss",        // 2025-11-5 16:53:00
+                        "d/M/yyyy HH:mm:ss",        // 5/11/2025 16:53:00
+                        "d/M/yyyy  HH:mm:ss",       // Con doble espacio
+                        "M/d/yy HH:mm",             // 10/13/25 18:04 (formato americano)
+                        "MM/dd/yy HH:mm",           // 10/13/25 18:04 (con ceros)
+                        "dd-MMM-yyyy",              // Formato anterior
+                        "dd/MM/yyyy HH:mm:ss"       // Formato anterior
+                    },
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AllowWhiteSpaces,
+                    out fechaAsignacion
+                );
+
+                if (!parseoExitoso)
+                {
+                    throw new Exception($"No se pudo parsear la fecha '{i.FechaSolicitud}' para ticket {i.CodTicket}. Formatos válidos: yyyy-MM-dd HH:mm:ss, d/M/yyyy HH:mm:ss, M/d/yy HH:mm");
+                }
+
+                fechaAsignacion = DateTime.SpecifyKind(fechaAsignacion, DateTimeKind.Local);
 
                 // 🔹 Crear asignación consultor
                 TicketConsultorAsignacionInsertDto? ticketConsultorInsertDto = null;
