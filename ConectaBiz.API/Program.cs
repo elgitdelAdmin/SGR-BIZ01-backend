@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 });
 
 // Forzar escuchar en IPv4 espec�ficamente
-builder.WebHost.UseUrls("http://0.0.0.0:5001");
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 // Add services to the container
 builder.Services.AddControllers();
