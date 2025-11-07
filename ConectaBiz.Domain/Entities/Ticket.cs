@@ -57,6 +57,7 @@ public class DetalleTareasConsultor
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public int Horas { get; set; }

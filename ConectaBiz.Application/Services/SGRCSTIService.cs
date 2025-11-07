@@ -18,7 +18,17 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly ITicketService _ticketService;
         private readonly IPersonaRepository _personaRepository;
-        public SGRCSTIService(ISGRCSTIRepository sGRCSTIRepository, IEmpresaRepository empresaRepository, IEmpresaService empresaService, IPersonaService personaService, ITicketService ticketService, IPersonaRepository personaRepository)
+        private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
+
+        public SGRCSTIService(
+            ISGRCSTIRepository sGRCSTIRepository, 
+            IEmpresaRepository empresaRepository, 
+            IEmpresaService empresaService, 
+            IPersonaService personaService, 
+            ITicketService ticketService,
+            IPersonaRepository personaRepository,
+            Lazy<INotificacionTicketService> notificacionTicketService
+            )
         {
             _sgrcstiRepository = sGRCSTIRepository;
             _empresaRepository = empresaRepository;
@@ -26,6 +36,7 @@ namespace ConectaBiz.Application.Services
             _personaService = personaService;
             _ticketService = ticketService;
             _personaRepository = personaRepository;
+            _notificacionTicketService = notificacionTicketService;
         }
         public async Task MigracionEmpresa()
         {
@@ -80,7 +91,7 @@ namespace ConectaBiz.Application.Services
                         {
                             var empresaExistente = await _empresaRepository.GetByCodSgrCstiAsync((int)createEmpresaDto.CodSgrCsti);
                             var empresaExisteNroDoc = await _empresaRepository.GetByNumDocContribuyenteDatAsync(createEmpresaDto.NumDocContribuyente);
-                            if (empresaExistente == null && empresaExisteNroDoc == null)
+                            if (empresaExistente == null && empresaExisteNroDoc == null) 
                             {
                                 var empresaCreada = await _empresaService.CreateAsync(createEmpresaDto);
                                 idEmpresa = empresaCreada.Id;
@@ -106,17 +117,28 @@ namespace ConectaBiz.Application.Services
                             Titulo = req.titulo,
                             FechaSolicitud = req.fecharegistro,
                             IdTipoTicket = tipoTicket,
-                            IdEstadoTicket = 1,
+                            IdEstadoTicket = 59,
                             IdEmpresa = idEmpresa,
                             IdUsuarioResponsableCliente = personaDto.Id,
                             IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                             Descripcion = req.detalle ?? "",
-                            UrlArchivos = null,
+                            UrlArchivos = null, 
                             UsuarioCreacion = "Migracion",
-                            EsCargaMasiva = true
+                            EsCargaMasiva = true,
+                            IdGestorConsultoria = 32
                         };
 
-                        await _ticketService.CreateAsync(ticketInsertDto);
+                        var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
+
+                        await _notificacionTicketService.Value.AddRangeAsync(new[]
+                          {
+                            new CrearNotificacionDto
+                            {
+                                IdTicket = ticketGuardado.Id,
+                                IdUser = 32,
+                                Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
+                            }
+                        });
                     }
                 }
                 catch (Exception ex)

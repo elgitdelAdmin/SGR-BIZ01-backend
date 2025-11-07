@@ -322,7 +322,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
             {
                 entity.ToTable("DetalleTareasConsultor", "conectabiz");
                 entity.HasKey(e => e.Id);
-
+                entity.Property(e => e.IdTipoActividad).IsRequired();
                 entity.Property(e => e.FechaInicio).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.FechaFin).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.Horas).IsRequired();

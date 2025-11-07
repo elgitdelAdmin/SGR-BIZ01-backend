@@ -87,7 +87,7 @@ namespace ConectaBiz.Application.Services
                     }
                 }
                 log.AppendLine($"✅ FIN EnviarCorreosAsync (total ms={swTotal.ElapsedMilliseconds})");
-                await File.AppendAllTextAsync(_rutaLog, log.ToString());
+                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
             }
             catch (Exception ex)
             {

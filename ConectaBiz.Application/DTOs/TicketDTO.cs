@@ -56,6 +56,7 @@ public class DetalleTareasConsultorDto
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public decimal Horas { get; set; }
@@ -204,6 +205,7 @@ public class DetalleTareasConsultorUpdateDto
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public decimal Horas { get; set; }

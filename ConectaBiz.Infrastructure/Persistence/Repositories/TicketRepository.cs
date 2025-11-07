@@ -118,16 +118,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
         {
-            // Lista de gestores válidos: el recibido por parámetro y el 47 fijo
-            var idsGestores = new List<int> { idGestor, 47 };
+            // Lista de gestores válidos: el recibido por parámetro (puedes agregar otros si deseas)
+            var idsGestores = new List<int> { idGestor };
 
             return await _context.Ticket
-                .Where(t => t.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value)) 
+                .Where(t => t.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value))
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
+
 
         public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
         {
@@ -210,10 +212,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 throw; // Re-lanzamos la excepción para que la Web API la maneje
             }
         }
-
-
-
-
 
         public async Task<Ticket> UpdateAsync(Ticket ticket)
         {

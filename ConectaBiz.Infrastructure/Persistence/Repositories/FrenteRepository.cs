@@ -22,7 +22,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Frente>> GetAllAsync()
         {
             return await _context.Set<Frente>()
-                .Include(f => f.SubFrente)
+                .Include(f => f.SubFrente.Where(sf => sf.Activo))
                 .OrderBy(f => f.Nombre)
                 .ToListAsync();
         }

@@ -34,7 +34,7 @@ namespace ConectaBiz.Application.Services
             {
                 Id = n.Id,
                 IdTicket = n.IdTicket,
-                Mensaje = n.Ticket?.CodTicket ?? "",
+                Mensaje = n.Mensaje,
                 Leido = n.Leido,
                 FechaCreacion = n.FechaCreacion,
                 FechaLectura = n.FechaLectura
@@ -182,7 +182,7 @@ namespace ConectaBiz.Application.Services
                 log.AppendLine($"Repository.AddRangeAsync ms={sw.ElapsedMilliseconds - t0}");
 
                 log.AppendLine($"✅ FIN EXITOSO (total ms={sw.ElapsedMilliseconds})");
-                await File.AppendAllTextAsync(_rutaLog, log.ToString());
+                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
 
                 return resultado;
             }
