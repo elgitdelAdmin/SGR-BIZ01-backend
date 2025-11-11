@@ -344,7 +344,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         {
             mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Queued", "PENDIENTE_APROBACION" },
+            { "Queued", "PENDIENTE_ATENCION" },
             { "Closed", "CERRADO" }
         };
         }
@@ -352,7 +352,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         {
             mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Pending", "PENDIENTE_APROBACION" },
+            { "Pending", "PENDIENTE_ATENCION" },
             { "En proceso", "EN_EJECUCION" },
             { "Por disponibilidad del usuario", "PENDIENTE_CLIENTE" }
         };
@@ -365,7 +365,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             { "Aprobado", "APROBADO" },
             { "Cancelado", "CANCELADO" },
             { "Cerrado", "CERRADO" },
-            { "Pendiente", "PENDIENTE_APROBACION" },
+            { "Pendiente", "PENDIENTE_ATENCION" },
             { "Resuelto", "CERRADO" }
         };
         }
