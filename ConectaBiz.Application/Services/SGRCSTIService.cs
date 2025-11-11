@@ -117,7 +117,7 @@ namespace ConectaBiz.Application.Services
                             Titulo = req.titulo,
                             FechaSolicitud = req.fecharegistro,
                             IdTipoTicket = tipoTicket,
-                            IdEstadoTicket = 59,
+                            IdEstadoTicket = 54,
                             IdEmpresa = idEmpresa,
                             IdUsuarioResponsableCliente = personaDto.Id,
                             IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
