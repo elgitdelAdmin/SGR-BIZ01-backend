@@ -24,6 +24,7 @@ namespace ConectaBiz.Application.Services
         private readonly IGestorService _gestorService;
         private readonly IConsultorService _consultorService;
         private readonly IEmpresaService _empresaService;
+        private readonly IAuthService _authService;
         private readonly IMapper _mapper;
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly string _rutaLog;
@@ -40,6 +41,7 @@ namespace ConectaBiz.Application.Services
             IGestorService gestorService,
             IConsultorService consultorService,
             IEmpresaService empresaService,
+            IAuthService authService,
             IMapper mapper,
             IServiceProvider provider
             )
@@ -54,6 +56,7 @@ namespace ConectaBiz.Application.Services
             _gestorService = gestorService;
             _consultorService = consultorService;
             _empresaService = empresaService;
+            _authService = authService;
             _mapper = mapper;
             _rutaLog = configuration["Logging:LogFilePath"];
         }
@@ -153,6 +156,20 @@ namespace ConectaBiz.Application.Services
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
                 //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+               .Select(t =>
+               {
+                   t.HorasTrabajadas = t.ConsultorAsignaciones
+                       .SelectMany(ca => ca.DetalleTareasConsultor)
+                       .Sum(dt => (int?)dt.Horas) ?? 0;
+                   return t;
+               })
+               .ToList();
+            }
+            else if (codRol == AppConstants.Roles.Admin)
+            {
+                UserDto userDto = await _authService.GetByIdAsync(idUser);
+                var tickets = await _ticketRepository.GetBySocioAsync(Convert.ToInt32(userDto.Socio.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {

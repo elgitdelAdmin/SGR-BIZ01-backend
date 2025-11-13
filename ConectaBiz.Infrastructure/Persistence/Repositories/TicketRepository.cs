@@ -80,6 +80,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
+        public async Task<IEnumerable<Ticket>> GetBySocioAsync(int idSocio)
+        {
+            return await _context.Ticket
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .Where(t =>
+                    t.Empresa != null &&
+                    t.Empresa.IdSocio == idSocio)
+                .ToListAsync();
+        }
         public async Task<IEnumerable<Ticket>> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp)
         {
             return await _context.Ticket

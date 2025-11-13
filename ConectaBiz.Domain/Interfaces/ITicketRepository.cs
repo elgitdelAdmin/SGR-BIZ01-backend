@@ -15,6 +15,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Ticket?> GetByIdWithRelationsAsync(int id);
         Task<Ticket?> GetByCodTicketAsync(string codTicket);
         Task<IEnumerable<Ticket>> GetByEmpresaAsync(int idEmpresa);
+        Task<IEnumerable<Ticket>> GetBySocioAsync(int idSocio);
         Task<IEnumerable<Ticket>> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp);
         Task<IEnumerable<Ticket>> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp);
         Task<IEnumerable<Ticket>> GetByEstadoAsync(int idEstado);
