@@ -195,7 +195,9 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.Ticket, opt => opt.Ignore());
             CreateMap<TicketConsultorAsignacionUpdateDto, TicketConsultorAsignacion>()
                 .ForMember(dest => dest.Ticket, opt => opt.Ignore()) 
-                .ForMember(dest => dest.DetalleTareasConsultor, opt => opt.Ignore()); 
+                .ForMember(dest => dest.DetalleTareasConsultor, opt => opt.Ignore())
+                .ForMember(dest => dest.DetallePlanificacionConsultor, opt => opt.Ignore());
+
 
             CreateMap<TicketConsultorAsignacion, TicketConsultorAsignacionUpdateDto>();
 
@@ -208,6 +210,17 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<DetalleTareasConsultorUpdateDto, DetalleTareasConsultor>()
                 .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
             CreateMap<DetalleTareasConsultor, DetalleTareasConsultorUpdateDto>();
+
+
+            // DetallePlanificacionConsultor <-> DTO
+            CreateMap<DetallePlanificacionConsultor, DetallePlanificacionConsultorDto>();
+            CreateMap<DetallePlanificacionConsultorDto, DetallePlanificacionConsultor>()
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
+
+            // Para updates específicamente
+            CreateMap<DetallePlanificacionConsultorUpdateDto, DetallePlanificacionConsultor>()
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
+            CreateMap<DetallePlanificacionConsultor, DetallePlanificacionConsultorUpdateDto>();
 
             // Mapeos de TicketFrenteSubFrente
             CreateMap<TicketFrenteSubFrente, TicketFrenteSubFrenteDto>();

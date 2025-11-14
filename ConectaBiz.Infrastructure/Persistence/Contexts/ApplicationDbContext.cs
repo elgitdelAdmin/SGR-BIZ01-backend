@@ -21,6 +21,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<TicketConsultorAsignacion> TicketConsultorAsignacion { get; set; }
         public DbSet<DetalleTareasConsultor> DetalleTareasConsultor { get; set; }
+        public DbSet<DetallePlanificacionConsultor> DetallePlanificacionConsultor { get; set; }
         public DbSet<TicketFrenteSubFrente> TicketFrenteSubFrente { get; set; }
         public DbSet<TicketHistorialEstado> TicketHistorialEstado { get; set; }
         public DbSet<Pais> Pais { get; set; }
@@ -334,8 +335,23 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasForeignKey(d => d.IdTicketConsultorAsignacion)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            modelBuilder.Entity<DetallePlanificacionConsultor>(entity =>
+            {
+                entity.ToTable("DetallePlanificacionConsultor", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.IdTipoActividad).IsRequired();
+                entity.Property(e => e.FechaInicio).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.FechaFin).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.Horas).IsRequired();
+                entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
 
-
+                entity.HasOne(d => d.TicketConsultorAsignacion)
+                    .WithMany(p => p.DetallePlanificacionConsultor)
+                    .HasForeignKey(d => d.IdTicketConsultorAsignacion)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+            
             // Configuración de TicketFrenteSubFrente
             modelBuilder.Entity<TicketFrenteSubFrente>(entity =>
             {

@@ -52,8 +52,21 @@ public class TicketConsultorAsignacion
     public bool Activo { get; set; } = true;
     public virtual Ticket Ticket { get; set; } = null!;
     public ICollection<DetalleTareasConsultor> DetalleTareasConsultor { get; set; } = new List<DetalleTareasConsultor>();
+    public ICollection<DetallePlanificacionConsultor> DetallePlanificacionConsultor { get; set; } = new List<DetallePlanificacionConsultor>();
 }
 public class DetalleTareasConsultor
+{
+    public int Id { get; set; }
+    public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFin { get; set; }
+    public int Horas { get; set; }
+    public string Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+    public TicketConsultorAsignacion TicketConsultorAsignacion { get; set; }
+}
+public class DetallePlanificacionConsultor
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
