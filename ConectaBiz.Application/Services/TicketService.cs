@@ -104,13 +104,15 @@ namespace ConectaBiz.Application.Services
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                 .Select(t =>
                 {
                     t.HorasTrabajadas = t.ConsultorAsignaciones
                         .SelectMany(ca => ca.DetalleTareasConsultor)
                         .Sum(dt => (int?)dt.Horas) ?? 0;
+                    t.HorasPlanificadas = t.ConsultorAsignaciones
+                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                      .Sum(dt => (int?)dt.Horas) ?? 0;
                     return t;
                 })
                 .ToList();
@@ -126,6 +128,9 @@ namespace ConectaBiz.Application.Services
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
                        .Sum(dt => (int?)dt.Horas) ?? 0;
+                   t.HorasPlanificadas = t.ConsultorAsignaciones
+                     .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                     .Sum(dt => (int?)dt.Horas) ?? 0;
                    return t;
                })
                .ToList();
@@ -134,7 +139,6 @@ namespace ConectaBiz.Application.Services
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                   .Select(t =>
                   {
@@ -144,6 +148,10 @@ namespace ConectaBiz.Application.Services
                           .SelectMany(ca => ca.DetalleTareasConsultor)
                           .Sum(dt => (int?)dt.Horas ?? 0);
 
+                      t.HorasPlanificadas = t.ConsultorAsignaciones
+                        .Where(ca => ca.IdConsultor == consultorDto.Id)
+                        .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                        .Sum(dt => (int?)dt.Horas ?? 0);
                       return t;
                   })
                   .ToList();
@@ -152,13 +160,15 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
                        .Sum(dt => (int?)dt.Horas) ?? 0;
+                   t.HorasPlanificadas = t.ConsultorAsignaciones
+                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                      .Sum(dt => (int?)dt.Horas) ?? 0;
                    return t;
                })
                .ToList();
@@ -166,13 +176,15 @@ namespace ConectaBiz.Application.Services
             else
             {
                 var tickets = await _ticketRepository.GetAllAsync();
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
                        .Sum(dt => (int?)dt.Horas) ?? 0;
+                   t.HorasPlanificadas = t.ConsultorAsignaciones
+                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                      .Sum(dt => (int?)dt.Horas) ?? 0;
                    return t;
                })
                .ToList();
@@ -540,7 +552,7 @@ namespace ConectaBiz.Application.Services
                 int? estadoAnterior = existingTicket.IdEstadoTicket;
 
                 // Actualizando el Estado según Logica
-                updateDto.IdEstadoTicket = await LogicaActualizarEstados(updateDto);
+                //updateDto.IdEstadoTicket = await LogicaActualizarEstados(updateDto);
 
                 // Actualizar los campos del ticket principal
                 UpdateTicketFields(existingTicket, updateDto);
@@ -552,7 +564,7 @@ namespace ConectaBiz.Application.Services
                 }
 
                 // Validar y actualizar asignaciones de consultores solo si hay cambios
-                var (modificados, agregados, tareasModificadas, tareasAgregadas) = await GetConsultorAsignacionesDiffAsync(id, updateDto.ConsultorAsignaciones);
+                var (modificados, agregados, tareasModificadas, tareasAgregadas, planificacionModificadas , planificacionAgregadas) = await GetConsultorAsignacionesDiffAsync(id, updateDto.ConsultorAsignaciones);
 
                 // 🔹 Procesar asignaciones modificadas (incluye eliminaciones lógicas)
                 if (modificados.Count > 0)
@@ -692,13 +704,22 @@ namespace ConectaBiz.Application.Services
             return (modificados, agregados);
         }
         // Método para validar cambios en ConsultorAsignaciones
-        private async Task<(List<TicketConsultorAsignacionUpdateDto> modificados, List<TicketConsultorAsignacionUpdateDto> agregados, List<DetalleTareasConsultorUpdateDto> tareasModificadas, List<DetalleTareasConsultorUpdateDto> tareasAgregadas)>
+        private async Task<(
+            List<TicketConsultorAsignacionUpdateDto> modificados, 
+            List<TicketConsultorAsignacionUpdateDto> agregados, 
+            List<DetalleTareasConsultorUpdateDto> tareasModificadas, 
+            List<DetalleTareasConsultorUpdateDto> tareasAgregadas,
+            List<DetallePlanificacionConsultorUpdateDto> planificacionModificadas,
+            List<DetallePlanificacionConsultorUpdateDto> planificacionAgregadas
+            )>
           GetConsultorAsignacionesDiffAsync(int idTicket, List<TicketConsultorAsignacionUpdateDto> newAsignaciones)
         {
             var modificados = new List<TicketConsultorAsignacionUpdateDto>();
             var agregados = new List<TicketConsultorAsignacionUpdateDto>();
             var tareasModificadas = new List<DetalleTareasConsultorUpdateDto>();
             var tareasAgregadas = new List<DetalleTareasConsultorUpdateDto>();
+            var planificacionModificadas = new List<DetallePlanificacionConsultorUpdateDto>();
+            var planificacionAgregadas = new List<DetallePlanificacionConsultorUpdateDto>();
 
             // 🔹 Procesar asignaciones basándose únicamente en Id y Activo
             foreach (var asignacion in newAsignaciones)
@@ -744,7 +765,31 @@ namespace ConectaBiz.Application.Services
                     }
                 }
             }
-            return (modificados, agregados, tareasModificadas, tareasAgregadas);
+
+            // 🔹 Procesar planificacion basándose únicamente en Id y Activo
+            foreach (var asignacion in newAsignaciones)
+            {
+                foreach (var planificacion in asignacion.DetallePlanificacionConsultor)
+                {
+                    // Ajustar fechas a hora local
+                    planificacion.FechaInicio = DateTime.SpecifyKind(planificacion.FechaInicio, DateTimeKind.Local);
+                    planificacion.FechaFin = DateTime.SpecifyKind(planificacion.FechaFin, DateTimeKind.Local);
+
+                    if (planificacion.Id == 0)
+                    {
+                        // ✅ Nueva planificacion (Id = 0)
+                        planificacionAgregadas.Add(planificacion);
+                    }
+                    else
+                    {
+                        // ✅ Planificacion existente (Id > 0) - puede ser modificación o eliminación lógica
+                        // Si Activo = false, es eliminación lógica
+                        // Si Activo = true, es modificación/actualización
+                        planificacionModificadas.Add(planificacion);
+                    }
+                }
+            }
+            return (modificados, agregados, tareasModificadas, tareasAgregadas, planificacionModificadas, planificacionAgregadas);
         }
 
         public async Task<bool> DeleteAsync(int id)

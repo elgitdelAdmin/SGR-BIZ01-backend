@@ -76,7 +76,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Ticket
                 .Where(t => t.IdEmpresa == idEmpresa)
                 .Include(t => t.Empresa)
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
@@ -125,18 +128,21 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(t => t.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value))
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
-
-
         public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
         {
             return await _context.Ticket
                 .Where(t => t.IdGestorConsultoria == idGestor)
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
@@ -150,6 +156,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
                     .ThenInclude(ca => ca.DetalleTareasConsultor
                         .Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor
+                        .Where(dp => dp.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }

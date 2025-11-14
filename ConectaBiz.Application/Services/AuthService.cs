@@ -85,7 +85,7 @@ namespace ConectaBiz.Application.Services
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
             var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
-            await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
+            //await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
 
             var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
 

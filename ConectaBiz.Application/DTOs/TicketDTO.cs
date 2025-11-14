@@ -48,11 +48,22 @@ public class TicketConsultorAsignacionDto
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
-
     public List<DetalleTareasConsultorDto> DetalleTareasConsultor { get; set; } = new();
+    public List<DetallePlanificacionConsultorDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 
 public class DetalleTareasConsultorDto
+{
+    public int Id { get; set; }
+    public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFin { get; set; }
+    public decimal Horas { get; set; }
+    public string Descripcion { get; set; }
+    public bool Activo { get; set; }
+}
+public class DetallePlanificacionConsultorDto
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
@@ -200,8 +211,20 @@ public class TicketConsultorAsignacionUpdateDto
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
     public List<DetalleTareasConsultorUpdateDto> DetalleTareasConsultor { get; set; } = new();
+    public List<DetallePlanificacionConsultorUpdateDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 public class DetalleTareasConsultorUpdateDto
+{
+    public int Id { get; set; }
+    public int IdTicketConsultorAsignacion { get; set; }
+    public int IdTipoActividad { get; set; }
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFin { get; set; }
+    public decimal Horas { get; set; }
+    public string Descripcion { get; set; }
+    public bool Activo { get; set; } = true;
+}
+public class DetallePlanificacionConsultorUpdateDto
 {
     public int Id { get; set; }
     public int IdTicketConsultorAsignacion { get; set; }
