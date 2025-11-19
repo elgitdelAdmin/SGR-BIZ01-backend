@@ -58,12 +58,12 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
             }
         }
-        [HttpGet("byIdRol/{idRol}")]
-        public async Task<ActionResult<IEnumerable<GestorDto>>> GetByIdRol(int idRol)
+        [HttpGet("byIdRol/{idRol}/byIdSocio/{idSocio}")]
+        public async Task<ActionResult<IEnumerable<GestorDto>>> GetByIdRol(int idRol, int idSocio)
         {
             try
             {
-                var gestor = await _gestorService.GetByIdRolAsync(idRol);
+                var gestor = await _gestorService.GetByIdRolAsync(idRol, idSocio);
                 if (gestor == null)
                 {
                     return NotFound(new { message = $"No se encontró el gestor con ID {idRol}" });

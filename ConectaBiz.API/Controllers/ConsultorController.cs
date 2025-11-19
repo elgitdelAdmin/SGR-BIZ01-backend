@@ -26,26 +26,6 @@ namespace ConectaBiz.API.Controllers
         }
 
 
-        //[HttpGet]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetAll()
-        //{
-        //    try
-        //    {
-        //        _logger.LogInformation("Obteniendo todos los consultores");
-
-        //        var consultores = await _consultorService.GetAllAsync();
-        //        var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultores);
-
-        //        return Ok(consultoresListDto);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error al obtener todos los consultores");
-        //        return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-        //    }
-        //}
-
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetAll()
@@ -123,49 +103,7 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
-        /// <summary>
-        /// Crea un nuevo consultor
-        /// </summary>
-        /// <param name="consultorDto">Datos del consultor</param>
-        /// <returns>Datos del consultor creado</returns>
-        //[HttpPost]
-        //[ProducesResponseType(StatusCodes.Status201Created)]
-        //[ProducesResponseType(StatusCodes.Status400BadRequest)]
-        //public async Task<ActionResult<ConsultorDetailDto>> Create([FromBody] CreateConsultorDto createConsultorDto)
-        //{
-        //    try
-        //    {
-        //        _logger.LogInformation("Creando nuevo consultor");
 
-        //        if (!ModelState.IsValid)
-        //        {
-        //            _logger.LogWarning("Modelo inválido para crear consultor");
-        //            return BadRequest(ModelState);
-        //        }
-
-        //        // Mapear el DTO de creación al DTO completo
-        //        var consultorDto = _mapper.Map<ConsultorDto>(createConsultorDto);
-
-        //        var createdConsultor = await _consultorService.CreateAsync(consultorDto);
-        //        _logger.LogInformation("Consultor creado con ID: {Id}", createdConsultor.Id);
-
-        //        // Obtener el consultor completo para la respuesta
-        //        var consultorCompleto = await _consultorService.GetByIdAsync(createdConsultor.Id);
-        //        var consultorDetailDto = _mapper.Map<ConsultorDetailDto>(consultorCompleto);
-
-        //        return CreatedAtAction(nameof(GetById), new { id = createdConsultor.Id }, consultorDetailDto);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        _logger.LogWarning(ex, "Error de validación al crear consultor");
-        //        return BadRequest(ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error al crear consultor");
-        //        return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-        //    }
-        //}
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

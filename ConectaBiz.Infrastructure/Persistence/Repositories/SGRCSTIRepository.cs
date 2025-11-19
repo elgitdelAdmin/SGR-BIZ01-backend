@@ -100,7 +100,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 left join  empresa e2 on r.idempresa  = e2.idempresa 
                 where e.idestadorequerimiento in (-3) AND r.fecharegistro >= DATE_TRUNC('day', NOW()) and COALESCE(r.id_area, 0) = 14
                 ";
-
+                //                 where r.codrequerimiento='JRC-2025-0060' and  e.idestadorequerimiento in (-3) and COALESCE(r.id_area, 0) = 14
+                // e.idestadorequerimiento in (-3) AND r.fecharegistro >= DATE_TRUNC('day', NOW()) and COALESCE(r.id_area, 0) = 14
                 await context.OpenAsync();
                 using (var command = new NpgsqlCommand(query, context))
                 {

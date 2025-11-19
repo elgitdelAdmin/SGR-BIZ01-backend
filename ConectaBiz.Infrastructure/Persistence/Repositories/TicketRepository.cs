@@ -133,7 +133,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var idsGestores = new List<int> { idGestor };
 
             return await _context.Ticket
-                .Where(t => t.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value))
+                .Where(t => t.Empresa.IdGestor.HasValue && idsGestores.Contains(t.IdGestor.Value))
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
