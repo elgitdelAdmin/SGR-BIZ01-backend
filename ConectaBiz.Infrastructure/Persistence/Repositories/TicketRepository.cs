@@ -80,7 +80,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
-<<<<<<< HEAD
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
@@ -89,8 +88,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Ticket
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-=======
->>>>>>> 318bb87093e90f452e82a33efb318ca83d7502ae
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Where(t =>
                     t.Empresa != null &&
