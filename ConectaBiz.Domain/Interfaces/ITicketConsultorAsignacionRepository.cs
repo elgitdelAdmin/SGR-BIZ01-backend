@@ -14,9 +14,11 @@ namespace ConectaBiz.Domain.Interfaces
         Task<TicketConsultorAsignacion> CreateAsync(TicketConsultorAsignacion asignacion);
         Task<IEnumerable<TicketConsultorAsignacion>> CreateRangeAsync(List<TicketConsultorAsignacion> asignaciones);
         Task<IEnumerable<DetalleTareasConsultor>> CreateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas);
+        Task<IEnumerable<DetalleTareasConsultor>> UpdateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas);
+        Task<IEnumerable<DetallePlanificacionConsultor>> CreatePlanificacionRangeAsync(List<DetallePlanificacionConsultor> detallesPlanificacion);
+        Task<IEnumerable<DetallePlanificacionConsultor>> UpdatePlanificacionRangeAsync(List<DetallePlanificacionConsultor> detallesPlanificacion);
         Task<TicketConsultorAsignacion> UpdateAsync(TicketConsultorAsignacion asignacion);
         Task<IEnumerable<TicketConsultorAsignacion>> UpdateRangeAsync(List<TicketConsultorAsignacion> asignaciones);
-        Task<IEnumerable<DetalleTareasConsultor>> UpdateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas);
         Task<bool> DeactivateAllByTicketIdAsync(int idTicket, string usuarioDesasignacion);
         Task<bool> DeleteAsync(int id);
     }

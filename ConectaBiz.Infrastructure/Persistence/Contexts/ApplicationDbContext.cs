@@ -307,6 +307,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).IsRequired();
                 entity.Property(e => e.IdTicket).IsRequired();
+                entity.Property(e => e.IdFrente).IsRequired();
+                entity.Property(e => e.IdSubFrente).IsRequired();
                 entity.Property(e => e.IdConsultor).IsRequired();
                 entity.Property(e => e.FechaAsignacion).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.FechaDesasignacion).HasColumnType("timestamp").IsRequired();

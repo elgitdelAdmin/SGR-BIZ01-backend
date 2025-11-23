@@ -45,6 +45,8 @@ public class TicketConsultorAsignacionDto
     public int IdTicket { get; set; }
     public int IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
+    public int? IdFrente { get; set; }
+    public int? IdSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
@@ -184,8 +186,8 @@ public class TicketFrenteSubFrenteInsertDto
 public class TicketFrenteSubFrenteUpdateDto
 {
     public int Id { get; set; }
-    public int IdFrente { get; set; }
-    public int IdSubFrente { get; set; }
+    public int? IdFrente { get; set; }
+    public int? IdSubFrente { get; set; }
     public int Cantidad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
@@ -199,6 +201,8 @@ public class TicketConsultorAsignacionInsertDto
 {
     public int IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
+    public int? IdFrente { get; set; }
+    public int? IdSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
 }
@@ -207,6 +211,8 @@ public class TicketConsultorAsignacionUpdateDto
     public int Id { get; set; }
     public int IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
+    public int IdFrente { get; set; }
+    public int IdSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;

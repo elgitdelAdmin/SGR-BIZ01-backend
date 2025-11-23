@@ -615,6 +615,19 @@ namespace ConectaBiz.Application.Services
                     var listaTareasAgregadas = _mapper.Map<List<DetalleTareasConsultor>>(tareasAgregadas).Select(x => {x.Id = 0;return x;}).ToList();
                     await _consultorAsignacionRepository.CreateTareasRangeAsync(listaTareasAgregadas);
                 }
+                // 🔹 Procesar planificaciones modificadas (incluye eliminaciones lógicas)
+                if (planificacionModificadas.Count > 0)
+                {
+                    var listaPlanificacionModificadas = _mapper.Map<List<DetallePlanificacionConsultor>>(planificacionModificadas);
+                    await _consultorAsignacionRepository.UpdatePlanificacionRangeAsync(listaPlanificacionModificadas);
+                }
+
+                // 🔹 Procesar tareas agregadas (nuevas)
+                if (planificacionAgregadas.Count > 0)
+                {
+                    var listaPlanificacionsAgregadas = _mapper.Map<List<DetallePlanificacionConsultor>>(planificacionAgregadas).Select(x => { x.Id = 0; return x; }).ToList();
+                    await _consultorAsignacionRepository.CreatePlanificacionRangeAsync(listaPlanificacionsAgregadas);
+                }
 
                 // Validar y actualizar frentes y subfrentes solo si hay cambios
                 var (frenteSubFrentesmodificados, frenteSubFrentesagregados) = await GetConsulFrenteSubFrentesfAsync(id, updateDto.FrenteSubFrentes);

@@ -104,7 +104,31 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 throw;
             }
         }
+        public async Task<IEnumerable<DetallePlanificacionConsultor>> CreatePlanificacionRangeAsync(List<DetallePlanificacionConsultor> detallesPlanificacion)
+        {
+            try
+            {
+                if (detallesPlanificacion == null || detallesPlanificacion.Count == 0)
+                    return new List<DetallePlanificacionConsultor>();
 
+                // Asegúrate que todos los Id sean 0 para inserción
+                foreach (var planificacion in detallesPlanificacion)
+                {
+                    planificacion.Id = 0; // Forzar inserción
+                }
+                await _context.DetallePlanificacionConsultor.AddRangeAsync(detallesPlanificacion);
+                await _context.SaveChangesAsync();
+
+                return detallesPlanificacion;
+            }
+            catch (Exception ex)
+            {
+                // Log del error con más detalle
+                Console.WriteLine($"Error al guardar planificacion: {ex.Message}");
+                Console.WriteLine($"Cantidad de planificacion: {detallesPlanificacion?.Count ?? 0}");
+                throw;
+            }
+        }
 
         public async Task<TicketConsultorAsignacion> UpdateAsync(TicketConsultorAsignacion asignacion)
         {
@@ -172,7 +196,37 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 throw;
             }
         }
+        public async Task<IEnumerable<DetallePlanificacionConsultor>> UpdatePlanificacionRangeAsync(List<DetallePlanificacionConsultor> detallesPlanificacion)
+        {
+            try
+            {
+                if (detallesPlanificacion == null || detallesPlanificacion.Count == 0)
+                    return new List<DetallePlanificacionConsultor>();
 
+                // Obtener los IDs que vamos a actualizar
+                var ids = detallesPlanificacion.Select(x => x.Id).ToList();
+
+                // Detach las entidades que podrían estar siendo rastreadas
+                var trackedEntities = _context.ChangeTracker.Entries<DetallePlanificacionConsultor>()
+                    .Where(e => ids.Contains(e.Entity.Id))
+                    .ToList();
+
+                foreach (var entity in trackedEntities)
+                {
+                    entity.State = EntityState.Detached;
+                }
+
+                _context.DetallePlanificacionConsultor.UpdateRange(detallesPlanificacion);
+                await _context.SaveChangesAsync();
+
+                return detallesPlanificacion;
+            }
+            catch (Exception ex)
+            {
+                // Aquí puedes loggear ex si lo deseas
+                throw;
+            }
+        }
         public async Task<bool> DeactivateAllByTicketIdAsync(int idTicket, string usuarioDesasignacion)
         {
             var asignaciones = await _context.TicketConsultorAsignacion

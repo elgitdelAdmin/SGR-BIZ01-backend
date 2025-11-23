@@ -774,19 +774,6 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
         // 🔹 Guardar todos los tickets en batch
         var ticketsGuardados = await _ticketRepository.CreateRangeAsync(tickets);
-
-        //// 🔹 Asignar IdTicket a las asignaciones y guardarlas en batch
-        //var todasAsignaciones = ticketsGuardados
-        //    .SelectMany(t => t.ConsultorAsignaciones.Select(ca =>
-        //    {
-        //        ca.IdTicket = t.Id;
-        //        return ca;
-        //    }))
-        //    .ToList();
-
-        //if (todasAsignaciones.Any())
-        //    await _consultorAsignacionRepository.CreateRangeAsync(todasAsignaciones);
-
         return ticketsGuardados;
     }
 
