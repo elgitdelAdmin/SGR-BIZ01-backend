@@ -163,6 +163,7 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
+<<<<<<< HEAD
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
@@ -180,12 +181,17 @@ namespace ConectaBiz.Application.Services
             {
                 UserDto userDto = await _authService.GetByIdAsync(idUser);
                 var tickets = await _ticketRepository.GetBySocioAsync(Convert.ToInt32(userDto.Socio.Id));
+=======
+>>>>>>> 318bb87093e90f452e82a33efb318ca83d7502ae
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
                        .Sum(dt => (int?)dt.Horas) ?? 0;
+                   t.HorasPlanificadas = t.ConsultorAsignaciones
+                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                      .Sum(dt => (int?)dt.Horas) ?? 0;
                    return t;
                })
                .ToList();
