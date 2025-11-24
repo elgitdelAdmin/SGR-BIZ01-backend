@@ -104,7 +104,6 @@ namespace ConectaBiz.Application.Services
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                 .Select(t =>
                 {
@@ -134,7 +133,6 @@ namespace ConectaBiz.Application.Services
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                   .Select(t =>
                   {
@@ -152,7 +150,6 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
@@ -166,7 +163,6 @@ namespace ConectaBiz.Application.Services
             else
             {
                 var tickets = await _ticketRepository.GetAllAsync();
-                //listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {

@@ -20,6 +20,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Ticket>> GetAllAsync()
         {
+
+            return await _context.Ticket
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                .ToListAsync();
+        }
+
+      /*  public async Task<IEnumerable<Ticket>> GetAllAsync()
+        {
             try
             {
                 var tickets = await _context.Ticket
@@ -46,8 +57,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             }
        
         }
-
-
+        */
 
         public async Task<Ticket?> GetByIdAsync(int id)
         {
@@ -137,6 +147,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(t => t.IdGestorConsultoria == idGestor)
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .ToListAsync();
         }
