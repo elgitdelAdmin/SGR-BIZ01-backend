@@ -64,6 +64,7 @@ namespace ConectaBiz.Domain.Constants
             public const string TicketsExcelia = "TKT_EXCELIA";
             public const string TicketsRansa = "TKT_RANSA";
             public const string TicketsIasa= "TKT_IASA";
+            public const string TicketsAlicorp = "TKT_ALICORP";
 
             public static class TipoCargaMasivaTicketExcelia
             {
@@ -79,6 +80,12 @@ namespace ConectaBiz.Domain.Constants
             {
                 public const string Incidentes = "Incidente";
                 public const string Requerimientos = "Solicitud";
+            }
+            public static class TipoCargaMasivaTicketAlicorp
+            {
+                public const string Incidentes = "Incidente";
+                public const string Solicitud = "Solicitud";
+                public const string Requerimientos = "Requerimiento";
             }
         }
         public static class TipoActividad

@@ -23,6 +23,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Parametro>> GetAllAsync()
         {
             return await _context.Parametros
+                .Where(p => p.Activo)
                 .OrderBy(p => p.TipoParametro)
                 .ThenBy(p => p.Orden)
                 .ToListAsync();
