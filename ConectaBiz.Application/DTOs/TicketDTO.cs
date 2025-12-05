@@ -211,8 +211,8 @@ public class TicketConsultorAsignacionUpdateDto
     public int Id { get; set; }
     public int IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
-    public int IdFrente { get; set; }
-    public int IdSubFrente { get; set; }
+    public int? IdFrente { get; set; }
+    public int? IdSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
