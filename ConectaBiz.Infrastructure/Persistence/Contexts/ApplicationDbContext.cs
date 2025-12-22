@@ -10,6 +10,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetToken { get; set; }
+        public DbSet<EmailVerificationCode> EmailVerificationCode { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Persona> Persona { get; set; }
@@ -96,7 +98,40 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasForeignKey(e => e.IdRol)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+            // Configuración de PasswordResetToken
+            modelBuilder.Entity<PasswordResetToken>(entity =>
+            {
+                entity.ToTable("PasswordResetToken", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.ExpiryDate).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.CreatedAt).HasColumnType("timestamp").IsRequired();
+                entity.HasIndex(e => e.Token);
+                entity.HasIndex(e => e.UserId);
 
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configuración de EmailVerificationCode
+            modelBuilder.Entity<EmailVerificationCode>(entity =>
+            {
+                entity.ToTable("EmailVerificationCode", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Code).IsRequired().HasMaxLength(10);
+                entity.Property(e => e.ExpiryDate).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.CreatedAt).HasColumnType("timestamp").IsRequired();
+                entity.HasIndex(e => e.Email);
+                entity.HasIndex(e => e.Code);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
             modelBuilder.Entity<Rol>(entity =>
             {
                 entity.ToTable("Rol", "conectabiz");

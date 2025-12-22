@@ -14,14 +14,14 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3006", "http://154.38.177.31:3000") // Tu frontend React
+        policy.WithOrigins("http://localhost:3006", "http://154.38.177.31:3000", "http://154.38.177.31:3001") // Tu frontend React
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
 // Forzar escuchar en IPv4 espec�ficamente
-builder.WebHost.UseUrls("http://0.0.0.0:5001");
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 // Add services to the container
 builder.Services.AddControllers();

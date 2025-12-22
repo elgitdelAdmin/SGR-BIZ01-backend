@@ -129,4 +129,29 @@ namespace ConectaBiz.Domain.Entities
         public virtual Rol Rol { get; set; }
         public virtual Permiso Permiso { get; set; }
     }
+
+    public class PasswordResetToken
+    {
+        public int Id { get; set; }
+        public string Token { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public DateTime ExpiryDate { get; set; }
+        public bool IsUsed { get; set; }
+        public DateTime CreatedAt { get; set; }
+
+        public virtual User User { get; set; }
+    }
+
+    public class EmailVerificationCode
+    {
+        public int Id { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public DateTime ExpiryDate { get; set; }
+        public bool IsUsed { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int? UserId { get; set; }
+
+        public virtual User? User { get; set; }
+    }
 }

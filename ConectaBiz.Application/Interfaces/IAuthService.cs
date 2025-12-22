@@ -23,5 +23,10 @@ namespace ConectaBiz.Application.Interfaces
         Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona);
         Task<IEnumerable<RolDto>> GetAllRolAsync();
         Task<RolDto> GetRolByCodigoAsync(string codigo);
+        Task<OperationResultDto> ChangePasswordAsync(ChangePasswordDto changePasswordDto);
+        Task<OperationResultDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
+        Task<OperationResultDto> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
+        Task<OperationResultDto> SendEmailVerificationCodeAsync(VerifyEmailDto verifyEmailDto);
+        Task<OperationResultDto> ConfirmEmailVerificationAsync(ConfirmEmailDto confirmEmailDto);
     }
 }

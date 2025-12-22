@@ -10,6 +10,7 @@ namespace ConectaBiz.Domain.Interfaces
     public interface IUserRepository
     {
         Task<User?> GetByUsernameAsync(string username);
+        Task<User?> GetByEmailAsync(string email);
         Task<User?> GetByIdAsync(int id);
         Task<IEnumerable<User>> GetUsersByIdAsync(int[] ids);
         Task<User> GetByIdSocioIdRolIdPersonaAsync(int idsocio, int idrol, int idpersona);
@@ -25,5 +26,12 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<Rol>> GetAllRolAsync();
         Task<Rol> GetRolByIdAsync(int id);
         Task<Rol>GetRolByCodigoAsync(string codigo);
+        Task<PasswordResetToken?> GetPasswordResetTokenAsync(string token);
+        Task AddPasswordResetTokenAsync(PasswordResetToken token);
+        Task MarkPasswordResetTokenAsUsedAsync(string token);
+        Task<EmailVerificationCode?> GetEmailVerificationCodeAsync(string email, string code);
+        Task AddEmailVerificationCodeAsync(EmailVerificationCode verificationCode);
+        Task MarkEmailVerificationCodeAsUsedAsync(int id);
+        Task InvalidateOldVerificationCodesAsync(string email);
     }
 }
