@@ -67,7 +67,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<Ticket?> GetByIdWithRelationsAsync(int id)
         {
             return await _context.Ticket
-                .Include(t => t.ConsultorAsignaciones.Where(fsf => fsf.Activo)).ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Include(t => t.TicketHistorialEstado)
                 .FirstOrDefaultAsync(t => t.Id == id);

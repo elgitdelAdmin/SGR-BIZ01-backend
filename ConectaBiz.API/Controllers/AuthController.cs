@@ -199,5 +199,93 @@ namespace ConectaBiz.API.Controllers
             await _authService.LogoutAsync(refreshTokenDto.RefreshToken);
             return Ok(new { message = "Sesión cerrada correctamente" });
         }
+        // En ConectaBiz.API.Controllers.AuthController
+
+        [HttpPost("change-password")]
+        public async Task<ActionResult<OperationResultDto>> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
+        {
+            try
+            {
+                var result = await _authService.ChangePasswordAsync(changePasswordDto);
+                if (!result.Success)
+                {
+                    return BadRequest(result);
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cambiar contraseña");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult<OperationResultDto>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+        {
+            try
+            {
+                var result = await _authService.ForgotPasswordAsync(forgotPasswordDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en recuperación de contraseña");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<ActionResult<OperationResultDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            try
+            {
+                var result = await _authService.ResetPasswordAsync(resetPasswordDto);
+                if (!result.Success)
+                {
+                    return BadRequest(result);
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al restablecer contraseña");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+
+        [HttpPost("send-verification-code")]
+        public async Task<ActionResult<OperationResultDto>> SendVerificationCode([FromBody] VerifyEmailDto verifyEmailDto)
+        {
+            try
+            {
+                var result = await _authService.SendEmailVerificationCodeAsync(verifyEmailDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar código de verificación");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
+
+        [HttpPost("confirm-email")]
+        public async Task<ActionResult<OperationResultDto>> ConfirmEmail([FromBody] ConfirmEmailDto confirmEmailDto)
+        {
+            try
+            {
+                var result = await _authService.ConfirmEmailVerificationAsync(confirmEmailDto);
+                if (!result.Success)
+                {
+                    return BadRequest(result);
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al confirmar email");
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+            }
+        }
     }
 }

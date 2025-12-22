@@ -41,6 +41,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                                  .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users
+                 .Include(u => u.Socio)
+                 .Include(u => u.Persona)
+                                 .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
         public async Task<IEnumerable<User>> GetUsersByIdAsync(int[] ids)
         {
             return await _context.Users
@@ -142,6 +151,72 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 refreshToken.IsRevoked = true;
                 await _context.SaveChangesAsync();
             }
+        }
+        // En ConectaBiz.Infrastructure.Persistence.Repositories.UserRepository
+
+        public async Task<PasswordResetToken?> GetPasswordResetTokenAsync(string token)
+        {
+            return await _context.PasswordResetToken
+                .Include(prt => prt.User)
+                .FirstOrDefaultAsync(prt => prt.Token == token && !prt.IsUsed);
+        }
+
+        public async Task AddPasswordResetTokenAsync(PasswordResetToken token)
+        {
+            _context.PasswordResetToken.Add(token);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task MarkPasswordResetTokenAsUsedAsync(string token)
+        {
+            var resetToken = await _context.PasswordResetToken
+                .FirstOrDefaultAsync(prt => prt.Token == token);
+
+            if (resetToken != null)
+            {
+                resetToken.IsUsed = true;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<EmailVerificationCode?> GetEmailVerificationCodeAsync(string email, string code)
+        {
+            return await _context.EmailVerificationCode
+                .Include(evc => evc.User)
+                .FirstOrDefaultAsync(evc =>
+                    evc.Email == email &&
+                    evc.Code == code &&
+                    !evc.IsUsed);
+        }
+
+        public async Task AddEmailVerificationCodeAsync(EmailVerificationCode verificationCode)
+        {
+            _context.EmailVerificationCode.Add(verificationCode);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task MarkEmailVerificationCodeAsUsedAsync(int id)
+        {
+            var code = await _context.EmailVerificationCode.FindAsync(id);
+            if (code != null)
+            {
+                code.IsUsed = true;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task InvalidateOldVerificationCodesAsync(string email)
+        {
+            var oldCodes = await _context.EmailVerificationCode
+                .Where(evc => evc.Email == email && !evc.IsUsed)
+                .ToListAsync();
+
+            foreach (var code in oldCodes)
+            {
+                code.IsUsed = true;
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }
