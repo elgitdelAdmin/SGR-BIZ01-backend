@@ -243,7 +243,7 @@ namespace ConectaBiz.Application.Services
 
             // Actualizar datos del usuario
             //existingUser.Username = updateUserDto.Username;
-            //existingUser.Email = updateUserDto.Email;
+            existingUser.Email = updateUserDto.Email;
             //existingUser.IdSocio = updateUserDto.IdSocio;
             //existingUser.IdRol = updateUserDto.IdRol;
 
@@ -446,7 +446,7 @@ namespace ConectaBiz.Application.Services
                                 </html>";
 
                 await _emailService.EnviarCorreosAsync(
-                    new[] { user.Email },
+                    new[] { user.Persona.Correo },
                     "Recuperación de Contraseña - Código de Seguridad",
                     mensaje
                 );

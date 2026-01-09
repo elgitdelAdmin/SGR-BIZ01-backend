@@ -73,6 +73,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Include(t => t.TicketHistorialEstado)
+                .Include(t => t.Empresa)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 

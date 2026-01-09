@@ -96,6 +96,7 @@ public class TicketFrenteSubFrenteDto
     public int IdFrente { get; set; }
     public int IdSubFrente { get; set; }
     public int Cantidad { get; set; }
+    public string Descripcion { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public DateTime FechaCreacion { get; set; }
@@ -189,6 +190,7 @@ public class TicketFrenteSubFrenteUpdateDto
     public int? IdFrente { get; set; }
     public int? IdSubFrente { get; set; }
     public int Cantidad { get; set; }
+    public string Descripcion { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public DateTime FechaModificacion { get; set; }

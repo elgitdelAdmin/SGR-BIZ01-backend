@@ -44,11 +44,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users
-                 .Include(u => u.Socio)
-                 .Include(u => u.Persona)
-                                 .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.Email == email);
+                .Include(u => u.Socio)
+                .Include(u => u.Persona)
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Persona.Correo == email);
         }
+
 
         public async Task<IEnumerable<User>> GetUsersByIdAsync(int[] ids)
         {
