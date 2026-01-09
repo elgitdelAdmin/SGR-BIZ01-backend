@@ -364,17 +364,23 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         {
             mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Queued", "PENDIENTE_ATENCION" },
-            { "Closed", "CERRADO" }
+           /* { "Queued", "PENDIENTE_ATENCION" },
+            { "Closed", "CERRADO" }*/
+            { "Queued", "ASIGNADO" },
+            { "Closed", "ASIGNADO" }
         };
         }
         else if(_tipoCarga == AppConstants.TipoCargaMasiva.TicketsIasa)
         {
-            mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Pending", "PENDIENTE_ATENCION" },
+            /* { "Pending", "PENDIENTE_ATENCION" },
             { "En proceso", "EN_EJECUCION" },
-            { "Por disponibilidad del usuario", "PENDIENTE_CLIENTE" }
+            { "Por disponibilidad del usuario", "PENDIENTE_CLIENTE" }*/
+
+            { "Pending", "ASIGNADO" },
+            { "En proceso", "ASIGNADO" },
+            { "Por disponibilidad del usuario", "ASIGNADO" }
         };
         }
         // --- 🔹 Otros casos ---
@@ -382,11 +388,17 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         {
             mapeo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "Aprobado", "APROBADO" },
+            /*{ "Aprobado", "APROBADO" },
             { "Cancelado", "CANCELADO" },
             { "Cerrado", "CERRADO" },
             { "Pendiente", "PENDIENTE_ATENCION" },
-            { "Resuelto", "CERRADO" }
+            { "Resuelto", "CERRADO" }*/
+
+            { "Aprobado", "ASIGNADO" },
+            { "Cancelado", "ASIGNADO" },
+            { "Cerrado", "ASIGNADO" },
+            { "Pendiente", "ASIGNADO" },
+            { "Resuelto", "ASIGNADO" }
         };
         }
 
@@ -755,8 +767,8 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         var tickets = insertDtos.Select((insertDto, index) =>
         {
             int nextId = ultimoId + index + 1;
-            string fechaHora = DateTime.Now.ToString("yyyyMMddHHmmss");
-            string codTicket = $"{ObtenerCodigoTicketPorId(insertDto.IdTipoTicket)}-{nextId}-{fechaHora}";
+            string fechaHora = DateTime.Now.ToString("yyyyMMdd");
+            string codTicket = $"{ObtenerCodigoTicketPorId(insertDto.IdTipoTicket)}-{fechaHora}-{nextId}";
 
             return new Ticket
             {

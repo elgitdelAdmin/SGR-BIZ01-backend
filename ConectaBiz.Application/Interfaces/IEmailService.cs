@@ -10,5 +10,11 @@ namespace ConectaBiz.Application.Interfaces
     public interface IEmailService
     {
         Task EnviarCorreosAsync(IEnumerable<string> destinatarios, string asunto, string mensajeTexto);
+        Task EnviarCorreosConAdjuntosAsync(
+           IEnumerable<string> destinatarios,
+           string asunto,
+           string mensajeTexto,
+           IEnumerable<(string FileName, byte[] Content, string ContentType)> adjuntos
+       );
     }
 }

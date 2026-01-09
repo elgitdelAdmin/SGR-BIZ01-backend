@@ -7,6 +7,8 @@ using ConectaBiz.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
+using ConectaBiz.API.Jobs;
+using ConectaBiz.Application.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +23,7 @@ builder.Services.AddCors(options =>
 });
 
 // Forzar escuchar en IPv4 espec�ficamente
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
+builder.WebHost.UseUrls("http://0.0.0.0:5001");
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -69,6 +71,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddHostedService<ConectaBiz.API.Jobs.RecurringJobWorker>();
+builder.Services.Configure<ReportesPorCorreoJobSettings>(
+    builder.Configuration.GetSection("ReportesPorCorreoJob")
+);
+
+builder.Services.AddHostedService<ReportesPorCorreoWorker>();
 
 var app = builder.Build();
 

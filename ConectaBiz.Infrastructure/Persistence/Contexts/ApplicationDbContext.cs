@@ -124,6 +124,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Code).IsRequired().HasMaxLength(10);
                 entity.Property(e => e.ExpiryDate).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.CreatedAt).HasColumnType("timestamp").IsRequired();
+                entity.Property(e => e.IsUsed).IsRequired().HasColumnType("boolean").HasDefaultValue(false);
                 entity.HasIndex(e => e.Email);
                 entity.HasIndex(e => e.Code);
 
@@ -400,6 +401,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
                 entity.Property(e => e.Cantidad);
+                entity.Property(e => e.Descripcion);
                 entity.Property(e => e.FechaInicio).HasColumnType("timestamp without time zone");
                 entity.Property(e => e.FechaFin).HasColumnType("timestamp without time zone");
                 entity.Property(e => e.IdFrente).IsRequired();

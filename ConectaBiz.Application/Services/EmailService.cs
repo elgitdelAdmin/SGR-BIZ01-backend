@@ -102,6 +102,71 @@ namespace ConectaBiz.Application.Services
             }
         }
 
+        public async Task EnviarCorreosConAdjuntosAsync(
+    IEnumerable<string> destinatarios,
+    string asunto,
+    string mensajeTexto,
+    IEnumerable<(string FileName, byte[] Content, string ContentType)> adjuntos)
+        {
+            var to = destinatarios?
+                .Where(d => !string.IsNullOrWhiteSpace(d))
+                .Select(d => d.Trim())
+                .Distinct()
+                .ToList() ?? new List<string>();
+
+            if (to.Count == 0)
+                return;
+
+            var cuerpoHtml = $@"
+    <html>
+      <body style='font-family:Arial; background-color:#f0f4f8; padding:20px;'>
+        <div style='background-color:#4a90e2; color:white; padding:20px; border-radius:10px;'>
+          {mensajeTexto}
+        </div>
+      </body>
+    </html>";
+
+            using var mensaje = new MailMessage();
+            mensaje.From = new MailAddress(_remitente, "Soporte TI");
+
+            foreach (var email in to)
+                mensaje.Bcc.Add(new MailAddress(email));
+
+            mensaje.Subject = asunto;
+            mensaje.Body = cuerpoHtml;
+            mensaje.IsBodyHtml = true;
+
+            // Mantener streams vivos hasta que se envíe el correo
+            var streams = new List<MemoryStream>();
+
+            try
+            {
+                if (adjuntos != null)
+                {
+                    foreach (var adjunto in adjuntos)
+                    {
+                        var ms = new MemoryStream(adjunto.Content);
+                        streams.Add(ms);
+
+                        var attachment = new Attachment(ms, adjunto.FileName, adjunto.ContentType);
+                        mensaje.Attachments.Add(attachment);
+                    }
+                }
+
+                using var smtp = new SmtpClient(_smtpServer, _smtpPort)
+                {
+                    Credentials = new NetworkCredential(_remitente, _password),
+                    EnableSsl = true
+                };
+
+                await smtp.SendMailAsync(mensaje);
+            }
+            finally
+            {
+                foreach (var s in streams)
+                    s.Dispose();
+            }
+        }
 
 
     }

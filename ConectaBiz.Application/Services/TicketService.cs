@@ -29,6 +29,13 @@ namespace ConectaBiz.Application.Services
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly string _rutaLog;
 
+        // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
+        private IEnumerable<Parametro> _listaTipoTicket;
+        private IEnumerable<Parametro> _listaEstados;
+        private IEnumerable<Parametro> _listaPrioridades;
+        private IEnumerable<Parametro> _listaParametros;
+        private IEnumerable<Parametro> _listaTipoActividad;
+
         public TicketService(
             IConfiguration configuration,
             ITicketRepository ticketRepository,
@@ -61,6 +68,15 @@ namespace ConectaBiz.Application.Services
             _rutaLog = configuration["Logging:LogFilePath"];
         }
 
+        // 🔹 Cargar todos los datos necesarios
+        private async Task InicializarDatosAsync()
+        {
+            _listaParametros = await _parametroRepository.GetAllAsync();
+            _listaTipoTicket = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoTicket).ToList();
+            _listaEstados = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.EstadoTicket).ToList();
+            _listaPrioridades = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.Prioridad).ToList();
+            _listaTipoActividad = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoActividad).ToList();
+        }
         public async Task<IEnumerable<TicketDto>> GetAllAsync()
         {
             var tickets = await _ticketRepository.GetAllAsync();
@@ -218,13 +234,15 @@ namespace ConectaBiz.Application.Services
         }
         public async Task<string> GenerarCodigoTicketAsync(int idTipoTicket)
         {
-            string codigoTipoTicket = (await _parametroRepository.GetByIdAsync(idTipoTicket)).Codigo;
+            //string codigoTipoTicket = (await _parametroRepository.GetByIdAsync(idTipoTicket)).Codigo;
+            string codigoTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Id.Equals(idTipoTicket)).Codigo; 
             int nextId = (await _ticketRepository.GetAllAsync()).DefaultIfEmpty().Max(t => t?.Id ?? 0) + 1;
-            string fechaHora = DateTime.Now.ToString("yyyyMMddHHmmss");
-            return $"{codigoTipoTicket}-{nextId}-{fechaHora}";
+            string fechaHora = DateTime.Now.ToString("yyyyMMdd");
+            return $"{codigoTipoTicket}-{fechaHora}-{nextId}";
         }
         public async Task<TicketDto> CreateAsync(TicketInsertDto insertDto)
         {
+            InicializarDatosAsync();
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var log = new StringBuilder();
             log.AppendLine("========== INICIO CREACIÓN DE TICKET ==========");

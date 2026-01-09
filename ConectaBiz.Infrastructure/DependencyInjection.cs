@@ -53,6 +53,7 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<ISocioRepository, SocioRepository>();
             services.AddScoped<INotificacionTicketRepository, NotificacionTicketRepository>();
             services.AddScoped<ICargaMasivaTicketsRepository, CargaMasivaTicketsRepository>();
+            services.AddScoped<IReportesRepository, ReportesRepository>();
 
             // Servicios
             services.AddScoped<ITokenService, TokenService>();
@@ -70,6 +71,7 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<INotificacionTicketService, NotificacionTicketService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+            services.AddScoped<IReportesService, ReportesService>();
 
             services.AddScoped(provider =>
                 new Lazy<INotificacionTicketService>(
