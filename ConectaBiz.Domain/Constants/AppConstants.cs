@@ -89,21 +89,18 @@ namespace ConectaBiz.Domain.Constants
         }
         public static class Estados
         {
-            public const string CONSULTORIA_PROCESO = "CONSULTORIA_PROCESO";
-            public const string PENDIENTE_APROBACION = "PENDIENTE_APROBACION";
-            public const string APROBADO = "APROBADO";
             public const string CERRADO = "CERRADO";
-            public const string ANULADO = "ANULADO";
-            public const string EN_PRUEBA = "EN_PRUEBA";
-            public const string RECHAZADO = "RECHAZADO";
-            public const string CANCELADO = "CANCELADO";
-            public const string PENDIENTE_SOLUCION = "PENDIENTE_SOLUCION";
-            public const string REGISTRADO = "REGISTRADO";
-            public const string EN_EJECUCION = "EN_EJECUCION";
-            public const string PENDIENTE_ATENCION = "PENDIENTE_ATENCION";
+            public const string ATENDIDO = "ATENDIDO";
             public const string PENDIENTE_ASIGNACION = "PENDIENTE_ASIGNACION";
-            public const string EN_REVISION = "EN_REVISION";
-            public const string OBSERVADO = "OBSERVADO";
+            public const string CANCELADO = "CANCELADO";
+            public const string RECHAZADO = "RECHAZADO";
+            public const string PENDIENTE_CLIENTE = "PENDIENTE_CLIENTE";
+            public const string PENDIENTE_CONSULTOR = "PENDIENTE_CONSULTOR";
+            public const string ANULADO = "ANULADO";
+            public const string PENDIENTE_ATENCION = "PENDIENTE_ATENCION";
+            public const string ASIGNADO = "ASIGNADO";
+            public const string APROBADO = "APROBADO";
+            public const string EN_EJECUCION = "EN_EJECUCION";
         }
         public static class TipoCargaMasiva
         {

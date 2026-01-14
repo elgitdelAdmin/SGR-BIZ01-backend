@@ -4,12 +4,15 @@ using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
 using NPOI.SS.Formula;
 using NPOI.SS.Formula.Functions;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using static ConectaBiz.Domain.Constants.AppConstants;
 
 namespace ConectaBiz.Application.Services
 {
@@ -18,8 +21,8 @@ namespace ConectaBiz.Application.Services
         private readonly ITicketRepository _ticketRepository;
         private readonly ITicketConsultorAsignacionRepository _consultorAsignacionRepository;
         private readonly ITicketFrenteSubFrenteRepository _frenteSubFrenteRepository;
-        private readonly ITicketHistorialRepository _historialRepository; 
-        private readonly IParametroRepository _parametroRepository;
+        private readonly ITicketHistorialRepository _historialRepository;
+        private readonly IParametrosCatalogo _parametrosCatalogo;
         private readonly IEmpresaRepository _empresaRepository;
         private readonly IGestorService _gestorService;
         private readonly IConsultorService _consultorService;
@@ -28,9 +31,11 @@ namespace ConectaBiz.Application.Services
         private readonly IMapper _mapper;
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly string _rutaLog;
+        private readonly string _rutaBaseArchivos;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
         private IEnumerable<Parametro> _listaTipoTicket;
+        private IEnumerable<Parametro> _listaSubTipoTicket;
         private IEnumerable<Parametro> _listaEstados;
         private IEnumerable<Parametro> _listaPrioridades;
         private IEnumerable<Parametro> _listaParametros;
@@ -43,7 +48,7 @@ namespace ConectaBiz.Application.Services
             Lazy<INotificacionTicketService> notificacionTicketService,
             ITicketFrenteSubFrenteRepository frenteSubFrenteRepository,
             ITicketHistorialRepository historialRepository,
-            IParametroRepository parametroRepository,
+            IParametrosCatalogo parametrosCatalogo,
             IEmpresaRepository empresaRepository,
             IGestorService gestorService,
             IConsultorService consultorService,
@@ -58,7 +63,7 @@ namespace ConectaBiz.Application.Services
             _notificacionTicketService = notificacionTicketService;
             _frenteSubFrenteRepository = frenteSubFrenteRepository;
             _historialRepository = historialRepository;
-            _parametroRepository = parametroRepository;
+            _parametrosCatalogo = parametrosCatalogo;
             _empresaRepository = empresaRepository;
             _gestorService = gestorService;
             _consultorService = consultorService;
@@ -66,16 +71,22 @@ namespace ConectaBiz.Application.Services
             _authService = authService;
             _mapper = mapper;
             _rutaLog = configuration["Logging:LogFilePath"];
+            _rutaBaseArchivos = configuration["RepositorioArchivos:RutaBase"];
         }
 
         // 🔹 Cargar todos los datos necesarios
         private async Task InicializarDatosAsync()
         {
-            _listaParametros = await _parametroRepository.GetAllAsync();
-            _listaTipoTicket = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoTicket).ToList();
-            _listaEstados = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.EstadoTicket).ToList();
-            _listaPrioridades = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.Prioridad).ToList();
-            _listaTipoActividad = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoActividad).ToList();
+            await _parametrosCatalogo.EnsureLoadedAsync();
+
+            var snap = _parametrosCatalogo.Current;
+
+            _listaParametros = snap.ListaParametros;
+            _listaTipoTicket = snap.ListaTipoTicket;
+            _listaSubTipoTicket = snap.ListaSubTipoTicket;
+            _listaEstados = snap.ListaEstados;
+            _listaPrioridades = snap.ListaPrioridades;
+            _listaTipoActividad = snap.ListaTipoActividad;
         }
         public async Task<IEnumerable<TicketDto>> GetAllAsync()
         {
@@ -242,7 +253,7 @@ namespace ConectaBiz.Application.Services
         }
         public async Task<TicketDto> CreateAsync(TicketInsertDto insertDto)
         {
-            InicializarDatosAsync();
+            await InicializarDatosAsync();
             var sw = System.Diagnostics.Stopwatch.StartNew();
             var log = new StringBuilder();
             log.AppendLine("========== INICIO CREACIÓN DE TICKET ==========");
@@ -250,45 +261,6 @@ namespace ConectaBiz.Application.Services
 
             try
             {
-                // Log inicial de DTO recibido
-                log.AppendLine("---- DATOS RECIBIDOS ----");
-                log.AppendLine($"codTicketInterno: {insertDto.CodTicketInterno}");
-                log.AppendLine($"titulo: {insertDto.Titulo}");
-                log.AppendLine($"fechaSolicitud: {insertDto.FechaSolicitud}");
-                log.AppendLine($"idTipoTicket: {insertDto.IdTipoTicket}");
-                log.AppendLine($"idEstadoTicket: {insertDto.IdEstadoTicket}");
-                log.AppendLine($"idEmpresa: {insertDto.IdEmpresa}");
-                log.AppendLine($"idUsuarioResponsableCliente: {insertDto.IdUsuarioResponsableCliente}");
-                log.AppendLine($"idPrioridad: {insertDto.IdPrioridad}");
-                log.AppendLine($"descripcion: {insertDto.Descripcion}");
-                log.AppendLine($"usuarioCreacion: {insertDto.UsuarioCreacion}");
-                log.AppendLine($"idGestorConsultoria: {insertDto.IdGestorConsultoria}");
-                //log.AppendLine($"consultorAsignaciones JSON: {insertDto.consultorAsignaciones}");
-               // log.AppendLine($"frenteSubFrentes JSON: {insertDto.frenteSubFrentes}");
-                log.AppendLine($"zipFile: {(insertDto.ZipFile != null ? insertDto.ZipFile.FileName : "NULL")}");
-
-                //// Deserialización de JSON
-                //try
-                //{
-                //    var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionInsertDto>>(insertDto.consultorAsignaciones);
-                //    insertDto.ConsultorAsignaciones = consultores;
-                //    log.AppendLine($"Consultores deserializados: {consultores?.Count ?? 0}");
-                //}
-                //catch (Exception exJson)
-                //{
-                //    log.AppendLine("❌ Error deserializando consultorAsignaciones: " + exJson.Message);
-                //}
-
-                //try
-                //{
-                //    var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteInsertDto>>(insertDto.frenteSubFrentes);
-                //    insertDto.FrenteSubFrentes = frentesSubfrentes;
-                //    log.AppendLine($"Frentes deserializados: {frentesSubfrentes?.Count ?? 0}");
-                //}
-                //catch (Exception exJson)
-                //{
-                //    log.AppendLine("❌ Error deserializando frenteSubFrentes: " + exJson.Message);
-                //}
 
                 // 1. Obtener empresa
                 var t0 = sw.ElapsedMilliseconds;
@@ -324,14 +296,14 @@ namespace ConectaBiz.Application.Services
                     {
                         var uploadsFolder = Path.Combine(
                             Directory.GetCurrentDirectory(),
-                            "Uploads",
+                            _rutaBaseArchivos,
                             "Empresa",
                             insertDto.IdEmpresa.ToString(),
                             createdTicket.Id.ToString()
                         );
                         Directory.CreateDirectory(uploadsFolder);
 
-                        var fileName = $"{Path.GetFileName(insertDto.ZipFile.FileName)}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                        var fileName = $"{Path.GetFileName(insertDto.ZipFile.FileName)}";
                         var filePath = Path.Combine(uploadsFolder, fileName);
                         t0 = sw.ElapsedMilliseconds;
 
@@ -344,7 +316,7 @@ namespace ConectaBiz.Application.Services
                         var zipFileDto = new TicketZipFileDto
                         {
                             Orden = 1,
-                            Url = Path.Combine("Uploads", "Empresa", insertDto.IdEmpresa.ToString(), createdTicket.Id.ToString(), fileName).Replace("\\", "/"),
+                            Url = Path.Combine(_rutaBaseArchivos, "Empresa", insertDto.IdEmpresa.ToString(), createdTicket.Id.ToString(), fileName).Replace("\\", "/"),
                             FechaInsert = DateTime.Now
                         };
 
@@ -371,14 +343,6 @@ namespace ConectaBiz.Application.Services
                 t0 = sw.ElapsedMilliseconds;
                 await CreateInitialHistorialAsync(createdTicket.Id, insertDto.IdEstadoTicket);
                 log.AppendLine($"CreateInitialHistorialAsync ms={sw.ElapsedMilliseconds - t0}");
-
-                //t0 = sw.ElapsedMilliseconds;
-                //await CreateConsultorAsignacionesAsync(createdTicket.Id, insertDto.ConsultorAsignaciones);
-                //log.AppendLine($"CreateConsultorAsignacionesAsync ms={sw.ElapsedMilliseconds - t0}");
-
-                //t0 = sw.ElapsedMilliseconds;
-                //await CreateFrenteSubFrentesAsync(createdTicket.Id, insertDto.FrenteSubFrentes);
-                //log.AppendLine($"CreateFrenteSubFrentesAsync ms={sw.ElapsedMilliseconds - t0}");
 
                 // 5. Notificaciones (SECUENCIAL - NO en background)
                 t0 = sw.ElapsedMilliseconds;
@@ -500,77 +464,91 @@ namespace ConectaBiz.Application.Services
         }
 
 
-        public async Task ActualizarEstadoDeAprobadoAEnEjecucion()
+        //public async Task ActualizarEstadoDeAprobadoAEnEjecucion()
+        //{
+        //    // 1. Obtener estados
+        //    var estados = await _parametrosCatalogo.GetByTipoParametroAsync(AppConstants.TiposParametros.EstadoTicket);
+        //    var idEstadoAprobado = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.APROBADO)?.Id ?? throw new Exception("No se encontró el estado APROBADO");
+        //    var idEstadoEnEjecucion = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.EN_EJECUCION)?.Id ?? throw new Exception("No se encontró el estado EN_EJECUCION");
+
+        //    // 2. Obtener tickets aprobados
+        //    var ticketsAprobados = await _ticketRepository.GetByEstadoAsync(idEstadoAprobado);
+
+        //    if (ticketsAprobados == null || !ticketsAprobados.Any())
+        //        return; // No hay nada que actualizar
+
+        //    // 3. Evaluar cada ticket
+        //    var ticketsAActualizar = new List<Ticket>();
+
+        //    foreach (var ticket in ticketsAprobados)
+        //    {
+        //        var fechaMaxAsignacion = ticket.ConsultorAsignaciones.Where(c => c.Activo).Select(c => (DateTime?)c.FechaAsignacion).Max();
+
+        //        // 4. Comparar fechas
+        //        if (fechaMaxAsignacion.HasValue && fechaMaxAsignacion.Value >= DateTime.Now)
+        //        {
+        //            ticket.IdEstadoTicket = idEstadoEnEjecucion;
+        //            ticket.FechaActualizacion = DateTime.Now;
+        //            ticket.UsuarioActualizacion = "System"; // o el usuario actual
+
+        //            ticketsAActualizar.Add(ticket);
+        //        }
+        //    }
+
+        //    // 5. Guardar cambios
+        //    if (ticketsAActualizar.Any())
+        //    {
+        //        await _ticketRepository.UpdateRangeAsync(ticketsAActualizar);
+        //    }
+        //}
+
+        private async Task<int> LogicaActualizarEstadosAutomatico(Ticket ticketActual,TicketUpdateDto updateDto)
         {
-            // 1. Obtener estados
-            var estados = await _parametroRepository.GetByTipoParametroAsync(AppConstants.TiposParametros.EstadoTicket);
-            var idEstadoAprobado = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.APROBADO)?.Id ?? throw new Exception("No se encontró el estado APROBADO");
-            var idEstadoEnEjecucion = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.EN_EJECUCION)?.Id ?? throw new Exception("No se encontró el estado EN_EJECUCION");
+            string codigoEstadoActual = _listaEstados.First(x => x.Id == ticketActual.IdEstadoTicket).Codigo;
 
-            // 2. Obtener tickets aprobados
-            var ticketsAprobados = await _ticketRepository.GetByEstadoAsync(idEstadoAprobado);
+            var idNuevoEstado = updateDto.IdEstadoTicket;
 
-            if (ticketsAprobados == null || !ticketsAprobados.Any())
-                return; // No hay nada que actualizar
+            bool huboCambiosFrentes = false;
+            bool huboCambiosAsignaciones = false;
 
-            // 3. Evaluar cada ticket
-            var ticketsAActualizar = new List<Ticket>();
-
-            foreach (var ticket in ticketsAprobados)
+            if (updateDto.FrenteSubFrentes.Any())
             {
-                var fechaMaxAsignacion = ticket.ConsultorAsignaciones.Where(c => c.Activo).Select(c => (DateTime?)c.FechaAsignacion).Max();
-
-                // 4. Comparar fechas
-                if (fechaMaxAsignacion.HasValue && fechaMaxAsignacion.Value >= DateTime.Now)
-                {
-                    ticket.IdEstadoTicket = idEstadoEnEjecucion;
-                    ticket.FechaActualizacion = DateTime.Now;
-                    ticket.UsuarioActualizacion = "System"; // o el usuario actual
-
-                    ticketsAActualizar.Add(ticket);
-                }
+                var (modificados, agregados) =await GetConsulFrenteSubFrentesfAsync(ticketActual.Id,updateDto.FrenteSubFrentes);
+                huboCambiosFrentes = modificados.Any() || agregados.Any();
             }
 
-            // 5. Guardar cambios
-            if (ticketsAActualizar.Any())
+            if (updateDto.ConsultorAsignaciones.Any())
             {
-                await _ticketRepository.UpdateRangeAsync(ticketsAActualizar);
+                var (asigMod, asigAg, _, _, _, _) =await GetConsultorAsignacionesDiffAsync(ticketActual.Id,updateDto.ConsultorAsignaciones);
+                huboCambiosAsignaciones = asigMod.Any() || asigAg.Any();
             }
-        }
-
-        private async Task<int> LogicaActualizarEstados(TicketUpdateDto updateDto)
-        {
-            var idNuevoEstado = 0;
-            var codNuevoEstado = AppConstants.Estados.PENDIENTE_ATENCION;
-            var estados = await _parametroRepository.GetByTipoParametroAsync(AppConstants.TiposParametros.EstadoTicket);
-            var codigoEstadoActual = estados.FirstOrDefault(p => p.Id == updateDto.IdEstadoTicket).Codigo;
 
             switch (codigoEstadoActual)
             {
-                case AppConstants.Estados.PENDIENTE_ATENCION:
-                    if (updateDto.ConsultorAsignaciones.Count > 0) // SI TIENE CONSULTORES ASIGNADOS 
+                case AppConstants.Estados.ATENDIDO:
+                    if (huboCambiosFrentes)
                     {
-                        codNuevoEstado = AppConstants.Estados.APROBADO;
+                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ASIGNACION).Id;
                     }
                     break;
-                //case AppConstants.Estados.APROBADO:
-                //    Console.WriteLine("Elegiste la opción APROBADO");
-                //    break;
-                //case AppConstants.Estados.EN_EJECUCION:
-                //    Console.WriteLine("Elegiste la opción EN_EJECUCION");
-                //    break;
-                default:
-                    codNuevoEstado = codigoEstadoActual;
+
+                case AppConstants.Estados.PENDIENTE_ASIGNACION:
+                    if (huboCambiosAsignaciones)
+                    {
+                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ASIGNADO).Id;
+                    }
                     break;
             }
-            idNuevoEstado = estados.FirstOrDefault(p => p.Codigo == codNuevoEstado).Id;
             return idNuevoEstado;
         }
+
 
         public async Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto)
         {
             try
             {
+                await InicializarDatosAsync();
+
                 var lstNotificaciones = new List<CrearNotificacionDto>();
 
                 var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones);
@@ -589,8 +567,8 @@ namespace ConectaBiz.Application.Services
                 // Guardar estado anterior para historial
                 int? estadoAnterior = existingTicket.IdEstadoTicket;
 
-                // Actualizando el Estado según Logica
-                //updateDto.IdEstadoTicket = await LogicaActualizarEstados(updateDto);
+                //// Actualizando el Estado según Logica
+                updateDto.IdEstadoTicket = await LogicaActualizarEstadosAutomatico(existingTicket, updateDto);
 
                 // Actualizar los campos del ticket principal
                 UpdateTicketFields(existingTicket, updateDto);
@@ -684,14 +662,14 @@ namespace ConectaBiz.Application.Services
                     // 2. Guardar el nuevo ZIP
                     var uploadsFolder = Path.Combine(
                         Directory.GetCurrentDirectory(),
-                        "Uploads",
+                        _rutaBaseArchivos,
                         "Empresa",
                         existingTicket.IdEmpresa.ToString(),
                         id.ToString()
                     );
                     Directory.CreateDirectory(uploadsFolder);
 
-                    var fileName = $"{Path.GetFileName(updateDto.ZipFile.FileName)}_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    var fileName = $"{Path.GetFileName(updateDto.ZipFile.FileName)}";
                     var filePath = Path.Combine(uploadsFolder, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -703,7 +681,7 @@ namespace ConectaBiz.Application.Services
                     var nuevoZip = new TicketZipFileDto
                     {
                         Orden = listaZips.Count + 1,
-                        Url = Path.Combine("Uploads", "Empresa", existingTicket.IdEmpresa.ToString(), id.ToString(), fileName).Replace("\\", "/"),
+                        Url = Path.Combine(_rutaBaseArchivos, "Empresa", existingTicket.IdEmpresa.ToString(), id.ToString(), fileName).Replace("\\", "/"),
                         FechaInsert = DateTime.Now
                     };
 
@@ -915,5 +893,39 @@ namespace ConectaBiz.Application.Services
             };
             await _historialRepository.CreateAsync(historial);
         }
+
+        public async Task<FileStreamResult> DescargarArchivoAsync(int idTicket, int orden)
+        {
+            var ticket = await _ticketRepository.GetByIdAsync(idTicket)
+                ?? throw new FileNotFoundException("Ticket no existe");
+
+            if (string.IsNullOrEmpty(ticket.UrlArchivos))
+                throw new FileNotFoundException("El ticket no tiene archivos");
+
+            var lista = JsonSerializer.Deserialize<List<TicketZipFileDto>>(ticket.UrlArchivos)
+                        ?? new();
+
+            var archivo = lista.FirstOrDefault(x => x.Orden == orden)
+                ?? throw new FileNotFoundException("Archivo no existe");
+
+            var fullPath = Path.GetFullPath(
+                Path.Combine(Directory.GetCurrentDirectory(), archivo.Url)
+            );
+
+            if (!File.Exists(fullPath))
+                throw new FileNotFoundException("Archivo no existe en disco");
+
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(fullPath, out var contentType))
+                contentType = "application/octet-stream";
+
+            var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            return new FileStreamResult(stream, contentType)
+            {
+                FileDownloadName = Path.GetFileName(fullPath)
+            };
+        }
+
     }
 }
