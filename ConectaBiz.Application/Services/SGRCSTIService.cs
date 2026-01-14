@@ -147,7 +147,7 @@ namespace ConectaBiz.Application.Services
                             FechaSolicitud = req.fecharegistro,
                             IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
                             IdSubTipoTicket = subTipoTicket,
-                            IdEstadoTicket = 54,
+                            IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
                             IdEmpresa = idEmpresa,
                             IdUsuarioResponsableCliente = personaDto.Id,
                             IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
@@ -201,7 +201,7 @@ namespace ConectaBiz.Application.Services
                 "MEDIA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id,
                 "ALTA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Alta)).Id,
                 "CRITICA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Crítica)).Id,
-                _ => 19 // Valor por defecto: Media
+                _ => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id, // Valor por defecto: Media
 
             };
         }

@@ -558,3 +558,63 @@ Construcción notificaciones ms=0 (count=1)
 Repository.AddRangeAsync ms=198
 ✅ FIN EXITOSO (total ms=357)
 ========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:00
+GetUsersByIdAsync ms=344
+Filtrar destinatarios ms=1 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=3)
+Repository.AddRangeAsync ms=464
+✅ FIN EXITOSO (total ms=810)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:01
+GetUsersByIdAsync ms=170
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=215
+✅ FIN EXITOSO (total ms=386)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:09
+GetUsersByIdAsync ms=168
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=353
+✅ FIN EXITOSO (total ms=521)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:09
+GetUsersByIdAsync ms=168
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=209
+✅ FIN EXITOSO (total ms=377)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:16
+GetUsersByIdAsync ms=184
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=359
+✅ FIN EXITOSO (total ms=543)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:16:17
+GetUsersByIdAsync ms=158
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=183
+✅ FIN EXITOSO (total ms=341)
+========== FIN AddRangeAsync ==========
