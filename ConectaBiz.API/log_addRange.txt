@@ -178,3 +178,383 @@ Construcción notificaciones ms=0 (count=1)
 Repository.AddRangeAsync ms=314
 ✅ FIN EXITOSO (total ms=531)
 ========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 13:18:44
+GetUsersByIdAsync ms=303
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=3)
+Repository.AddRangeAsync ms=478
+✅ FIN EXITOSO (total ms=783)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 13:18:44
+GetUsersByIdAsync ms=168
+Filtrar destinatarios ms=1 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=281
+✅ FIN EXITOSO (total ms=450)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 13:18:50
+GetUsersByIdAsync ms=155
+Filtrar destinatarios ms=0 (count=2)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=344
+✅ FIN EXITOSO (total ms=499)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 13:18:50
+GetUsersByIdAsync ms=157
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=189
+✅ FIN EXITOSO (total ms=346)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:12
+GetUsersByIdAsync ms=160
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=468
+✅ FIN EXITOSO (total ms=628)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:13
+GetUsersByIdAsync ms=159
+Filtrar destinatarios ms=1 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=219
+✅ FIN EXITOSO (total ms=379)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:19
+GetUsersByIdAsync ms=165
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=390
+✅ FIN EXITOSO (total ms=555)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:19
+GetUsersByIdAsync ms=163
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=260
+✅ FIN EXITOSO (total ms=423)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:27
+GetUsersByIdAsync ms=163
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=353
+✅ FIN EXITOSO (total ms=516)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 14:59:28
+GetUsersByIdAsync ms=198
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=248
+✅ FIN EXITOSO (total ms=446)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:07:26
+GetUsersByIdAsync ms=157
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=163
+✅ FIN EXITOSO (total ms=320)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:25:16
+GetUsersByIdAsync ms=160
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=169
+✅ FIN EXITOSO (total ms=329)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:25:26
+GetUsersByIdAsync ms=156
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=156
+✅ FIN EXITOSO (total ms=312)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:30:10
+GetUsersByIdAsync ms=161
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=163
+✅ FIN EXITOSO (total ms=324)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:30:28
+GetUsersByIdAsync ms=157
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=158
+✅ FIN EXITOSO (total ms=315)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:30:44
+GetUsersByIdAsync ms=189
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=161
+✅ FIN EXITOSO (total ms=350)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 15:35:19
+GetUsersByIdAsync ms=169
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=158
+✅ FIN EXITOSO (total ms=327)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 16:04:32
+GetUsersByIdAsync ms=159
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=167
+✅ FIN EXITOSO (total ms=326)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 16:16:47
+GetUsersByIdAsync ms=158
+Filtrar destinatarios ms=1 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=155
+✅ FIN EXITOSO (total ms=314)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 17:00:03
+GetUsersByIdAsync ms=692
+Filtrar destinatarios ms=1 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=1)
+Repository.AddRangeAsync ms=343
+✅ FIN EXITOSO (total ms=1037)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 17:24:43
+GetUsersByIdAsync ms=1968
+Filtrar destinatarios ms=1 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=194
+✅ FIN EXITOSO (total ms=2163)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 17:48:53
+GetUsersByIdAsync ms=163
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=165
+✅ FIN EXITOSO (total ms=328)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 17:49:08
+GetUsersByIdAsync ms=162
+Filtrar destinatarios ms=0 (count=1)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=163
+✅ FIN EXITOSO (total ms=325)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:36:09
+GetUsersByIdAsync ms=321
+Filtrar destinatarios ms=1 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=3)
+Repository.AddRangeAsync ms=491
+✅ FIN EXITOSO (total ms=814)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:36:09
+GetUsersByIdAsync ms=162
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=233
+✅ FIN EXITOSO (total ms=395)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:36:20
+GetUsersByIdAsync ms=154
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=334
+✅ FIN EXITOSO (total ms=488)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:36:21
+GetUsersByIdAsync ms=155
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=194
+✅ FIN EXITOSO (total ms=349)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:36:33
+GetUsersByIdAsync ms=158
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=365
+✅ FIN EXITOSO (total ms=523)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:51:34
+GetUsersByIdAsync ms=298
+Filtrar destinatarios ms=1 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=3)
+Repository.AddRangeAsync ms=460
+✅ FIN EXITOSO (total ms=760)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:51:39
+GetUsersByIdAsync ms=161
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=195
+✅ FIN EXITOSO (total ms=356)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:51:59
+GetUsersByIdAsync ms=1100
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=582
+✅ FIN EXITOSO (total ms=1682)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:52:01
+GetUsersByIdAsync ms=158
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=228
+✅ FIN EXITOSO (total ms=386)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:52:21
+GetUsersByIdAsync ms=155
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=364
+✅ FIN EXITOSO (total ms=519)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 21:52:21
+GetUsersByIdAsync ms=157
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=189
+✅ FIN EXITOSO (total ms=346)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:08:21
+GetUsersByIdAsync ms=297
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=1 (count=3)
+Repository.AddRangeAsync ms=454
+✅ FIN EXITOSO (total ms=753)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:08:22
+GetUsersByIdAsync ms=160
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=218
+✅ FIN EXITOSO (total ms=379)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:08:28
+GetUsersByIdAsync ms=159
+Filtrar destinatarios ms=0 (count=3)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=3)
+Repository.AddRangeAsync ms=359
+✅ FIN EXITOSO (total ms=518)
+========== FIN AddRangeAsync ==========
+========== INICIO AddRangeAsync ==========
+Fecha: 2026-01-13 22:08:29
+GetUsersByIdAsync ms=159
+Filtrar destinatarios ms=0 (count=0)
+Mensaje global preparado.
+EnviarCorreosAsync ms=0
+Construcción notificaciones ms=0 (count=1)
+Repository.AddRangeAsync ms=198
+✅ FIN EXITOSO (total ms=357)
+========== FIN AddRangeAsync ==========

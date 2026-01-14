@@ -317,6 +317,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Titulo).IsRequired();
                 entity.Property(e => e.FechaSolicitud).HasColumnType("timestamp without time zone").IsRequired();
                 entity.HasIndex(e => e.IdTipoTicket);
+                entity.HasIndex(e => e.IdSubTipoTicket);
                 entity.HasIndex(e => e.IdEstadoTicket);
                 entity.HasIndex(e => e.IdEmpresa);
                 entity.HasIndex(e => e.IdUsuarioResponsableCliente);

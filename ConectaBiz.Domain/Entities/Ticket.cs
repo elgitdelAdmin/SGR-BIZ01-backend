@@ -16,6 +16,7 @@ public class Ticket
     public string Titulo { get; set; }
     public DateTime FechaSolicitud { get; set; }
     public int IdTipoTicket { get; set; }
+    public int IdSubTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int? IdGestor { get; set; }

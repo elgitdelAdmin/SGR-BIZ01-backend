@@ -20,6 +20,7 @@ public class TicketDto
     public string Titulo { get; set; } = string.Empty;
     public DateTime FechaSolicitud { get; set; }
     public int IdTipoTicket { get; set; }
+    public int IdSubTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }
@@ -132,6 +133,7 @@ public class TicketInsertDto
     public string Titulo { get; set; }
     public DateTime FechaSolicitud { get; set; }
     public int IdTipoTicket { get; set; }
+    public int IdSubTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int? IdUsuarioResponsableCliente { get; set; }
@@ -160,6 +162,7 @@ public class TicketUpdateDto
     public string Titulo { get; set; } = string.Empty;
     public DateTime FechaSolicitud { get; set; }
     public int IdTipoTicket { get; set; }
+    public int IdSubTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
     public int IdUsuarioResponsableCliente { get; set; }

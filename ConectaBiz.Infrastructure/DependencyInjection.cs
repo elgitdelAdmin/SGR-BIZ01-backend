@@ -13,6 +13,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Infrastructure.Caching;
+
 
 namespace ConectaBiz.Infrastructure
 {
@@ -72,6 +75,8 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
             services.AddScoped<IReportesService, ReportesService>();
+
+            services.AddSingleton<IParametrosCatalogo, ParametrosCatalogo>();
 
             services.AddScoped(provider =>
                 new Lazy<INotificacionTicketService>(
