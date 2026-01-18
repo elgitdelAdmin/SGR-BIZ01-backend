@@ -551,13 +551,50 @@ namespace ConectaBiz.Application.Services
 
                 await _userRepository.AddEmailVerificationCodeAsync(verificationCode);
 
-                // Enviar correo con el código
+                var codeSpaced = string.Join("&nbsp;", code.ToCharArray());
+
                 var mensaje = $@"
-            <h2>Código de Verificación</h2>
-            <p>Tu código de verificación es:</p>
-            <h1 style='color:#4a90e2; font-size:48px; letter-spacing:10px;'>{code}</h1>
-            <p>Este código expirará en 15 minutos.</p>
-            <p>Si no solicitaste este código, ignora este correo.</p>";
+<table role='presentation' width='100%' cellpadding='0' cellspacing='0' border='0' style='background:#f4f4f4;'>
+  <tr>
+    <td align='center' style='padding:20px; color:#333333; font-family:Arial, sans-serif;'>
+
+      <table role='presentation' width='420' cellpadding='0' cellspacing='0' border='0' style='background:#ffffff; border-radius:6px;'>
+        <tr>
+          <td align='center' style='padding:24px; color:#333333; font-family:Arial, sans-serif;'>
+
+            <div style='font-size:22px; line-height:28px; font-weight:bold; color:#333333; margin:0 0 10px 0;'>
+              Código de Verificación
+            </div>
+
+            <div style='font-size:14px; line-height:20px; color:#555555; margin:0 0 14px 0;'>
+              Tu código de verificación es:
+            </div>
+
+            <table role='presentation' cellpadding='0' cellspacing='0' border='0' align='center'>
+              <tr>
+                <td align='center' bgcolor='#4a90e2'
+                    style='background:#4a90e2; padding:14px 18px; font-family:Arial, sans-serif; font-size:36px; line-height:42px; font-weight:bold; color:#ffffff; mso-line-height-rule:exactly; mso-padding-alt:14px 18px 14px 18px;'>
+                  {codeSpaced}
+                </td>
+              </tr>
+            </table>
+
+            <div style='font-size:14px; line-height:20px; color:#555555; margin:16px 0 0 0;'>
+              Este código expirará en 15 minutos.
+            </div>
+
+            <div style='font-size:12px; line-height:18px; color:#777777; margin:10px 0 0 0;'>
+              Si no solicitaste este código, ignora este correo.
+            </div>
+
+          </td>
+        </tr>
+      </table>
+
+    </td>
+  </tr>
+</table>";
+
 
                 await _emailService.EnviarCorreosAsync(
                     new[] { verifyEmailDto.Email },
