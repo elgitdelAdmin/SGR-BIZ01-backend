@@ -88,41 +88,50 @@ namespace ConectaBiz.Application.Services
         }
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest)
         {
-            var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
-            //await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
-
-            var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash))
+            try
             {
-                throw new UnauthorizedAccessException("Credenciales inválidas");
+                var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
+                //await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
+
+                var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
+
+                if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash))
+                {
+                    throw new UnauthorizedAccessException("Credenciales inválidas");
+                }
+
+                user.LastLogin = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+                await _userRepository.UpdateAsync(user);
+
+                var accessToken = _tokenService.GenerateAccessToken(user);
+                var refreshToken = _tokenService.GenerateRefreshToken();
+
+                var refreshTokenEntity = new RefreshToken
+                {
+                    Token = refreshToken,
+                    ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified),
+                    UserId = user.Id
+                };
+
+                await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
+
+                var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
+                return new AuthResponseDto
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    ExpiresAt = DateTime.UtcNow.AddHours(1),
+                    User = _mapper.Map<UserDto>(user),
+                    IdConsultor = consultor?.Id,
+                    NotificacionTicket = notificacionTicketDto.ToList()
+                };
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
 
-            user.LastLogin = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
-            await _userRepository.UpdateAsync(user);
-
-            var accessToken = _tokenService.GenerateAccessToken(user);
-            var refreshToken = _tokenService.GenerateRefreshToken();
-
-            var refreshTokenEntity = new RefreshToken
-            {
-                Token = refreshToken,
-                ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified),
-                UserId = user.Id
-            };
-
-            await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
-
-            var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
-            return new AuthResponseDto
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddHours(1),
-                User = _mapper.Map<UserDto>(user),
-                IdConsultor = consultor?.Id,
-                NotificacionTicket = notificacionTicketDto.ToList()
-            };
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest)
@@ -507,7 +516,7 @@ namespace ConectaBiz.Application.Services
             <p>Si no realizaste este cambio, contacta inmediatamente con soporte.</p>";
 
                 await _emailService.EnviarCorreosAsync(
-                    new[] { user.Email },
+                    new[] { resetToken.User.Persona.Correo},
                     "Contraseña Actualizada",
                     mensaje
                 );

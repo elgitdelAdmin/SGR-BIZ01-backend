@@ -159,6 +159,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.PasswordResetToken
                 .Include(prt => prt.User)
+                    .ThenInclude(u => u.Persona)
                 .FirstOrDefaultAsync(prt => prt.Token == token && !prt.IsUsed);
         }
 
