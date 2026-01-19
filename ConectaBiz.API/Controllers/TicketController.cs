@@ -296,5 +296,24 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
+
+        [HttpGet("{idTicket}/desgarcarArchivo/{orden}")]
+        public async Task<IActionResult> DescargarArchivoTicket(int idTicket, int orden)
+        {
+            try
+            {
+                var fileResult = await _ticketService.DescargarArchivoAsync(idTicket, orden);
+                return fileResult;
+            }
+            catch (FileNotFoundException)
+            {
+                return NotFound("Archivo no encontrado.");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
     }
 }

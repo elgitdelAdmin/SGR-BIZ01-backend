@@ -12,6 +12,7 @@ namespace ConectaBiz.Domain.Constants
         public static class TiposParametros
         {
             public const string TipoTicket = "TipoTicket";
+            public const string SubTipoTicket = "Subtipos";
             public const string Prioridad = "Prioridad";
             public const string TipoActividad = "TipoActividad";
             public const string TipoDocumento = "TipoDocumento";
@@ -21,15 +22,62 @@ namespace ConectaBiz.Domain.Constants
             public const string EstadoTicket = "EstadoTicket";
             public const string TipoCargaMasiva = "TipoCargaMasiva";
         }
+        /* public static class TipoTicket
+         {
+             public const string Incidencia = "INC";
+             public const string Requerimiento = "REQ";
+             public const string Demanda = "DEM";
+             public const string Proyecto = "PROY";
+             public const string PreVenta = "PREV";
+             public const string Bolsa = "BOL";
+         }*/
+        public static class Prioridad
+        {
+            public const string Baja = "BAJA";
+            public const string Media = "MEDIA";
+            public const string Alta = "ALTA";
+            public const string Crítica = "CRITICA";
+        }
         public static class TipoTicket
         {
-            public const string Incidencia = "INC";
-            public const string Requerimiento = "REQ";
-            public const string Demanda = "DEM";
-            public const string Proyecto = "PROY";
             public const string PreVenta = "PREV";
-            public const string Bolsa = "BOL";
+            public const string MesaDeAyuda = "MDA";
+            public const string BolsaDeHoras = "BOL";
+            public const string Staffing = "STF";
+            public const string Proyectos = "PROY";
         }
+        public static class SubtipoTicket
+        {
+            public static class PreVenta
+            {
+                public const string MesaDeAyuda = "PREV_MDA";
+                public const string BolsaDeHoras = "PREV_BOL";
+                public const string Proyectos = "PREV_PROY";
+                public const string Staffing = "PREV_STF";
+            }
+            public static class MesaDeAyuda
+            {
+                public const string Incidencia = "MDA_INC";
+                public const string Requerimiento = "MDA_REQ";
+            }
+            public static class BolsaDeHoras
+            {
+                public const string Incidencia = "BOL_INC";
+                public const string Requerimiento = "BOL_REQ";
+            }
+            public static class Staffing
+            {
+                public const string Presencial = "STF_PRES";
+                public const string Remoto = "STF_REM";
+                public const string Hibrido = "STF_HIB";
+            }
+            public static class Proyectos
+            {
+                public const string Proyecto = "PROY_PRY";
+                public const string Mejora = "PROY_MEJ";
+            }
+        }
+
         public static class Roles
         {
             public const string SuperAdmin = "SUPERADMIN";
@@ -41,21 +89,18 @@ namespace ConectaBiz.Domain.Constants
         }
         public static class Estados
         {
-            public const string CONSULTORIA_PROCESO = "CONSULTORIA_PROCESO";
-            public const string PENDIENTE_APROBACION = "PENDIENTE_APROBACION";
-            public const string APROBADO = "APROBADO";
             public const string CERRADO = "CERRADO";
-            public const string ANULADO = "ANULADO";
-            public const string EN_PRUEBA = "EN_PRUEBA";
-            public const string RECHAZADO = "RECHAZADO";
-            public const string CANCELADO = "CANCELADO";
-            public const string PENDIENTE_SOLUCION = "PENDIENTE_SOLUCION";
-            public const string REGISTRADO = "REGISTRADO";
-            public const string EN_EJECUCION = "EN_EJECUCION";
-            public const string PENDIENTE_ATENCION = "PENDIENTE_ATENCION";
+            public const string ATENDIDO = "ATENDIDO";
             public const string PENDIENTE_ASIGNACION = "PENDIENTE_ASIGNACION";
-            public const string EN_REVISION = "EN_REVISION";
-            public const string OBSERVADO = "OBSERVADO";
+            public const string CANCELADO = "CANCELADO";
+            public const string RECHAZADO = "RECHAZADO";
+            public const string PENDIENTE_CLIENTE = "PENDIENTE_CLIENTE";
+            public const string PENDIENTE_CONSULTOR = "PENDIENTE_CONSULTOR";
+            public const string ANULADO = "ANULADO";
+            public const string PENDIENTE_ATENCION = "PENDIENTE_ATENCION";
+            public const string ASIGNADO = "ASIGNADO";
+            public const string APROBADO = "APROBADO";
+            public const string EN_EJECUCION = "EN_EJECUCION";
         }
         public static class TipoCargaMasiva
         {

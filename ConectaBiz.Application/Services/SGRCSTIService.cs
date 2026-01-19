@@ -1,5 +1,6 @@
 ﻿using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using System;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static ConectaBiz.Domain.Constants.AppConstants;
 
 namespace ConectaBiz.Application.Services
 {
@@ -19,6 +21,15 @@ namespace ConectaBiz.Application.Services
         private readonly ITicketService _ticketService;
         private readonly IPersonaRepository _personaRepository;
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
+        private readonly IParametrosCatalogo _parametrosCatalogo;
+
+        // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
+        private IEnumerable<Parametro> _listaTipoTicket;
+        private IEnumerable<Parametro> _listaSubTipoTicket;
+        private IEnumerable<Parametro> _listaEstados;
+        private IEnumerable<Parametro> _listaPrioridades;
+        private IEnumerable<Parametro> _listaParametros;
+        private IEnumerable<Parametro> _listaTipoActividad;
 
         public SGRCSTIService(
             ISGRCSTIRepository sGRCSTIRepository, 
@@ -27,6 +38,7 @@ namespace ConectaBiz.Application.Services
             IPersonaService personaService, 
             ITicketService ticketService,
             IPersonaRepository personaRepository,
+            IParametrosCatalogo parametrosCatalogo,
             Lazy<INotificacionTicketService> notificacionTicketService
             )
         {
@@ -36,17 +48,34 @@ namespace ConectaBiz.Application.Services
             _personaService = personaService;
             _ticketService = ticketService;
             _personaRepository = personaRepository;
+            _parametrosCatalogo = parametrosCatalogo;
             _notificacionTicketService = notificacionTicketService;
         }
+
+        private async Task InicializarDatosAsync()
+        {
+            await _parametrosCatalogo.EnsureLoadedAsync();
+
+            var snap = _parametrosCatalogo.Current;
+
+            _listaParametros = snap.ListaParametros;
+            _listaTipoTicket = snap.ListaTipoTicket;
+            _listaSubTipoTicket = snap.ListaSubTipoTicket;
+            _listaEstados = snap.ListaEstados;
+            _listaPrioridades = snap.ListaPrioridades;
+            _listaTipoActividad = snap.ListaTipoActividad;
+        }
+
         public async Task MigracionEmpresa()
         {
-            var Clientes=await _empresaRepository.GetAllAsync();
-
+            var Clientes =await _empresaRepository.GetAllAsync();
             var ClientesSGRCSTI = await _sgrcstiRepository.ObtenerEmpresasByExcepcion(Clientes.Any(x => x.CodSgrCsti != null) ? Clientes.Select(x => (int)x.CodSgrCsti).ToList() : null);
         }
 
         public async Task<IEnumerable<dynamic>> MigracionRequerimientos()
         {
+            await InicializarDatosAsync();
+
             var resultados = await _sgrcstiRepository.MigracionRequerimientos();
             var personaDto = await _personaService.GetByIdAsync(58);
 
@@ -104,7 +133,7 @@ namespace ConectaBiz.Application.Services
                             }
                         }
 
-                        var tipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+                        var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
 
                         // Validar si ya existe un ticket con ese CodReqSgrCsti
 
@@ -116,8 +145,9 @@ namespace ConectaBiz.Application.Services
                             CodTicketInterno = req.codrequerimiento,
                             Titulo = req.titulo,
                             FechaSolicitud = req.fecharegistro,
-                            IdTipoTicket = tipoTicket,
-                            IdEstadoTicket = 54,
+                            IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
+                            IdSubTipoTicket = subTipoTicket,
+                            IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
                             IdEmpresa = idEmpresa,
                             IdUsuarioResponsableCliente = personaDto.Id,
                             IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
@@ -156,10 +186,10 @@ namespace ConectaBiz.Application.Services
         {
             return idTipoServicio switch
             {
-                1 => 12, // Incidente
-                2 => 13, // Requerimiento
-                3 => 13, // Garantía también será Requerimiento
-                _ => 13  // Valor por defecto
+                1 => _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.BolsaDeHoras.Incidencia)).Id, // Incidente
+                2 => _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.BolsaDeHoras.Requerimiento)).Id, // Requerimiento
+                3 => _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.BolsaDeHoras.Requerimiento)).Id, // Garantía también será Requerimiento
+                _ => _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.BolsaDeHoras.Requerimiento)).Id,  // Valor por defecto
             };
         }
 
@@ -167,11 +197,11 @@ namespace ConectaBiz.Application.Services
         {
             return prioridad.ToUpper() switch
             {
-                "BAJA" => 18,
-                "MEDIA" => 19,
-                "ALTA" => 20,
-                "CRITICA" => 21,
-                _ => 19 // Valor por defecto: Media
+                "BAJA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Baja)).Id,
+                "MEDIA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id,
+                "ALTA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Alta)).Id,
+                "CRITICA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Crítica)).Id,
+                _ => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id, // Valor por defecto: Media
 
             };
         }

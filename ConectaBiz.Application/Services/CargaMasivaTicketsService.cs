@@ -25,6 +25,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
     // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
     private IEnumerable<Parametro> _listaTipoTicket;
+    private IEnumerable<Parametro> _listaSubTipoTicket;
     private IEnumerable<Parametro> _listaEstados;
     private IEnumerable<Parametro> _listaPrioridades;
     private EmpresaDto _empresaDto;
@@ -117,6 +118,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
     {
         _listaParametros = await _parametroRepository.GetAllAsync();
         _listaTipoTicket = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoTicket).ToList();
+        _listaSubTipoTicket = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.SubTipoTicket).ToList();
         _listaEstados = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.EstadoTicket).ToList();
         _listaPrioridades = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.Prioridad).ToList();
         _listaTipoActividad = _listaParametros.Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoActividad).ToList();
@@ -263,7 +265,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
     }
 
     // 🔹 Mapeo Tipo Ticket
-    private int LogicaObtenerTipoTicketPorCodigo(string codigo)
+    private int LogicaObtenerSubTipoTicketPorCodigo(string codigo)
     {
         int idTipoTicket = 0;
 
@@ -278,9 +280,9 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
             idTipoTicket = codigoCorto switch
             {
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketExcelia.Solicitud => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento),
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketExcelia.Incidentes => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Incidencia),
-                _ => throw new Exception("LogicaObtenerTipoTicketPorCodigo() no soportado")
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketExcelia.Solicitud => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento),
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketExcelia.Incidentes => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Incidencia),
+                _ => throw new Exception("LogicaObtenerSubTipoTicketPorCodigo() no soportado")
             };
         }
         else if (_tipoCarga == AppConstants.TipoCargaMasiva.TicketsRansa)
@@ -289,9 +291,9 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
             idTipoTicket = codigoCorto switch
             {
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketRansa.Requerimientos => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento),
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketRansa.Incidentes => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Incidencia),
-                _ => throw new Exception("LogicaObtenerTipoTicketPorCodigo() no soportado")
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketRansa.Requerimientos => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento),
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketRansa.Incidentes => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Incidencia),
+                _ => throw new Exception("LogicaObtenerSubTipoTicketPorCodigo() no soportado")
             };
         }
         else if (_tipoCarga == AppConstants.TipoCargaMasiva.TicketsIasa)
@@ -300,9 +302,9 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
             idTipoTicket = codigoCorto switch
             {
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketIasa.Requerimientos => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento),
-                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketIasa.Incidentes => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Incidencia),
-                _ => throw new Exception("LogicaObtenerTipoTicketPorCodigo() no soportado")
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketIasa.Requerimientos => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento),
+                AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketIasa.Incidentes => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Incidencia),
+                _ => throw new Exception("LogicaObtenerSubTipoTicketPorCodigo() no soportado")
             };
         }
         else if (_tipoCarga == AppConstants.TipoCargaMasiva.TicketsAlicorp)
@@ -310,46 +312,51 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             idTipoTicket = codigo switch
             {
                 var c when c.StartsWith(AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketAlicorp.Requerimientos)
-                    => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento),
+                    => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento),
 
                 var c when c.StartsWith(AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketAlicorp.Solicitud)
-                    => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento),
+                    => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento),
 
                 var c when c.StartsWith(AppConstants.TipoCargaMasiva.TipoCargaMasivaTicketAlicorp.Incidentes)
-                    => ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Incidencia),
+                    => ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Incidencia),
 
-                _ => throw new Exception("LogicaObtenerTipoTicketPorCodigo() no soportado")
+                _ => throw new Exception("LogicaObtenerSubTipoTicketPorCodigo() no soportado")
             };
         }
 
         else if (_tipoCarga == AppConstants.TipoCargaMasiva.RequerimientosAlicorp)
         {
-            idTipoTicket = ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Requerimiento);
+            idTipoTicket = ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Requerimiento);
         }
         else if (_tipoCarga == AppConstants.TipoCargaMasiva.IncidentesAlicorp)
         {
-            idTipoTicket = ObtenerTipoTicketPorCodigo(AppConstants.TipoTicket.Incidencia);
+            idTipoTicket = ObtenerSubTipoTicketPorCodigo(AppConstants.SubtipoTicket.MesaDeAyuda.Incidencia);
         }
         else
         {
-            throw new Exception("Tipo de carga no reconocido en LogicaObtenerTipoTicketPorCodigo()");
+            throw new Exception("Tipo de carga no reconocido en LogicaObtenerSubTipoTicketPorCodigo()");
         }
         return idTipoTicket;
     }
 
-    private int ObtenerTipoTicketPorCodigo(string codigo)
+    private int ObtenerSubTipoTicketPorCodigo(string codigo)
     {
         if (string.IsNullOrWhiteSpace(codigo)) return 0;
-        var tipoTicket = _listaTipoTicket.FirstOrDefault(t =>t.Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase));
-        return tipoTicket != null ? tipoTicket.Id : 0;
+        var subTipoTicket = _listaSubTipoTicket.FirstOrDefault(t =>t.Codigo.Equals(codigo, StringComparison.OrdinalIgnoreCase));
+        return subTipoTicket != null ? subTipoTicket.Id : 0;
     }
+    //private string ObtenerCodigoTicketPorId(int id)
+    //{
+    //    if (id <= 0) return string.Empty;
+    //    var subTipoTicket = _listaSubTipoTicket.FirstOrDefault(t => t.Id == id);
+    //    return subTipoTicket != null ? subTipoTicket.Codigo : string.Empty;
+    //}
     private string ObtenerCodigoTicketPorId(int id)
     {
         if (id <= 0) return string.Empty;
         var tipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Id == id);
         return tipoTicket != null ? tipoTicket.Codigo : string.Empty;
     }
-
     // 🔹 Mapeo Estado
     private int MapearEstado(string estadoRecibido)
     {
@@ -713,7 +720,8 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     CodTicketInterno = i.CodTicket,
                     Titulo = i.Titulo,
                     FechaSolicitud = fechaAsignacion,
-                    IdTipoTicket = LogicaObtenerTipoTicketPorCodigo(i.CodTicket.Trim()),
+                    IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.MesaDeAyuda, StringComparison.OrdinalIgnoreCase)).Id,
+                    IdSubTipoTicket = LogicaObtenerSubTipoTicketPorCodigo(i.CodTicket.Trim()),
                     IdEstadoTicket = MapearEstado(i.EstadoTicket),
                     IdEmpresa = _empresaDto.Id,
                     IdUsuarioResponsableCliente = _empresaDto.IdUser,
