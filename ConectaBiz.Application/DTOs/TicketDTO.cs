@@ -27,6 +27,7 @@ public class TicketDto
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
+    public string? Repositorios { get; set; }
     public int? IdReqSgrCsti { get; set; }
     public string? CodReqSgrCsti { get; set; }
     public int? IdGestorConsultoria { get; set; }
@@ -126,6 +127,12 @@ public class TicketZipFileDto
     public string Url { get; set; }
     public DateTime FechaInsert{ get; set; }
 }
+public class RepositoriosDto
+{
+    public int Orden { get; set; }
+    public string Url { get; set; }
+    public DateTime FechaInsert { get; set; }
+}
 
 public class TicketInsertDto
 {
@@ -140,6 +147,7 @@ public class TicketInsertDto
     public int IdPrioridad { get; set; }
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
+    public string? Repositorios { get; set; }
     public string UsuarioCreacion { get; set; }
     public string? CodReqSgrCsti {get;set; }
     public int? IdReqSgrCsti { get; set; }
@@ -169,6 +177,7 @@ public class TicketUpdateDto
     public int IdPrioridad { get; set; }
     public string Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
+    public string? Repositorios { get; set; }
     public int? IdGestorConsultoria { get; set; }
     // Nuevo campo para el .zip
     public IFormFile? ZipFile { get; set; }

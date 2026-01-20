@@ -324,6 +324,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasIndex(e => e.IdPrioridad);
                 entity.Property(e => e.Descripcion);
                 entity.Property(e => e.UrlArchivos);
+                entity.Property(e => e.Repositorios);
                 entity.Property(e => e.IdReqSgrCsti);
                 entity.Property(e => e.IdGestor);
                 entity.Property(e => e.IdGestorConsultoria);

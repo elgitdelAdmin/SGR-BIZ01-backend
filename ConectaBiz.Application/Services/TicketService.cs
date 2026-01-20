@@ -12,6 +12,7 @@ using NPOI.SS.Formula.Functions;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using static ConectaBiz.Domain.Constants.AppConstants;
 
 namespace ConectaBiz.Application.Services
@@ -282,6 +283,7 @@ namespace ConectaBiz.Application.Services
                 ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
                 ticket.Activo = true;
                 ticket.UrlArchivos = null;
+                ticket.Repositorios = insertDto.Repositorios;
                 ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
 
                 t0 = sw.ElapsedMilliseconds;
@@ -551,7 +553,8 @@ namespace ConectaBiz.Application.Services
 
                 var lstNotificaciones = new List<CrearNotificacionDto>();
 
-                var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones);
+                var jsonOptions = new JsonSerializerOptions{NumberHandling = JsonNumberHandling.AllowReadingFromString};
+                var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones, jsonOptions);
                 updateDto.ConsultorAsignaciones = consultores;
 
                 var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteUpdateDto>>(updateDto.frenteSubFrentes);
@@ -690,6 +693,7 @@ namespace ConectaBiz.Application.Services
                     // 4. Serializar de nuevo
                     existingTicket.UrlArchivos = JsonSerializer.Serialize(listaZips);
                 }
+                AplicarRepositorios(existingTicket, updateDto);
 
                 // Guardar cambios del ticket principal
                 await _ticketRepository.UpdateAsync(existingTicket);
@@ -704,6 +708,75 @@ namespace ConectaBiz.Application.Services
                 throw;
             }
         }
+        private void AplicarRepositorios(Ticket existingTicket, TicketUpdateDto updateDto)
+        {
+            // Si el front no envía nada, no tocamos lo existente
+            if (string.IsNullOrWhiteSpace(updateDto.Repositorios))
+                return;
+
+            // 1️⃣ Repositorios existentes (con Orden y FechaInsert)
+            var existentes = string.IsNullOrWhiteSpace(existingTicket.Repositorios)
+                ? new List<RepositoriosDto>()
+                : JsonSerializer.Deserialize<List<RepositoriosDto>>(existingTicket.Repositorios)
+                  ?? new List<RepositoriosDto>();
+
+            // 2️⃣ Repositorios que vienen del frontend (sin FechaInsert)
+            var incoming = JsonSerializer.Deserialize<List<JsonElement>>(updateDto.Repositorios)
+                           ?? new List<JsonElement>();
+
+            var ahora = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
+            // 3️⃣ Determinar el último orden existente
+            int ultimoOrden = existentes.Any()
+                ? existentes.Max(x => x.Orden)
+                : 0;
+
+            var resultado = new List<RepositoriosDto>();
+
+            foreach (var item in incoming)
+            {
+                var url = item.TryGetProperty("Url", out var urlProp)
+                    ? urlProp.GetString()
+                    : item.TryGetProperty("Link", out var linkProp)
+                        ? linkProp.GetString()
+                        : null;
+
+                url = (url ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(url))
+                    continue;
+
+                // 🔎 Buscar si ya existe
+                var existente = existentes.FirstOrDefault(e =>
+                    string.Equals(e.Url?.Trim(), url, StringComparison.OrdinalIgnoreCase));
+
+                if (existente != null)
+                {
+                    // ✔ Ya existía → conserva Orden y FechaInsert
+                    resultado.Add(new RepositoriosDto
+                    {
+                        Orden = existente.Orden,
+                        Url = existente.Url,
+                        FechaInsert = existente.FechaInsert
+                    });
+                }
+                else
+                {
+                    // 🆕 Nuevo → Orden = max + 1, Fecha nueva
+                    ultimoOrden++;
+
+                    resultado.Add(new RepositoriosDto
+                    {
+                        Orden = ultimoOrden,
+                        Url = url,
+                        FechaInsert = ahora
+                    });
+                }
+            }
+
+            // 4️⃣ Guardar JSON actualizado
+            existingTicket.Repositorios = JsonSerializer.Serialize(resultado);
+        }
+
         private async Task<(List<TicketFrenteSubFrenteUpdateDto> modificados  , List<TicketFrenteSubFrenteUpdateDto> agregados)>
         GetConsulFrenteSubFrentesfAsync(int idTicket, List<TicketFrenteSubFrenteUpdateDto> newFrenteSubfrente)
         {
