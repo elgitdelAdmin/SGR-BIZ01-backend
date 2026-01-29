@@ -78,6 +78,9 @@ namespace ConectaBiz.Infrastructure.Caching
                     ListaTipoActividad = listaParametros
                         .Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoActividad)
                         .ToList(),
+                    ListaReportes = listaParametros
+                        .Where(p => p.TipoParametro == AppConstants.TiposParametros.TipoReporte)
+                        .ToList(),
                 };
 
                 _current = snapshot;

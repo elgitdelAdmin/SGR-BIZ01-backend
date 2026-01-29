@@ -24,12 +24,12 @@ namespace ConectaBiz.Application.Services
         private readonly IParametrosCatalogo _parametrosCatalogo;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
-        private IEnumerable<Parametro> _listaTipoTicket;
-        private IEnumerable<Parametro> _listaSubTipoTicket;
-        private IEnumerable<Parametro> _listaEstados;
-        private IEnumerable<Parametro> _listaPrioridades;
-        private IEnumerable<Parametro> _listaParametros;
-        private IEnumerable<Parametro> _listaTipoActividad;
+        private IEnumerable<Parametro> _listaTipoTicket = Array.Empty<Parametro>();
+        private IEnumerable<Parametro> _listaSubTipoTicket = Array.Empty<Parametro>();
+        private IEnumerable<Parametro> _listaEstados = Array.Empty<Parametro>();
+        private IEnumerable<Parametro> _listaPrioridades = Array.Empty<Parametro>();
+        private IEnumerable<Parametro> _listaParametros = Array.Empty<Parametro>();
+        private IEnumerable<Parametro> _listaTipoActividad = Array.Empty<Parametro>();
 
         public SGRCSTIService(
             ISGRCSTIRepository sGRCSTIRepository, 
@@ -200,7 +200,7 @@ namespace ConectaBiz.Application.Services
                 "BAJA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Baja)).Id,
                 "MEDIA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id,
                 "ALTA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Alta)).Id,
-                "CRITICA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Crítica)).Id,
+                "CRITICA" => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Critica)).Id,
                 _ => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id, // Valor por defecto: Media
 
             };
