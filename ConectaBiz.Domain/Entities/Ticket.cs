@@ -25,6 +25,7 @@ public class Ticket
     public int IdPrioridad { get; set; }
     public string? Descripcion { get; set; }
     public string? UrlArchivos { get; set; }
+    public string? Repositorios { get; set; }
     public int? IdReqSgrCsti { get; set; }
     public string? CodReqSgrCsti { get; set; }
     public bool Activo { get; set; } = true;
@@ -64,7 +65,7 @@ public class DetalleTareasConsultor
     public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
-    public int Horas { get; set; }
+    public decimal Horas { get; set; }
     public string Descripcion { get; set; }
     public bool Activo { get; set; } = true;
     public TicketConsultorAsignacion TicketConsultorAsignacion { get; set; }
@@ -76,7 +77,7 @@ public class DetallePlanificacionConsultor
     public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
-    public int Horas { get; set; }
+    public decimal Horas { get; set; }
     public string Descripcion { get; set; }
     public bool Activo { get; set; } = true;
     public TicketConsultorAsignacion TicketConsultorAsignacion { get; set; }

@@ -15,5 +15,6 @@ namespace ConectaBiz.Application.DTOs
         public IReadOnlyList<Parametro> ListaEstados { get; init; } = Array.Empty<Parametro>();
         public IReadOnlyList<Parametro> ListaPrioridades { get; init; } = Array.Empty<Parametro>();
         public IReadOnlyList<Parametro> ListaTipoActividad { get; init; } = Array.Empty<Parametro>();
+        public IReadOnlyList<Parametro> ListaReportes { get; init; } = Array.Empty<Parametro>();
     }
 }

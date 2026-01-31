@@ -21,22 +21,22 @@ namespace ConectaBiz.Domain.Constants
             public const string ModalidadLaboral = "ModalidadLaboral";
             public const string EstadoTicket = "EstadoTicket";
             public const string TipoCargaMasiva = "TipoCargaMasiva";
+            public const string TipoReporte = "TipoReporte";
         }
-        /* public static class TipoTicket
-         {
-             public const string Incidencia = "INC";
-             public const string Requerimiento = "REQ";
-             public const string Demanda = "DEM";
-             public const string Proyecto = "PROY";
-             public const string PreVenta = "PREV";
-             public const string Bolsa = "BOL";
-         }*/
+        public static class IdTipoReporte
+        {
+            public const string CargabilidadPorCliente = "CARGA_EMPRESA";
+            public const string CargabilidadPorTicket = "CARGA_TICKET";
+            public const string CargabilidadPorConsultor = "CARGA_CONSULTOR";
+            public const string RankingDeConsultoresQueNoRegistranHoras = "RANK_CONSULTOR_SIN_HORAS";
+            public const string RankingDeConsultoresRegistranMayorCantidadDeHoras = "RANK_CONSULTOR_CON_HORAS";
+        }
         public static class Prioridad
         {
             public const string Baja = "BAJA";
             public const string Media = "MEDIA";
             public const string Alta = "ALTA";
-            public const string Crítica = "CRITICA";
+            public const string Critica = "CRITICA";
         }
         public static class TipoTicket
         {

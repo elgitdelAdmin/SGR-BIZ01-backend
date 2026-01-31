@@ -373,8 +373,8 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         {
            /* { "Queued", "PENDIENTE_ATENCION" },
             { "Closed", "CERRADO" }*/
-            { "Queued", "ASIGNADO" },
-            { "Closed", "ASIGNADO" }
+            { "Queued", "CERRADO" },
+            { "Closed", "CERRADO" }
         };
         }
         else if(_tipoCarga == AppConstants.TipoCargaMasiva.TicketsIasa)
@@ -385,9 +385,9 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             { "En proceso", "EN_EJECUCION" },
             { "Por disponibilidad del usuario", "PENDIENTE_CLIENTE" }*/
 
-            { "Pending", "ASIGNADO" },
-            { "En proceso", "ASIGNADO" },
-            { "Por disponibilidad del usuario", "ASIGNADO" }
+            { "Pending", "CERRADO" },
+            { "En proceso", "CERRADO" },
+            { "Por disponibilidad del usuario", "CERRADO" }
         };
         }
         // --- 🔹 Otros casos ---
@@ -401,11 +401,11 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             { "Pendiente", "PENDIENTE_ATENCION" },
             { "Resuelto", "CERRADO" }*/
 
-            { "Aprobado", "ASIGNADO" },
-            { "Cancelado", "ASIGNADO" },
-            { "Cerrado", "ASIGNADO" },
-            { "Pendiente", "ASIGNADO" },
-            { "Resuelto", "ASIGNADO" }
+            { "Aprobado", "CERRADO" },
+            { "Cancelado", "CERRADO" },
+            { "Cerrado", "CERRADO" },
+            { "Pendiente", "CERRADO" },
+            { "Resuelto", "CERRADO" }
         };
         }
 
@@ -440,7 +440,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             { "Medium", "Media" },
             { "Low", "Baja" },
             { "High", "Alta" },
-            { "Critical", "Crítica" }
+            { "Critical", "Critica" }
         };
         }
         // --- Excelia ---
