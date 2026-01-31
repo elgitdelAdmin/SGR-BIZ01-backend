@@ -277,5 +277,20 @@ namespace ConectaBiz.Application.Services
             }
         }
 
+        public async Task<string> ObtenerNombreReporteAsync(int idTipoReporte)
+        {
+            await InicializarDatosAsync();
+            
+            // Buscar en cache
+            var configReporte = _listaReportes.FirstOrDefault(x => x.Id == idTipoReporte);
+            
+            // Fallback a la base de datos si no está en cache
+            if (configReporte == null)
+                configReporte = await _parametroRepo.GetByIdAsync(idTipoReporte);
+            
+            // Retornar el nombre del reporte o un valor por defecto
+            return configReporte?.Nombre ?? $"Reporte_{idTipoReporte}";
+        }
+
     }
 }
