@@ -106,8 +106,18 @@ namespace ConectaBiz.Application.Services
             if (configReporte == null)
                 configReporte = await _parametroRepo.GetByIdAsync(filtros.IdTipoReporte);
 
-            var sheetName = configReporte?.Nombre ?? "REPORTE";
+            var sheetName = TruncateSheetName(configReporte?.Nombre ?? "REPORTE");
             return CrearExcel(data, sheetName);
+        }
+
+        // Trunca el nombre de la hoja a 31 caracteres (límite de Excel)
+        private static string TruncateSheetName(string name)
+        {
+            const int maxLength = 31;
+            if (string.IsNullOrEmpty(name))
+                return "REPORTE";
+            
+            return name.Length <= maxLength ? name : name.Substring(0, maxLength);
         }
 
         private async Task<IEnumerable<IDictionary<string, object>>> CallRepo(FiltrosReporteRequest f)
