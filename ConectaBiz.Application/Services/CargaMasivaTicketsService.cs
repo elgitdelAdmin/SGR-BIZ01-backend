@@ -264,6 +264,17 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         return tipoActividad != null ? tipoActividad.Id : 0;
     }
 
+    private string LimpiarCodTicketInterno(string codTicket)
+    {
+        if (string.IsNullOrWhiteSpace(codTicket)) return string.Empty;
+
+        return codTicket
+            .Replace("Solicitud", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Incidente", "", StringComparison.OrdinalIgnoreCase)
+            .Replace(" ", "")
+            .Trim();
+    }
+
     // 🔹 Mapeo Tipo Ticket
     private int LogicaObtenerSubTipoTicketPorCodigo(string codigo)
     {
@@ -499,9 +510,14 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         }
 
         if (columnas.Count == 0) return datos;
+        
+        // 🔹 LOG: Ver qué columnas detectamos realmente
+        Console.WriteLine($"🔍 Columnas detectadas en Excel: {string.Join(", ", columnas.Select(c => c.Header))}");
 
         // ✅ DEFINIR COLUMNAS OBLIGATORIAS (ajusta según tus necesidades)
-        var columnasObligatorias = new HashSet<string>
+        // Nota: Agregamos ignore case al set para validación posterior si fuera necesario, 
+        // pero la validación principal depende del diccionario de la fila.
+        var columnasObligatorias = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "CodTicket",
             "Titulo",
@@ -509,7 +525,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             "EstadoTicket",
             "IdPrioridad",
             "Descripcion",
-            "Descripcion",
+            //"Descripcion", // Eliminado duplicado
             "Asignado"
         };
 
@@ -547,7 +563,8 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
             if (!tieneContenido) continue;
 
-            var fila = new Dictionary<string, string>();
+            // 🔹 Usar StringComparer.OrdinalIgnoreCase para que "codTicket" coincida con "CodTicket"
+            var fila = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -578,25 +595,30 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
                 foreach (var columnaObligatoria in columnasObligatorias)
                 {
+                    // Al usar un diccionario CaseInsensitive, podemos buscar directo
                     if (fila.TryGetValue(columnaObligatoria, out string valor))
                     {
                         if (string.IsNullOrWhiteSpace(valor))
                         {
                             filaValida = false;
-                            columnasVacias.Add(columnaObligatoria);
+                            columnasVacias.Add($"{columnaObligatoria} (VACÍO)");
                         }
                     }
                     else
                     {
                         // La columna obligatoria ni siquiera existe en el Excel
                         filaValida = false;
-                        columnasVacias.Add(columnaObligatoria);
+                        columnasVacias.Add($"{columnaObligatoria} (NO ENCONTRADA)");
                     }
                 }
 
                 if (!filaValida)
                 {
-                    Console.WriteLine($"⚠️ Fila {rowIdx} omitida - Columnas vacías u obligatorias faltantes: {string.Join(", ", columnasVacias)}");
+                    // 🔹 LOG: Detalle exacto de qué falló
+                    Console.WriteLine($"⚠️ Fila {rowIdx} omitida. Faltan: {string.Join(", ", columnasVacias)}");
+                    
+                    // Opcional: Imprimir lo que SÍ se leyó para debug
+                    // Console.WriteLine($"   Datos leídos: {System.Text.Json.JsonSerializer.Serialize(fila)}");
                     continue;
                 }
 
@@ -717,7 +739,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 // 🔹 Construir TicketInsertDto
                 return new TicketInsertMasivoDto
                 {
-                    CodTicketInterno = i.CodTicket,
+                    CodTicketInterno = LimpiarCodTicketInterno(i.CodTicket),
                     Titulo = i.Titulo,
                     FechaSolicitud = fechaAsignacion,
                     IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.MesaDeAyuda, StringComparison.OrdinalIgnoreCase)).Id,
