@@ -323,5 +323,76 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .FirstOrDefaultAsync(t => t.CodReqSgrCsti == codReqSgrCsti);
         }
+
+        // ── Métodos IQueryable para paginación server-side ──────────────
+
+        public IQueryable<Ticket> GetQueryableByGestor(int idGestor)
+        {
+            return _context.Ticket
+                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor)
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+        }
+
+        public IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor)
+        {
+            return _context.Ticket
+                .Where(t => t.IdGestorConsultoria == idGestor)
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo));
+        }
+
+        public IQueryable<Ticket> GetQueryableByConsultor(int idConsultor)
+        {
+            return _context.Ticket
+                .Where(t => t.Activo &&
+                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo));
+        }
+
+        public IQueryable<Ticket> GetQueryableByEmpresa(int idEmpresa)
+        {
+            return _context.Ticket
+                .Where(t => t.IdEmpresa == idEmpresa)
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+        }
+
+        public IQueryable<Ticket> GetQueryableBySocio(int idSocio)
+        {
+            return _context.Ticket
+                .Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio)
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+        }
+
+        public IQueryable<Ticket> GetQueryableAll()
+        {
+            return _context.Ticket
+                .Include(t => t.Empresa)
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+        }
     }
 }

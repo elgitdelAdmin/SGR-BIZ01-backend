@@ -32,5 +32,13 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket);
         Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket);
         Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
+
+        // ── Métodos IQueryable para paginación server-side ──
+        IQueryable<Ticket> GetQueryableByGestor(int idGestor);
+        IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor);
+        IQueryable<Ticket> GetQueryableByConsultor(int idConsultor);
+        IQueryable<Ticket> GetQueryableByEmpresa(int idEmpresa);
+        IQueryable<Ticket> GetQueryableBySocio(int idSocio);
+        IQueryable<Ticket> GetQueryableAll();
     }
 }

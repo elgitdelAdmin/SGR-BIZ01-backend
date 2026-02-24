@@ -127,6 +127,52 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, "Error interno del servidor");
             }
         }
+
+        /// <summary>
+        /// Obtiene tickets paginados por usuario y rol
+        /// </summary>
+        [HttpGet("user/{idUser}/rol/{codRol}/paged")]
+        public async Task<ActionResult<PagedResultDto<TicketListItemDto>>> GetPagedByUserRolAsync(
+            int idUser, string codRol,
+            [FromQuery] int page = 0,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? estadoIds = null,
+            [FromQuery] string? globalFilter = null,
+            [FromQuery] string? sortField = null,
+            [FromQuery] string? sortOrder = null,
+            // Nuevos filtros
+            [FromQuery] string? codTicket = null,
+            [FromQuery] string? codTicketInterno = null,
+            [FromQuery] string? titulo = null,
+            [FromQuery] string? empresa = null,
+            [FromQuery] string? prioridad = null,
+            [FromQuery] string? estado = null
+            )
+        {
+            try
+            {
+                List<int>? estadoIdsList = null;
+                if (!string.IsNullOrWhiteSpace(estadoIds))
+                {
+                    estadoIdsList = estadoIds.Split(',')
+                        .Where(s => int.TryParse(s, out _))
+                        .Select(int.Parse)
+                        .ToList();
+                }
+
+                var result = await _ticketService.GetPagedByUserRolAsync(
+                    idUser, codRol, page, pageSize,
+                    estadoIdsList, globalFilter, sortField, sortOrder,
+                    codTicket, codTicketInterno, titulo, empresa, prioridad, estado);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener tickets paginados");
+                return StatusCode(500, "Error interno del servidor");
+            }
+        }
         
         /// <summary>
         /// Obtiene tickets por usuario

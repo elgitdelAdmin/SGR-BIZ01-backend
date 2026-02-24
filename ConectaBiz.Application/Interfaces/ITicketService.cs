@@ -28,5 +28,17 @@ namespace ConectaBiz.Application.Interfaces
         Task<IEnumerable<TicketHistorialEstadoDto>> GetHistorialByTicketIdAsync(int idTicket);
         Task<TicketDto?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
         //Task ActualizarEstadoDeAprobadoAEnEjecucion();
+        Task<PagedResultDto<TicketListItemDto>> GetPagedByUserRolAsync(
+            int idUser, string codRol,
+            int page, int pageSize,
+            List<int>? estadoIds = null,
+            string? globalFilter = null,
+            string? sortField = null, string? sortOrder = null,
+            string? codTicket = null,
+            string? codTicketInterno = null,
+            string? titulo = null,
+            string? empresa = null,
+            string? prioridad = null,
+            string? estado = null);
     }
 }

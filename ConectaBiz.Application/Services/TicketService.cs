@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using static ConectaBiz.Domain.Constants.AppConstants;
+using Microsoft.EntityFrameworkCore;
 
 namespace ConectaBiz.Application.Services
 {
@@ -191,23 +192,6 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
-                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
-               .Select(t =>
-               {
-                   t.HorasTrabajadas = t.ConsultorAsignaciones
-                       .SelectMany(ca => ca.DetalleTareasConsultor)
-                       .Sum(dt => (int?)dt.Horas) ?? 0;
-                   t.HorasPlanificadas = t.ConsultorAsignaciones
-                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                      .Sum(dt => (int?)dt.Horas) ?? 0;
-                   return t;
-               })
-               .ToList();
-            }
-            else if (codRol == AppConstants.Roles.Admin)
-            {
-                UserDto userDto = await _authService.GetByIdAsync(idUser);
-                var tickets = await _ticketRepository.GetBySocioAsync(Convert.ToInt32(userDto.Socio.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Select(t =>
                {
@@ -506,7 +490,9 @@ namespace ConectaBiz.Application.Services
 
         private async Task<int> LogicaActualizarEstadosAutomatico(Ticket ticketActual,TicketUpdateDto updateDto)
         {
-            string codigoEstadoActual = _listaEstados.First(x => x.Id == ticketActual.IdEstadoTicket).Codigo;
+            string codigoEstadoActual = ticketActual.IdEstadoTicket > 0
+                ? _listaEstados.First(x => x.Id == ticketActual.IdEstadoTicket).Codigo
+                : _listaEstados.First(x => x.Id == updateDto.IdEstadoTicket).Codigo;
 
             var idNuevoEstado = updateDto.IdEstadoTicket;
 
@@ -945,7 +931,7 @@ namespace ConectaBiz.Application.Services
             if (!string.IsNullOrEmpty(updateDto.Titulo)) existingTicket.Titulo = updateDto.Titulo;
             if (updateDto.FechaSolicitud != DateTime.MinValue) existingTicket.FechaSolicitud = DateTime.SpecifyKind(updateDto.FechaSolicitud, DateTimeKind.Local);
             if (updateDto.IdTipoTicket > 0) existingTicket.IdTipoTicket = updateDto.IdTipoTicket;
-            if (updateDto.IdSubTipoTicket > 0) existingTicket.IdSubTipoTicket = updateDto.IdSubTipoTicket;
+            if (updateDto.IdSubTipoTicket.HasValue && updateDto.IdSubTipoTicket > 0) existingTicket.IdSubTipoTicket = updateDto.IdSubTipoTicket;
             if (updateDto.IdEstadoTicket > 0) existingTicket.IdEstadoTicket = updateDto.IdEstadoTicket;
             if (updateDto.IdEmpresa > 0) existingTicket.IdEmpresa = updateDto.IdEmpresa;
             if (updateDto.IdUsuarioResponsableCliente > 0) existingTicket.IdUsuarioResponsableCliente = updateDto.IdUsuarioResponsableCliente;
@@ -997,6 +983,232 @@ namespace ConectaBiz.Application.Services
             return new FileStreamResult(stream, contentType)
             {
                 FileDownloadName = Path.GetFileName(fullPath)
+            };
+        }
+
+        // ── Paginación server-side ───────────────────────────────────────
+
+        public async Task<PagedResultDto<TicketListItemDto>> GetPagedByUserRolAsync(
+            int idUser, string codRol,
+            int page, int pageSize,
+            List<int>? estadoIds = null,
+            string? globalFilter = null,
+            string? sortField = null, string? sortOrder = null,
+            string? codTicket = null,
+            string? codTicketInterno = null,
+            string? titulo = null,
+            string? empresa = null,
+            string? prioridad = null,
+            string? estado = null)
+        {
+            Console.WriteLine($"[DEBUG] GetPagedByUserRolAsync Start - User: {idUser}, Role: {codRol}, Page: {page}, PageSize: {pageSize}");
+            Console.WriteLine($"[DEBUG] Params - CodTicket: '{codTicket}', CodTicketInterno: '{codTicketInterno}', GlobalFilter: '{globalFilter}'");
+            if (estadoIds != null) Console.WriteLine($"[DEBUG] EstadoIds received: {string.Join(",", estadoIds)}");
+
+            // 1) Obtener el IQueryable base según el rol
+            IQueryable<Ticket> query;
+
+            if (codRol == AppConstants.Roles.GestorCuenta)
+            {
+                Console.WriteLine("[DEBUG] Role detected: GestorCuenta");
+                var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                query = _ticketRepository.GetQueryableByGestor(gestorDto.Id);
+            }
+            else if (codRol == AppConstants.Roles.GestorConsultoria)
+            {
+                Console.WriteLine("[DEBUG] Role detected: GestorConsultoria");
+                var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                query = _ticketRepository.GetQueryableByGestorConsultoria(gestorDto.Id);
+                // GestorConsultoria filtra por FrenteSubFrentes
+                query = query.Where(t => t.FrenteSubFrentes.Any(fsf => fsf.Activo));
+            }
+            else if (codRol == AppConstants.Roles.Consultor)
+            {
+                Console.WriteLine("[DEBUG] Role detected: Consultor");
+                var consultorDto = await _consultorService.GetByIdUserAsync(idUser);
+                query = _ticketRepository.GetQueryableByConsultor(consultorDto.Id);
+            }
+            else if (codRol == AppConstants.Roles.Empresa)
+            {
+                Console.WriteLine("[DEBUG] Role detected: Empresa");
+                var empresaDto = await _empresaService.GetByIdUserAsync(idUser);
+                query = _ticketRepository.GetQueryableByEmpresa(Convert.ToInt32(empresaDto.Id));
+            }
+            else if (codRol == AppConstants.Roles.Admin)
+            {
+                Console.WriteLine("[DEBUG] Role detected: ADMIN");
+                var userDto = await _authService.GetByIdAsync(idUser);
+                Console.WriteLine($"[DEBUG] Admin IdSocio: {userDto?.Socio?.Id}");
+                query = _ticketRepository.GetQueryableBySocio(Convert.ToInt32(userDto.Socio.Id));
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Role detected: OTHER ({codRol}) - Using GetQueryableAll");
+                query = _ticketRepository.GetQueryableAll();
+            }
+
+            Console.WriteLine($"[DEBUG] Base Query Count: {await query.CountAsync()}");
+
+            // 2) Filtro por estados (multiselect)
+            if (estadoIds != null && estadoIds.Count > 0)
+            {
+                bool isSpecificSearch = !string.IsNullOrWhiteSpace(codTicket) || !string.IsNullOrWhiteSpace(codTicketInterno);
+                
+                if (isSpecificSearch)
+                {
+                    Console.WriteLine("[DEBUG] Specific Code Search detected - Bypassing status filter for all roles.");
+                }
+                else if (codRol == AppConstants.Roles.Admin)
+                {
+                    Console.WriteLine("[DEBUG] Role is ADMIN - Ignoring status filter per request.");
+                }
+                else
+                {
+                    query = query.Where(t => estadoIds.Contains(t.IdEstadoTicket));
+                    Console.WriteLine($"[DEBUG] After estadoIds filter: {await query.CountAsync()}");
+                }
+            }
+
+            // 3) Filtro global (búsqueda de texto)
+            if (!string.IsNullOrWhiteSpace(globalFilter))
+            {
+                query = query.Where(t =>
+                    t.CodTicket.Contains(globalFilter) ||
+                    t.CodTicketInterno.Contains(globalFilter) ||
+                    t.Titulo.Contains(globalFilter) ||
+                    (t.Empresa != null && t.Empresa.RazonSocial.Contains(globalFilter))
+                );
+                Console.WriteLine($"[DEBUG] After globalFilter '{globalFilter}': {await query.CountAsync()}");
+            }
+
+            // ── NUEVOS Filtros por columna ──────────────────────────────────
+            if (!string.IsNullOrWhiteSpace(codTicket)) {
+                var search = codTicket.Trim().ToLower();
+                query = query.Where(t => t.CodTicket.ToLower().Contains(search));
+                Console.WriteLine($"[DEBUG] After codTicket filter '{search}': {await query.CountAsync()}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(codTicketInterno)) {
+                var search = codTicketInterno.Trim().ToLower();
+                query = query.Where(t => t.CodTicketInterno.ToLower().Contains(search));
+                Console.WriteLine($"[DEBUG] After codTicketInterno filter '{search}': {await query.CountAsync()}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(titulo)) {
+                var search = titulo.Trim().ToLower();
+                query = query.Where(t => t.Titulo.ToLower().Contains(search));
+                Console.WriteLine($"[DEBUG] After titulo filter '{search}': {await query.CountAsync()}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(empresa))
+                query = query.Where(t => t.Empresa != null && t.Empresa.RazonSocial.Contains(empresa));
+
+            // Para Prioridad y Estado (input texto), buscamos IDs que coincidan con el nombre
+            // Necesitamos los parámetros cargados
+            if (!string.IsNullOrWhiteSpace(prioridad) || !string.IsNullOrWhiteSpace(estado))
+            {
+                await InicializarDatosAsync(); // Asegura carga de _listaPrioridades, _listaEstados
+
+                if (!string.IsNullOrWhiteSpace(prioridad))
+                {
+                    var idsPrioridad = _listaPrioridades?
+                        .Where(p => p.Nombre != null && p.Nombre.Contains(prioridad))
+                        .Select(p => p.Id)
+                        .ToList();
+
+                    if (idsPrioridad != null && idsPrioridad.Count > 0)
+                        query = query.Where(t => idsPrioridad.Contains(t.IdPrioridad));
+                    else
+                        query = query.Where(t => false);
+                }
+
+                if (!string.IsNullOrWhiteSpace(estado))
+                {
+                    var idsEstado = _listaEstados?
+                        .Where(e => e.Nombre != null && e.Nombre.Contains(estado))
+                        .Select(e => e.Id)
+                        .ToList();
+
+                    if (idsEstado != null && idsEstado.Count > 0)
+                        query = query.Where(t => idsEstado.Contains(t.IdEstadoTicket));
+                    else
+                        query = query.Where(t => false);
+                }
+            }
+            // ────────────────────────────────────────────────────────────────
+
+            // 4) Contar total ANTES de paginar
+            var totalRecords = await query.CountAsync();
+            Console.WriteLine($"[DEBUG] Total Records Final: {totalRecords}");
+
+            // 5) Ordenamiento
+            var isDesc = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase)
+                      || string.Equals(sortOrder, "-1", StringComparison.OrdinalIgnoreCase);
+
+            query = (sortField?.ToLower()) switch
+            {
+                "codticket" => isDesc ? query.OrderByDescending(t => t.CodTicket) : query.OrderBy(t => t.CodTicket),
+                "codticketinterno" => isDesc ? query.OrderByDescending(t => t.CodTicketInterno) : query.OrderBy(t => t.CodTicketInterno),
+                "titulo" => isDesc ? query.OrderByDescending(t => t.Titulo) : query.OrderBy(t => t.Titulo),
+                "fechasolicitud" => isDesc ? query.OrderByDescending(t => t.FechaSolicitud) : query.OrderBy(t => t.FechaSolicitud),
+                "idestadoticket" or "estadonombre" => isDesc ? query.OrderByDescending(t => t.IdEstadoTicket) : query.OrderBy(t => t.IdEstadoTicket),
+                "idprioridad" or "prioridadnombre" => isDesc ? query.OrderByDescending(t => t.IdPrioridad) : query.OrderBy(t => t.IdPrioridad),
+                "empresa.razonsocial" or "empresarazonsocial" => isDesc
+                    ? query.OrderByDescending(t => t.Empresa != null ? t.Empresa.RazonSocial : "")
+                    : query.OrderBy(t => t.Empresa != null ? t.Empresa.RazonSocial : ""),
+                _ => query.OrderByDescending(t => t.FechaCreacion ?? DateTime.MinValue)
+            };
+
+            // 6) Paginación
+            var tickets = await query
+                .Skip(page * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            // 7) Cargar parámetros para nombres de estado y prioridad
+            await InicializarDatosAsync();
+            var estados = _listaEstados?.ToList() ?? new List<Parametro>();
+            var prioridades = _listaPrioridades?.ToList() ?? new List<Parametro>();
+
+            // 8) Mapear a DTO ligero
+            var items = tickets.Select(t =>
+            {
+                var horasTrabajadas = t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo)
+                    .SelectMany(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
+                    .Sum(dt => (int?)dt.Horas) ?? 0;
+
+                var horasPlanificadas = t.ConsultorAsignaciones
+                    .Where(ca => ca.Activo)
+                    .SelectMany(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo))
+                    .Sum(dp => (int?)dp.Horas) ?? 0;
+
+                return new TicketListItemDto
+                {
+                    Id = t.Id,
+                    CodTicket = t.CodTicket,
+                    CodTicketInterno = t.CodTicketInterno,
+                    Titulo = t.Titulo,
+                    FechaSolicitud = t.FechaSolicitud,
+                    IdEstadoTicket = t.IdEstadoTicket,
+                    EstadoNombre = estados.FirstOrDefault(e => e.Id == t.IdEstadoTicket)?.Nombre ?? "Sin estado",
+                    IdPrioridad = t.IdPrioridad,
+                    PrioridadNombre = prioridades.FirstOrDefault(p => p.Id == t.IdPrioridad)?.Nombre ?? "Sin prioridad",
+                    IdEmpresa = t.IdEmpresa,
+                    EmpresaRazonSocial = t.Empresa?.RazonSocial,
+                    HorasTrabajadas = horasTrabajadas,
+                    HorasPlanificadas = horasPlanificadas,
+                    FechaCreacion = t.FechaCreacion
+                };
+            }).ToList();
+
+            return new PagedResultDto<TicketListItemDto>
+            {
+                Items = items,
+                TotalRecords = totalRecords,
+                Page = page,
+                PageSize = pageSize
             };
         }
 
