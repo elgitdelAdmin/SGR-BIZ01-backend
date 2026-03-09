@@ -331,6 +331,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return _context.Ticket
                 .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor)
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
@@ -342,6 +344,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return _context.Ticket
                 .Where(t => t.IdGestorConsultoria == idGestor)
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
@@ -355,6 +359,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(t => t.Activo &&
                             t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones
                     .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
@@ -368,6 +374,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return _context.Ticket
                 .Where(t => t.IdEmpresa == idEmpresa)
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
@@ -379,6 +387,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return _context.Ticket
                 .Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio)
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
@@ -389,6 +399,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return _context.Ticket
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))

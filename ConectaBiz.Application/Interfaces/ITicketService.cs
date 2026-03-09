@@ -38,6 +38,7 @@ namespace ConectaBiz.Application.Interfaces
             string? codTicketInterno = null,
             string? titulo = null,
             string? empresa = null,
+            string? gestor = null,
             string? prioridad = null,
             string? estado = null);
     }

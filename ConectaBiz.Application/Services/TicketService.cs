@@ -998,6 +998,7 @@ namespace ConectaBiz.Application.Services
             string? codTicketInterno = null,
             string? titulo = null,
             string? empresa = null,
+            string? gestor = null,
             string? prioridad = null,
             string? estado = null)
         {
@@ -1103,6 +1104,17 @@ namespace ConectaBiz.Application.Services
             if (!string.IsNullOrWhiteSpace(empresa))
                 query = query.Where(t => t.Empresa != null && t.Empresa.RazonSocial.Contains(empresa));
 
+            if (!string.IsNullOrWhiteSpace(gestor))
+            {
+                var g = gestor.Trim().ToLower();
+                query = query.Where(t =>
+                    t.Empresa != null &&
+                    t.Empresa.Gestor != null &&
+                    t.Empresa.Gestor.Persona != null &&
+                    (t.Empresa.Gestor.Persona.Nombres.ToLower().Contains(g) ||
+                     t.Empresa.Gestor.Persona.ApellidoPaterno.ToLower().Contains(g)));
+            }
+
             // Para Prioridad y Estado (input texto), buscamos IDs que coincidan con el nombre
             // Necesitamos los parámetros cargados
             if (!string.IsNullOrWhiteSpace(prioridad) || !string.IsNullOrWhiteSpace(estado))
@@ -1197,6 +1209,9 @@ namespace ConectaBiz.Application.Services
                     PrioridadNombre = prioridades.FirstOrDefault(p => p.Id == t.IdPrioridad)?.Nombre ?? "Sin prioridad",
                     IdEmpresa = t.IdEmpresa,
                     EmpresaRazonSocial = t.Empresa?.RazonSocial,
+                    NombreGestor = t.Empresa?.Gestor?.Persona != null
+                        ? $"{t.Empresa.Gestor.Persona.Nombres} {t.Empresa.Gestor.Persona.ApellidoPaterno}"
+                        : null,
                     HorasTrabajadas = horasTrabajadas,
                     HorasPlanificadas = horasPlanificadas,
                     FechaCreacion = t.FechaCreacion

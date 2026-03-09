@@ -16,6 +16,7 @@ public class TicketListItemDto
     public string PrioridadNombre { get; set; } = string.Empty;
     public int IdEmpresa { get; set; }
     public string? EmpresaRazonSocial { get; set; }
+    public string? NombreGestor { get; set; }
     public int HorasTrabajadas { get; set; }
     public int HorasPlanificadas { get; set; }
     public DateTime? FechaCreacion { get; set; }
