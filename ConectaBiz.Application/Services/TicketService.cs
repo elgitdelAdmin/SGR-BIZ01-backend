@@ -262,6 +262,7 @@ namespace ConectaBiz.Application.Services
                 // 2. Crear ticket
                 var ticket = _mapper.Map<Ticket>(insertDto);
                 ticket.IdGestor = empresa.IdGestor;
+                ticket.IdEstadoTicket = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ATENCION).Id;
                 ticket.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
                 ticket.FechaSolicitud = DateTime.SpecifyKind(ticket.FechaSolicitud, DateTimeKind.Local);
                 ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
