@@ -32,7 +32,7 @@ namespace ConectaBiz.API.Jobs
                     // Aquí puedes loguear el error si tienes un logger
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
             }
         }
     }
