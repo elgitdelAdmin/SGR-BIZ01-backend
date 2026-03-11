@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
@@ -195,7 +195,7 @@ namespace ConectaBiz.Application.Services
             finally
             {
                 log.AppendLine("========== FIN AddRangeAsync ==========");
-                await File.AppendAllTextAsync("log_addRange.txt", log.ToString());
+                // await File.AppendAllTextAsync("log_addRange.txt", log.ToString());
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
@@ -132,6 +132,13 @@ namespace ConectaBiz.Application.Services
 
         public async Task<EmpresaDto> CreateAsync(CreateEmpresaDto createDto)
         {
+            // 🔹 Validar que no exista una empresa con el mismo SOCIO + PAIS + RUC
+            var yaExiste = await _empresaRepository.ExistsByNumDocYPaisAsync(createDto.NumDocContribuyente, createDto.IdPais, createDto.IdSocio);
+            if (yaExiste)
+            {
+                throw new InvalidOperationException($"Ya existe una empresa registrada con el Nro. de documento '{createDto.NumDocContribuyente}' para este socio y país.");
+            }
+
             var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(createDto.Persona.TipoDocumento, createDto.Persona.NumeroDocumento);
 
             if (personaExistente == null)
@@ -259,9 +266,9 @@ namespace ConectaBiz.Application.Services
             return await _empresaRepository.DeleteAsync(id);
         }
 
-        public async Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais)
+        public async Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null)
         {
-            return await _empresaRepository.ExistsByNumDocYPaisAsync(numDocContribuyente, idPais);
+            return await _empresaRepository.ExistsByNumDocYPaisAsync(numDocContribuyente, idPais, idSocio);
         }
     }
 }

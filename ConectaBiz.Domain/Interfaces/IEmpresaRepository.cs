@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Empresa> CreateAsync(Empresa empresa);
         Task<Empresa> UpdateAsync(Empresa empresa);
         Task<bool> DeleteAsync(int id);
-        Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais);
+        Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null);
         Task<bool> ExistsAsync(int id);
         Task<Empresa?> GetByCodSgrCstiAsync(int codSgrCsti);
     }

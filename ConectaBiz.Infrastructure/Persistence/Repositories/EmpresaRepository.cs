@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
@@ -191,11 +191,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return true;
         }
 
-        public async Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais)
+        public async Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null)
         {
             return await _context.Empresas.AnyAsync(e =>
                 e.NumDocContribuyente == numDocContribuyente &&
-                e.IdPais == idPais);
+                e.IdPais == idPais &&
+                (idSocio == null || e.IdSocio == idSocio));
         }
 
         public async Task<bool> ExistsAsync(int id)

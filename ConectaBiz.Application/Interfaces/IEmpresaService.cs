@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Services;
 using ConectaBiz.Domain.Interfaces;
 using System;
@@ -25,7 +25,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<EmpresaDto> CreateAsync(CreateEmpresaDto createDto);
         Task<EmpresaDto> UpdateAsync(int id, UpdateEmpresaDto updateDto);
         Task<bool> DeleteAsync(int id);
-        Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais);
+        Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null);
 
     }
 }

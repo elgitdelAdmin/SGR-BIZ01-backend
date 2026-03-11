@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
@@ -702,7 +702,13 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                         "M/d/yy HH:mm",             // 10/13/25 18:04 (formato americano)
                         "MM/dd/yy HH:mm",           // 10/13/25 18:04 (con ceros)
                         "dd-MMM-yyyy",              // Formato anterior
-                        "dd/MM/yyyy HH:mm:ss"       // Formato anterior
+                        "dd/MM/yyyy HH:mm:ss",      // Formato anterior
+                        "M/d/yy",                   // 3/10/26 sin tiempo
+                        "d/M/yy",                   // 10/3/26 sin tiempo
+                        "MM/dd/yyyy",               // 03/10/2026 sin tiempo
+                        "dd/MM/yyyy",               // 10/03/2026 sin tiempo
+                        "M/d/yyyy",                 // 3/10/2026 sin tiempo
+                        "d/M/yyyy"                  // 10/3/2026 sin tiempo
                     },
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.AllowWhiteSpaces,
@@ -711,7 +717,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
                 if (!parseoExitoso)
                 {
-                    throw new Exception($"No se pudo parsear la fecha '{i.FechaSolicitud}' para ticket {i.CodTicket}. Formatos válidos: yyyy-MM-dd HH:mm:ss, d/M/yyyy HH:mm:ss, M/d/yy HH:mm");
+                    throw new Exception($"No se pudo parsear la fecha '{i.FechaSolicitud}' para ticket {i.CodTicket}. Formatos válidos: yyyy-MM-dd HH:mm:ss, d/M/yyyy HH:mm:ss, M/d/yy HH:mm, M/d/yy, d/M/yy");
                 }
 
                 fechaAsignacion = DateTime.SpecifyKind(fechaAsignacion, DateTimeKind.Local);

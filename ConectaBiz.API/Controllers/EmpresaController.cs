@@ -1,5 +1,6 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
@@ -173,23 +174,23 @@ namespace ConectaBiz.API.Controllers
 
         // POST: api/empresas
         [HttpPost]
-        public async Task<ActionResult<EmpresaDto>> Create([FromBody] CreateEmpresaDto createDto)
+        public async Task<ActionResult> Create([FromBody] CreateEmpresaDto createDto)
         {
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+                    return Ok(ApiResponse<object>.Fail("Datos inválidos. Revise los campos enviados."));
 
                 var empresa = await _empresaService.CreateAsync(createDto);
-                return CreatedAtAction(nameof(GetById), new { id = empresa.Id }, empresa);
+                return Ok(ApiResponse<EmpresaDto>.Ok(empresa, "Empresa creada correctamente."));
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new { message = ex.Message });
+                return Ok(ApiResponse<object>.Fail(ex.Message));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
+                return Ok(ApiResponse<object>.Fail(ex.InnerException?.Message ?? ex.Message));
             }
         }
 
