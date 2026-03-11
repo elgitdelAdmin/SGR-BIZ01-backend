@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
@@ -359,6 +359,27 @@ namespace ConectaBiz.API.Controllers
             catch (UnauthorizedAccessException)
             {
                 return Forbid();
+            }
+        }
+
+        /// <summary>
+        /// Migra un ticket por su código de requerimiento SGR
+        /// </summary>
+        [HttpPost("migrarsgr/{codTicketInterno}")]
+        public async Task<ActionResult> MigrarTicket([FromServices] ISGRCSTIService sgrcstiService, string codTicketInterno)
+        {
+            try
+            {
+                var resultados = await sgrcstiService.MigracionRequerimientoPorCodAsync(codTicketInterno);
+                return Ok(new { 
+                    mensaje = "Proceso finalizado.", 
+                    migrados = resultados 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al migrar el ticket {CodTicketInterno}", codTicketInterno);
+                return StatusCode(500, new { mensaje = "Error interno durante la migración.", detalle = ex.Message });
             }
         }
 

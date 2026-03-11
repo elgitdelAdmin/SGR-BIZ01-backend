@@ -40,5 +40,6 @@ namespace ConectaBiz.Domain.Interfaces
         IQueryable<Ticket> GetQueryableByEmpresa(int idEmpresa);
         IQueryable<Ticket> GetQueryableBySocio(int idSocio);
         IQueryable<Ticket> GetQueryableAll();
+        Task<List<string>> GetAllCodTicketInternosAsync();
     }
 }

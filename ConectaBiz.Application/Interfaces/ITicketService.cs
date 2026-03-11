@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -28,6 +28,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<IEnumerable<TicketHistorialEstadoDto>> GetHistorialByTicketIdAsync(int idTicket);
         Task<TicketDto?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
         //Task ActualizarEstadoDeAprobadoAEnEjecucion();
+        Task<List<string>> GetAllCodTicketInternosAsync();
         Task<PagedResultDto<TicketListItemDto>> GetPagedByUserRolAsync(
             int idUser, string codRol,
             int page, int pageSize,

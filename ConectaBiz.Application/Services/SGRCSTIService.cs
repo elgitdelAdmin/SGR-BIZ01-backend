@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
@@ -77,99 +77,93 @@ namespace ConectaBiz.Application.Services
             await InicializarDatosAsync();
 
             var resultados = await _sgrcstiRepository.MigracionRequerimientos();
+            var listadoTicketsExistentes = await _ticketService.GetAllCodTicketInternosAsync();
+            var hashTicketsExistentes = new HashSet<string>(listadoTicketsExistentes);
+
             var personaDto = await _personaService.GetByIdAsync(58);
 
             var errores = new List<string>(); // Para registrar los errores
+            var resultadosFinales = new List<dynamic>(); // Para devolver los insertados
 
-            foreach (var req in resultados)
+            // Filtramos la lista antes para iterar solo sobre los que no existen
+            var requerimientosNuevos = resultados
+                .Where(req => !hashTicketsExistentes.Contains((string)req.codrequerimiento))
+                .ToList();
+
+            foreach (var req in requerimientosNuevos)
             {
                 try
                 {
-                    var ticketExistente = await _ticketService.GetByCodReqSgrCstiAsync(req.codrequerimiento);
-                    if (ticketExistente == null)
+                    var createEmpresaDto = new DTOs.CreateEmpresaDto
                     {
-                        var createEmpresaDto = new DTOs.CreateEmpresaDto
+                        RazonSocial = req.empresa_razonsocial,
+                        NombreComercial = req.empresa_nombrecomercial,
+                        NumDocContribuyente = req.empresa_ruc,
+                        Direccion = req.empresa_direccion,
+                        Telefono = req.empresa_telefono,
+                        CodSgrCsti = req.empresa_idempresa,
+                        IdSocio = 1,
+                        IdPais = 1,
+                        IdGestor = 47,
+                        UsuarioRegistro = "Migracion",
+                        Persona = personaDto == null ? null : new DTOs.CreatePersonaDto
                         {
-                            RazonSocial = req.empresa_razonsocial,
-                            NombreComercial = req.empresa_nombrecomercial,
-                            NumDocContribuyente = req.empresa_ruc,
-                            Direccion = req.empresa_direccion,
-                            Telefono = req.empresa_telefono,
-                            CodSgrCsti = req.empresa_idempresa,
-                            IdSocio = 1,
-                            IdPais = 1,
-                            IdGestor = 47,
-                            UsuarioRegistro = "Migracion",
-                            Persona = personaDto == null ? null : new DTOs.CreatePersonaDto
-                            {
-                                Nombres = personaDto.Nombres,
-                                ApellidoMaterno = personaDto.ApellidoMaterno,
-                                ApellidoPaterno = personaDto.ApellidoPaterno,
-                                NumeroDocumento = personaDto.NumeroDocumento,
-                                TipoDocumento = personaDto.TipoDocumento,
-                                Telefono = personaDto.Telefono,
-                                Telefono2 = personaDto.Telefono2,
-                                Correo = personaDto.Correo,
-                                Direccion = personaDto.Direccion,
-                                FechaNacimiento = personaDto.FechaNacimiento
-                            }
-                        };
-
-                        int idEmpresa = 0;
-                        if (createEmpresaDto.CodSgrCsti != null)
-                        {
-                            var empresaExistente = await _empresaRepository.GetByCodSgrCstiAsync((int)createEmpresaDto.CodSgrCsti);
-                            var empresaExisteNroDoc = await _empresaRepository.GetByNumDocContribuyenteDatAsync(createEmpresaDto.NumDocContribuyente);
-                            if (empresaExistente == null && empresaExisteNroDoc == null) 
-                            {
-                                var empresaCreada = await _empresaService.CreateAsync(createEmpresaDto);
-                                idEmpresa = empresaCreada.Id;
-                            }
-                            else
-                            {
-                                idEmpresa = empresaExistente != null
-                                    ? empresaExistente.Id
-                                    : empresaExisteNroDoc.Id;
-                            }
+                            Nombres = personaDto.Nombres,
+                            ApellidoMaterno = personaDto.ApellidoMaterno,
+                            ApellidoPaterno = personaDto.ApellidoPaterno,
+                            NumeroDocumento = personaDto.NumeroDocumento,
+                            TipoDocumento = personaDto.TipoDocumento,
+                            Telefono = personaDto.Telefono,
+                            Telefono2 = personaDto.Telefono2,
+                            Correo = personaDto.Correo,
+                            Direccion = personaDto.Direccion,
+                            FechaNacimiento = personaDto.FechaNacimiento
                         }
+                    };
 
-                        var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+                    int idEmpresa = 0;
+                    if (createEmpresaDto.CodSgrCsti != null)
+                    {
+                        var empresaExistente = await _empresaRepository.GetByCodSgrCstiAsync((int)createEmpresaDto.CodSgrCsti) 
+                                            ?? await _empresaRepository.GetByNumDocContribuyenteDatAsync(createEmpresaDto.NumDocContribuyente);
 
-                        // Validar si ya existe un ticket con ese CodReqSgrCsti
-
-
-                        var ticketInsertDto = new TicketInsertDto
-                        {
-                            CodReqSgrCsti = req.codrequerimiento,
-                            IdReqSgrCsti = req.idrequerimiento,
-                            CodTicketInterno = req.codrequerimiento,
-                            Titulo = req.titulo,
-                            FechaSolicitud = req.fecharegistro,
-                            IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
-                            IdSubTipoTicket = subTipoTicket,
-                            IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
-                            IdEmpresa = idEmpresa,
-                            IdUsuarioResponsableCliente = personaDto.Id,
-                            IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
-                            Descripcion = req.detalle ?? "",
-                            UrlArchivos = null, 
-                            UsuarioCreacion = "Migracion",
-                            EsCargaMasiva = true,
-                            IdGestorConsultoria = 32
-                        };
-
-                        var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
-
-                        await _notificacionTicketService.Value.AddRangeAsync(new[]
-                          {
-                            new CrearNotificacionDto
-                            {
-                                IdTicket = ticketGuardado.Id,
-                                IdUser = 32,
-                                Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
-                            }
-                        });
+                        idEmpresa = empresaExistente?.Id ?? (await _empresaService.CreateAsync(createEmpresaDto)).Id;
                     }
+
+                    var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+
+                    var ticketInsertDto = new TicketInsertDto
+                    {
+                        CodReqSgrCsti = req.codrequerimiento,
+                        IdReqSgrCsti = req.idrequerimiento,
+                        CodTicketInterno = req.codrequerimiento,
+                        Titulo = req.titulo,
+                        FechaSolicitud = req.fecharegistro,
+                        IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
+                        IdSubTipoTicket = subTipoTicket,
+                        IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
+                        IdEmpresa = idEmpresa,
+                        IdUsuarioResponsableCliente = personaDto.Id,
+                        IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
+                        Descripcion = req.detalle ?? "",
+                        UrlArchivos = null, 
+                        UsuarioCreacion = "Migracion",
+                        EsCargaMasiva = true,
+                        IdGestorConsultoria = 32
+                    };
+
+                    var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
+
+                    await _notificacionTicketService.Value.AddRangeAsync(new[]
+                      {
+                        new CrearNotificacionDto
+                        {
+                            IdTicket = ticketGuardado.Id,
+                            IdUser = 32,
+                            Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
+                        }
+                    });
+                    resultadosFinales.Add(req);
                 }
                 catch (Exception ex)
                 {
@@ -179,7 +173,7 @@ namespace ConectaBiz.Application.Services
                     Console.WriteLine("❌ " + detalle);
                 }
             }
-            return resultados;
+            return resultadosFinales;
         }
 
         private int MapTipoServicioToTipoTicket(int idTipoServicio)
@@ -204,6 +198,107 @@ namespace ConectaBiz.Application.Services
                 _ => _listaPrioridades.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Prioridad.Media)).Id, // Valor por defecto: Media
 
             };
+        }
+
+        public async Task<IEnumerable<dynamic>> MigracionRequerimientoPorCodAsync(string codTicketInterno)
+        {
+            await InicializarDatosAsync();
+
+            var resultados = await _sgrcstiRepository.MigracionRequerimientoPorCod(codTicketInterno);
+            var listadoTicketsExistentes = await _ticketService.GetAllCodTicketInternosAsync();
+            var hashTicketsExistentes = new HashSet<string>(listadoTicketsExistentes);
+
+            var personaDto = await _personaService.GetByIdAsync(58);
+            var errores = new List<string>();
+            var resultadosFinales = new List<dynamic>();
+
+            var requerimientosNuevos = resultados
+                .Where(req => !hashTicketsExistentes.Contains((string)req.codrequerimiento))
+                .ToList();
+
+            foreach (var req in requerimientosNuevos)
+            {
+                try
+                {
+                    var createEmpresaDto = new DTOs.CreateEmpresaDto
+                    {
+                        RazonSocial = req.empresa_razonsocial,
+                        NombreComercial = req.empresa_nombrecomercial,
+                        NumDocContribuyente = req.empresa_ruc,
+                        Direccion = req.empresa_direccion,
+                        Telefono = req.empresa_telefono,
+                        CodSgrCsti = req.empresa_idempresa,
+                        IdSocio = 1,
+                        IdPais = 1,
+                        IdGestor = 47,
+                        UsuarioRegistro = "Migracion",
+                        Persona = personaDto == null ? null : new DTOs.CreatePersonaDto
+                        {
+                            Nombres = personaDto.Nombres,
+                            ApellidoMaterno = personaDto.ApellidoMaterno,
+                            ApellidoPaterno = personaDto.ApellidoPaterno,
+                            NumeroDocumento = personaDto.NumeroDocumento,
+                            TipoDocumento = personaDto.TipoDocumento,
+                            Telefono = personaDto.Telefono,
+                            Telefono2 = personaDto.Telefono2,
+                            Correo = personaDto.Correo,
+                            Direccion = personaDto.Direccion,
+                            FechaNacimiento = personaDto.FechaNacimiento
+                        }
+                    };
+
+                    int idEmpresa = 0;
+                    if (createEmpresaDto.CodSgrCsti != null)
+                    {
+                        var empresaExistente = await _empresaRepository.GetByCodSgrCstiAsync((int)createEmpresaDto.CodSgrCsti) 
+                                               ?? await _empresaRepository.GetByNumDocContribuyenteDatAsync(createEmpresaDto.NumDocContribuyente);
+
+                        idEmpresa = empresaExistente?.Id ?? (await _empresaService.CreateAsync(createEmpresaDto)).Id;
+                    }
+
+                    var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+
+                    var ticketInsertDto = new TicketInsertDto
+                    {
+                        CodReqSgrCsti = req.codrequerimiento,
+                        IdReqSgrCsti = req.idrequerimiento,
+                        CodTicketInterno = req.codrequerimiento,
+                        Titulo = req.titulo,
+                        FechaSolicitud = req.fecharegistro,
+                        IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
+                        IdSubTipoTicket = subTipoTicket,
+                        IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
+                        IdEmpresa = idEmpresa,
+                        IdUsuarioResponsableCliente = personaDto.Id,
+                        IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
+                        Descripcion = req.detalle ?? "",
+                        UrlArchivos = null, 
+                        UsuarioCreacion = "Migracion",
+                        EsCargaMasiva = true,
+                        IdGestorConsultoria = 32
+                    };
+
+                    var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
+
+                    await _notificacionTicketService.Value.AddRangeAsync(new[]
+                      {
+                        new CrearNotificacionDto
+                        {
+                            IdTicket = ticketGuardado.Id,
+                            IdUser = 32,
+                            Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
+                        }
+                    });
+                    resultadosFinales.Add(req);
+                }
+                catch (Exception ex)
+                {
+                    var detalle = $"Error en requerimiento por cod {req?.codrequerimiento}: {ex.Message}";
+                    errores.Add(detalle);
+                    Console.WriteLine("❌ " + detalle);
+                }
+            }
+            return resultadosFinales;
         }
     }
 }

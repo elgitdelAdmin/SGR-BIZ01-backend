@@ -525,7 +525,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             "EstadoTicket",
             "IdPrioridad",
             "Descripcion",
-            //"Descripcion", // Eliminado duplicado
+            "UsuarioCreacion",
             "Asignado"
         };
 

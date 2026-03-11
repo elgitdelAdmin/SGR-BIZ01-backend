@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +11,6 @@ namespace ConectaBiz.Domain.Interfaces
     {
         Task<IEnumerable<Empresa>> ObtenerEmpresasByExcepcion(List<int> excepcion);
         Task<IEnumerable<dynamic>> MigracionRequerimientos();
+        Task<IEnumerable<dynamic>> MigracionRequerimientoPorCod(string codTicketInterno);
     }
 }

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
@@ -1228,5 +1228,9 @@ namespace ConectaBiz.Application.Services
             };
         }
 
+        public async Task<List<string>> GetAllCodTicketInternosAsync()
+        {
+            return await _ticketRepository.GetAllCodTicketInternosAsync();
+        }
     }
 }

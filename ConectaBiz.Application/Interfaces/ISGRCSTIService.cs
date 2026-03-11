@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +10,6 @@ namespace ConectaBiz.Application.Interfaces
     {
         Task MigracionEmpresa();
         Task<IEnumerable<dynamic>> MigracionRequerimientos();
+        Task<IEnumerable<dynamic>> MigracionRequerimientoPorCodAsync(string codTicketInterno);
     }
 }

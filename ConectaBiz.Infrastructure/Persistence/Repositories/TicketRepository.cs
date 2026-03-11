@@ -406,5 +406,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
         }
+        public async Task<List<string>> GetAllCodTicketInternosAsync()
+        {
+            return await _context.Ticket
+                .Select(t => t.CodTicketInterno)
+                .ToListAsync();
+        }
+
     }
 }
