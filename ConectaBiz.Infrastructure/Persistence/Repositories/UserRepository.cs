@@ -19,6 +19,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                 .Include(c => c.Persona)
                 .Include(c => c.Socio)
+                .Include(c => c.Rol)
                 .Where(c => c.Activo)
                 .AsNoTracking()
                 .ToListAsync();
@@ -29,6 +30,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(c => c.Activo && c.IdSocio == idSocio)
                 .Include(c => c.Persona)
                 .Include(c => c.Socio)
+                .Include(c => c.Rol)
                 .Where(c => c.Activo)
                 .AsNoTracking()
                 .ToListAsync();
