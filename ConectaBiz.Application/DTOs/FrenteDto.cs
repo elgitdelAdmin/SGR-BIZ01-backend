@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -40,9 +40,8 @@ namespace ConectaBiz.Application.DTOs
     }
     public class CreateFrenteDto
     {
-        [Required(ErrorMessage = "El código es requerido")]
         [StringLength(20, ErrorMessage = "El código no puede exceder 20 caracteres")]
-        public string Codigo { get; set; }
+        public string? Codigo { get; set; }
 
         [Required(ErrorMessage = "El nombre es requerido")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
@@ -76,9 +75,8 @@ namespace ConectaBiz.Application.DTOs
     }
     public class CreateSubFrenteDto
     {
-        [Required(ErrorMessage = "El código es requerido")]
         [StringLength(20, ErrorMessage = "El código no puede exceder 20 caracteres")]
-        public string Codigo { get; set; }
+        public string? Codigo { get; set; }
 
         [Required(ErrorMessage = "El nombre es requerido")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
@@ -121,5 +119,13 @@ namespace ConectaBiz.Application.DTOs
 
         [StringLength(20, ErrorMessage = "El nivel no puede exceder 20 caracteres")]
         public string? Nivel { get; set; }
+    }
+
+    public class ConsultorAsociadoDto
+    {
+        public int ConsultorId { get; set; }
+        public string NombreCompleto { get; set; }
+        public string? FrenteNombre { get; set; }
+        public string? SubFrenteNombre { get; set; }
     }
 }

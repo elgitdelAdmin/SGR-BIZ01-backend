@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Entities;
 using System.Text.Json;
@@ -62,10 +62,36 @@ namespace ConectaBiz.Application.Mappings
             // Mapeo de Frente
             CreateMap<Frente, FrenteDto>().ForMember(dest => dest.SubFrente, opt => opt.MapFrom(src => src.SubFrente));
             CreateMap<FrenteDto, Frente>().ForMember(dest => dest.SubFrente, opt => opt.Ignore());
+            CreateMap<CreateFrenteDto, Frente>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.SubFrente, opt => opt.Ignore())
+                .ForMember(dest => dest.ConsultorFrenteSubFrente, opt => opt.Ignore());
+            CreateMap<UpdateFrenteDto, Frente>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.UsuarioRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.SubFrente, opt => opt.Ignore())
+                .ForMember(dest => dest.ConsultorFrenteSubFrente, opt => opt.Ignore());
 
             // Mapeo de SubFrente
             CreateMap<SubFrente, SubFrenteDto>(); 
             CreateMap<SubFrenteDto, SubFrente>().ForMember(dest => dest.Frente, opt => opt.Ignore());
+            CreateMap<CreateSubFrenteDto, SubFrente>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.Frente, opt => opt.Ignore())
+                .ForMember(dest => dest.ConsultorFrenteSubFrente, opt => opt.Ignore());
+            CreateMap<UpdateSubFrenteDto, SubFrente>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+                .ForMember(dest => dest.UsuarioRegistro, opt => opt.Ignore())
+                .ForMember(dest => dest.Frente, opt => opt.Ignore())
+                .ForMember(dest => dest.ConsultorFrenteSubFrente, opt => opt.Ignore());
 
             // Mapeos para ConsultorFrenteSubFrente
             CreateMap<ConsultorFrenteSubFrente, ConsultorFrenteSubFrenteDto>()

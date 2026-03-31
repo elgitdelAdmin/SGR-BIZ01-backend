@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ConectaBiz.Infrastructure.Persistence.Contexts

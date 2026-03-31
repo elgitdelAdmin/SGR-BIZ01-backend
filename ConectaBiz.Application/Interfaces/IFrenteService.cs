@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +13,10 @@ namespace ConectaBiz.Application.Interfaces
         Task<IEnumerable<FrenteDto>> GetActiveAsync();
         Task<FrenteDto?> GetByIdAsync(int id);
         Task<FrenteDto?> GetByIdWithSubFrentesAsync(int id);
-        Task<FrenteDto> CreateAsync(FrenteDto frenteDto);
-        Task<FrenteDto> UpdateAsync(int id, FrenteDto frenteDto);
+        Task<FrenteDto> CreateAsync(CreateFrenteDto createFrenteDto);
+        Task<FrenteDto> UpdateAsync(int id, UpdateFrenteDto updateFrenteDto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
+        Task<IEnumerable<ConsultorAsociadoDto>> GetConsultoresAsociadosByFrenteIdAsync(int frenteId);
     }
 }

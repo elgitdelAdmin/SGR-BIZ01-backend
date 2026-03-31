@@ -1,5 +1,6 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.Exceptions;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
@@ -14,11 +15,13 @@ namespace ConectaBiz.Application.Services
     public class FrenteService : IFrenteService
     {
         private readonly IFrenteRepository _frenteRepository;
+        private readonly IConsultorFrenteSubFrenteRepository _consultorFrenteSubFrenteRepository;
         private readonly IMapper _mapper;
 
-        public FrenteService(IFrenteRepository frenteRepository, IMapper mapper)
+        public FrenteService(IFrenteRepository frenteRepository, IConsultorFrenteSubFrenteRepository consultorFrenteSubFrenteRepository, IMapper mapper)
         {
             _frenteRepository = frenteRepository;
+            _consultorFrenteSubFrenteRepository = consultorFrenteSubFrenteRepository;
             _mapper = mapper;
         }
 
@@ -46,28 +49,46 @@ namespace ConectaBiz.Application.Services
             return frente == null ? null : _mapper.Map<FrenteDto>(frente);
         }
 
-        public async Task<FrenteDto> CreateAsync(FrenteDto frenteDto)
+        public async Task<FrenteDto> CreateAsync(CreateFrenteDto createFrenteDto)
         {
-            // Validar que el código no exista
-            if (await _frenteRepository.ExistsByCodigoAsync(frenteDto.Codigo))
-                throw new InvalidOperationException($"Ya existe un frente con el código '{frenteDto.Codigo}'");
+            var frente = _mapper.Map<Frente>(createFrenteDto);
+            
+            // Asignar un c\u00f3digo temporal para superar posible restricci\u00f3n NOT NULL
+            frente.Codigo = "TMP-" + Guid.NewGuid().ToString().Substring(0,8);
 
-            var frente = _mapper.Map<Frente>(frenteDto);
+            // Primer guardado: genera el ID
             var createdFrente = await _frenteRepository.CreateAsync(frente);
+
+            // Asignar el c\u00f3digo real basado en el ID ya generado (Ej: FRN004)
+            createdFrente.Codigo = $"FRN{createdFrente.Id:D3}";
+
+            // Segundo guardado: actualiza el c\u00f3digo final en base de datos
+            createdFrente = await _frenteRepository.UpdateAsync(createdFrente);
+
             return _mapper.Map<FrenteDto>(createdFrente);
         }
 
-        public async Task<FrenteDto> UpdateAsync(int id, FrenteDto frenteDto)
+        public async Task<FrenteDto> UpdateAsync(int id, UpdateFrenteDto updateFrenteDto)
         {
             var existingFrente = await _frenteRepository.GetByIdAsync(id);
             if (existingFrente == null)
                 throw new KeyNotFoundException($"No se encontró el frente con ID {id}");
 
             // Validar que el código no exista en otro registro
-            if (await _frenteRepository.ExistsByCodigoAsync(frenteDto.Codigo, id))
-                throw new InvalidOperationException($"Ya existe un frente con el código '{frenteDto.Codigo}'");
+            if (await _frenteRepository.ExistsByCodigoAsync(updateFrenteDto.Codigo, id))
+                throw new InvalidOperationException($"Ya existe un frente con el código '{updateFrenteDto.Codigo}'");
 
-            _mapper.Map(frenteDto, existingFrente);
+            // Validar consultores asociados al intentar desactivar
+            if (existingFrente.Activo && !updateFrenteDto.Activo)
+            {
+                var consultores = (await GetConsultoresAsociadosByFrenteIdAsync(id)).ToList();
+                if (consultores.Any())
+                    throw new ConsultoresAsociadosException(
+                        "No se puede desactivar el frente porque tiene consultores asociados.",
+                        consultores);
+            }
+
+            _mapper.Map(updateFrenteDto, existingFrente);
             existingFrente.Id = id; // Asegurar que el ID no cambie
 
             var updatedFrente = await _frenteRepository.UpdateAsync(existingFrente);
@@ -79,12 +100,33 @@ namespace ConectaBiz.Application.Services
             if (!await _frenteRepository.ExistsAsync(id))
                 return false;
 
+            // Validar consultores asociados antes de desactivar
+            var consultores = (await GetConsultoresAsociadosByFrenteIdAsync(id)).ToList();
+            if (consultores.Any())
+                throw new ConsultoresAsociadosException(
+                    "No se puede desactivar el frente porque tiene consultores asociados.",
+                    consultores);
+
             return await _frenteRepository.DeleteAsync(id);
         }
 
         public async Task<bool> ExistsAsync(int id)
         {
             return await _frenteRepository.ExistsAsync(id);
+        }
+
+        public async Task<IEnumerable<ConsultorAsociadoDto>> GetConsultoresAsociadosByFrenteIdAsync(int frenteId)
+        {
+            var registros = await _consultorFrenteSubFrenteRepository.GetActiveByFrenteIdAsync(frenteId);
+            return registros.Select(r => new ConsultorAsociadoDto
+            {
+                ConsultorId = r.ConsultorId,
+                NombreCompleto = r.Consultor?.Persona != null
+                    ? $"{r.Consultor.Persona.Nombres} {r.Consultor.Persona.ApellidoPaterno} {r.Consultor.Persona.ApellidoMaterno}".Trim()
+                    : "Sin nombre",
+                FrenteNombre = r.Frente?.Nombre,
+                SubFrenteNombre = r.SubFrente?.Nombre
+            }).ToList();
         }
     }
 }

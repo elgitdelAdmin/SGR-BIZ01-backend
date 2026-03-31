@@ -1,5 +1,6 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.Exceptions;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
@@ -15,12 +16,14 @@ namespace ConectaBiz.Application.Services
     {
         private readonly ISubFrenteRepository _subFrenteRepository;
         private readonly IFrenteRepository _frenteRepository;
+        private readonly IConsultorFrenteSubFrenteRepository _consultorFrenteSubFrenteRepository;
         private readonly IMapper _mapper;
 
-        public SubFrenteService(ISubFrenteRepository subFrenteRepository, IFrenteRepository frenteRepository, IMapper mapper)
+        public SubFrenteService(ISubFrenteRepository subFrenteRepository, IFrenteRepository frenteRepository, IConsultorFrenteSubFrenteRepository consultorFrenteSubFrenteRepository, IMapper mapper)
         {
             _subFrenteRepository = subFrenteRepository;
             _frenteRepository = frenteRepository;
+            _consultorFrenteSubFrenteRepository = consultorFrenteSubFrenteRepository;
             _mapper = mapper;
         }
 
@@ -54,36 +57,54 @@ namespace ConectaBiz.Application.Services
             return subFrente == null ? null : _mapper.Map<SubFrenteDto>(subFrente);
         }
 
-        public async Task<SubFrenteDto> CreateAsync(SubFrenteDto subFrenteDto)
+        public async Task<SubFrenteDto> CreateAsync(CreateSubFrenteDto createSubFrenteDto)
         {
             // Validar que el frente padre exista
-            if (!await _frenteRepository.ExistsAsync(subFrenteDto.IdFrente))
-                throw new KeyNotFoundException($"No se encontró el frente con ID {subFrenteDto.IdFrente}");
+            if (!await _frenteRepository.ExistsAsync(createSubFrenteDto.IdFrente))
+                throw new KeyNotFoundException($"No se encontró el frente con ID {createSubFrenteDto.IdFrente}");
 
-            // Validar que el código no exista
-            if (await _subFrenteRepository.ExistsByCodigoAsync(subFrenteDto.Codigo))
-                throw new InvalidOperationException($"Ya existe un sub-frente con el código '{subFrenteDto.Codigo}'");
+            var subFrente = _mapper.Map<SubFrente>(createSubFrenteDto);
+            
+            // Asignar código temporal por restricción NOT NULL
+            subFrente.Codigo = "TMP-" + Guid.NewGuid().ToString().Substring(0,8);
 
-            var subFrente = _mapper.Map<SubFrente>(subFrenteDto);
+            // Se genera el ID al crear en base de datos
             var createdSubFrente = await _subFrenteRepository.CreateAsync(subFrente);
+
+            // Asigna el ID final como pidió el usuario (Ej: SFR023)
+            createdSubFrente.Codigo = $"SFR{createdSubFrente.Id:D3}";
+
+            // Actualiza la entidad con su código final
+            createdSubFrente = await _subFrenteRepository.UpdateAsync(createdSubFrente);
+
             return _mapper.Map<SubFrenteDto>(createdSubFrente);
         }
 
-        public async Task<SubFrenteDto> UpdateAsync(int id, SubFrenteDto subFrenteDto)
+        public async Task<SubFrenteDto> UpdateAsync(int id, UpdateSubFrenteDto updateSubFrenteDto)
         {
             var existingSubFrente = await _subFrenteRepository.GetByIdAsync(id);
             if (existingSubFrente == null)
                 throw new KeyNotFoundException($"No se encontró el sub-frente con ID {id}");
 
             // Validar que el frente padre exista
-            if (!await _frenteRepository.ExistsAsync(subFrenteDto.IdFrente))
-                throw new KeyNotFoundException($"No se encontró el frente con ID {subFrenteDto.IdFrente}");
+            if (!await _frenteRepository.ExistsAsync(updateSubFrenteDto.IdFrente))
+                throw new KeyNotFoundException($"No se encontró el frente con ID {updateSubFrenteDto.IdFrente}");
 
             // Validar que el código no exista en otro registro
-            if (await _subFrenteRepository.ExistsByCodigoAsync(subFrenteDto.Codigo, id))
-                throw new InvalidOperationException($"Ya existe un sub-frente con el código '{subFrenteDto.Codigo}'");
+            if (await _subFrenteRepository.ExistsByCodigoAsync(updateSubFrenteDto.Codigo, id))
+                throw new InvalidOperationException($"Ya existe un sub-frente con el código '{updateSubFrenteDto.Codigo}'");
 
-            _mapper.Map(subFrenteDto, existingSubFrente);
+            // Validar consultores asociados al intentar desactivar
+            if (existingSubFrente.Activo && !updateSubFrenteDto.Activo)
+            {
+                var consultores = (await GetConsultoresAsociadosBySubFrenteIdAsync(id)).ToList();
+                if (consultores.Any())
+                    throw new ConsultoresAsociadosException(
+                        "No se puede desactivar el sub-frente porque tiene consultores asociados.",
+                        consultores);
+            }
+
+            _mapper.Map(updateSubFrenteDto, existingSubFrente);
             existingSubFrente.Id = id; // Asegurar que el ID no cambie
 
             var updatedSubFrente = await _subFrenteRepository.UpdateAsync(existingSubFrente);
@@ -95,12 +116,33 @@ namespace ConectaBiz.Application.Services
             if (!await _subFrenteRepository.ExistsAsync(id))
                 return false;
 
+            // Validar consultores asociados antes de desactivar
+            var consultores = (await GetConsultoresAsociadosBySubFrenteIdAsync(id)).ToList();
+            if (consultores.Any())
+                throw new ConsultoresAsociadosException(
+                    "No se puede desactivar el sub-frente porque tiene consultores asociados.",
+                    consultores);
+
             return await _subFrenteRepository.DeleteAsync(id);
         }
 
         public async Task<bool> ExistsAsync(int id)
         {
             return await _subFrenteRepository.ExistsAsync(id);
+        }
+
+        public async Task<IEnumerable<ConsultorAsociadoDto>> GetConsultoresAsociadosBySubFrenteIdAsync(int subFrenteId)
+        {
+            var registros = await _consultorFrenteSubFrenteRepository.GetActiveBySubFrenteIdAsync(subFrenteId);
+            return registros.Select(r => new ConsultorAsociadoDto
+            {
+                ConsultorId = r.ConsultorId,
+                NombreCompleto = r.Consultor?.Persona != null
+                    ? $"{r.Consultor.Persona.Nombres} {r.Consultor.Persona.ApellidoPaterno} {r.Consultor.Persona.ApellidoMaterno}".Trim()
+                    : "Sin nombre",
+                FrenteNombre = r.Frente?.Nombre,
+                SubFrenteNombre = r.SubFrente?.Nombre
+            }).ToList();
         }
     }
 }
