@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +87,30 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                               c.IdNivelExperiencia == idNivelExperiencia &&
                               c.EsCertificado == esCertificado &&
                               c.Activo);
+        }
+
+        public async Task<IEnumerable<ConsultorFrenteSubFrente>> GetActiveByFrenteIdAsync(int frenteId)
+        {
+            return await _context.ConsultorFrenteSubFrente
+                .Include(c => c.Consultor)
+                    .ThenInclude(c => c.Persona)
+                .Include(c => c.Frente)
+                .Include(c => c.SubFrente)
+                .Where(c => c.IdFrente == frenteId && c.Activo && c.Consultor.Activo)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<ConsultorFrenteSubFrente>> GetActiveBySubFrenteIdAsync(int subFrenteId)
+        {
+            return await _context.ConsultorFrenteSubFrente
+                .Include(c => c.Consultor)
+                    .ThenInclude(c => c.Persona)
+                .Include(c => c.Frente)
+                .Include(c => c.SubFrente)
+                .Where(c => c.IdSubFrente == subFrenteId && c.Activo && c.Consultor.Activo)
+                .AsNoTracking()
+                .ToListAsync();
         }
     }
 }

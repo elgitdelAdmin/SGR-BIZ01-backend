@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,5 +15,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<bool> DeleteByConsultorIdAsync(int consultorId);
         Task<bool> ExistsAsync(int consultorId, int frenteId, int subFrenteId, int idNivelExperiencia, bool esCertificado);
+        Task<IEnumerable<ConsultorFrenteSubFrente>> GetActiveByFrenteIdAsync(int frenteId);
+        Task<IEnumerable<ConsultorFrenteSubFrente>> GetActiveBySubFrenteIdAsync(int subFrenteId);
     }
 }
