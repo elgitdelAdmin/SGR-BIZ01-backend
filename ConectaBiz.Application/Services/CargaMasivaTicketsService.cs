@@ -757,7 +757,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     Descripcion = i.Descripcion,
                     UsuarioCreacion = i.UsuarioCreacion,
                     IdGestor = (int)_empresaDto.IdGestor,
-                    IdGestorConsultoria = 32,
+                    IdGestorConsultoria = 100,
                     EsCargaMasiva = true,
                     DatosCargaMasiva = System.Text.Json.JsonSerializer.Serialize(i, new JsonSerializerOptions { WriteIndented = true }),
                     ConsultorAsignaciones = ticketConsultorInsertDto != null

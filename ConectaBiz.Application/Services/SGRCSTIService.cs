@@ -149,7 +149,7 @@ namespace ConectaBiz.Application.Services
                         UrlArchivos = null, 
                         UsuarioCreacion = "Migracion",
                         EsCargaMasiva = true,
-                        IdGestorConsultoria = 32
+                        IdGestorConsultoria = 100
                     };
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
@@ -275,7 +275,7 @@ namespace ConectaBiz.Application.Services
                         UrlArchivos = null, 
                         UsuarioCreacion = "Migracion",
                         EsCargaMasiva = true,
-                        IdGestorConsultoria = 32
+                        IdGestorConsultoria = 100
                     };
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
