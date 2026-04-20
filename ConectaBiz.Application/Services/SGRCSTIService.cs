@@ -98,15 +98,15 @@ namespace ConectaBiz.Application.Services
                 .ToList();
 
             // Pruebas: réplica al nuevo Conecta con el 1.er requerimiento de SGR aunque ya exista en Conecta actual (no pasa por CreateAsync). Desactivar en appsettings cuando no pruebes.
-            if (string.Equals(_configuration["ConectaNuevoTicketDestino:ForzarUnaReplicaConPrimerRequerimiento"], "true", StringComparison.OrdinalIgnoreCase))
-            {
-                var paraPrueba = resultados.FirstOrDefault();
-                if (paraPrueba != null)
-                {
-                    Console.WriteLine("[DEBUG Conecta nuevo] ForzarUnaReplicaConPrimerRequerimiento → " + Convert.ToString(paraPrueba.codrequerimiento));
-                    await ReplicarEnConectaNuevoSiCorrespondeAsync(paraPrueba);
-                }
-            }
+            //if (string.Equals(_configuration["ConectaNuevoTicketDestino:ForzarUnaReplicaConPrimerRequerimiento"], "true", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    var paraPrueba = resultados.FirstOrDefault();
+            //    if (paraPrueba != null)
+            //    {
+            //        Console.WriteLine("[DEBUG Conecta nuevo] ForzarUnaReplicaConPrimerRequerimiento → " + Convert.ToString(paraPrueba.codrequerimiento));
+            //        await ReplicarEnConectaNuevoSiCorrespondeAsync(paraPrueba);
+            //    }
+            //}
 
             foreach (var req in requerimientosNuevos)
             {
@@ -172,7 +172,14 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await ReplicarEnConectaNuevoSiCorrespondeAsync(req);
+                    try
+                    {
+                        await ReplicarEnConectaNuevoSiCorrespondeAsync(req);
+                    }
+                    catch(Exception ex)
+                    {
+
+                    }
 
                     await _notificacionTicketService.Value.AddRangeAsync(new[]
                       {
