@@ -7,7 +7,6 @@ using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Authentication.Services;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using ConectaBiz.Infrastructure.Persistence.Repositories;
-using ConectaBiz.Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -34,7 +33,7 @@ namespace ConectaBiz.Infrastructure
 
             //Configuracion de BDSGRCSTI
             Conexiones.ConnectionSGRCSTI = configuration.GetConnectionString("ConnectionSGRCSTI");
-
+            Conexiones.ConnectionConectaNuevo = configuration.GetConnectionString("ConnectionConectaNuevo");
 
             // Repositorios
             services.AddScoped<IUserRepository, UserRepository>();
@@ -91,6 +90,7 @@ namespace ConectaBiz.Infrastructure
 
             //Integracion
             services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();
+            services.AddScoped<IConectaNuevoTicketRepository, ConectaNuevoTicketRepository>();
             services.AddScoped<ISGRCSTIService, SGRCSTIService>();
 
             // Configuración JWT
