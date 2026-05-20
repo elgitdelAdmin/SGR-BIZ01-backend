@@ -95,9 +95,13 @@ namespace ConectaBiz.Application.Services
             return await CallRepo(filtros);
         }
 
-        public async Task<IEnumerable<IDictionary<string, object>>> ConsultarDashboardTicketsConsultorAsync()
+        public async Task<IEnumerable<IDictionary<string, object>>> ConsultarDashboardTicketsConsultorAsync(
+            int[]? consultores = null,
+            int[]? tipos = null,
+            string[]? tickets = null,
+            int[]? estados = null)
         {
-            return await _repo.GetDashboardTicketsConsultorAsync();
+            return await _repo.GetDashboardTicketsConsultorAsync(consultores, tipos, tickets, estados);
         }
 
         public async Task<byte[]> GenerarReporteExcelAsync(FiltrosReporteRequest filtros)

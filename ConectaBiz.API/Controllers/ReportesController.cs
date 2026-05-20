@@ -51,9 +51,13 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpGet("DashboardTicketsConsultor")]
-        public async Task<IActionResult> DashboardTicketsConsultor()
+        public async Task<IActionResult> DashboardTicketsConsultor(
+            [FromQuery] int[]? consultores = null,
+            [FromQuery] int[]? tipos = null,
+            [FromQuery] string[]? tickets = null,
+            [FromQuery] int[]? estados = null)
         {
-            var data = await _service.ConsultarDashboardTicketsConsultorAsync();
+            var data = await _service.ConsultarDashboardTicketsConsultorAsync(consultores, tipos, tickets, estados);
             return Ok(data);
         }
 

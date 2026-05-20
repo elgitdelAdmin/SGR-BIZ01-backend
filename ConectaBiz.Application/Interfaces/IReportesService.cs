@@ -16,7 +16,11 @@ namespace ConectaBiz.Application.Interfaces
         );
 
         Task<IEnumerable<IDictionary<string, object>>> ConsultarDetalleReporteAsync(FiltrosReporteRequest filtros);
-        Task<IEnumerable<IDictionary<string, object>>> ConsultarDashboardTicketsConsultorAsync();
+        Task<IEnumerable<IDictionary<string, object>>> ConsultarDashboardTicketsConsultorAsync(
+            int[]? consultores = null,
+            int[]? tipos = null,
+            string[]? tickets = null,
+            int[]? estados = null);
         
         Task<byte[]> GenerarReporteExcelAsync(FiltrosReporteRequest filtros);
 

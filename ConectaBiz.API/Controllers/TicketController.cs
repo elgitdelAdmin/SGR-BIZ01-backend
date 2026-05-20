@@ -162,6 +162,10 @@ namespace ConectaBiz.API.Controllers
                         .ToList();
                 }
 
+                Console.WriteLine($"[DEBUG-CONTROLLER] nombreConsultor received: '{nombreConsultor}'");
+                Console.WriteLine($"[DEBUG-CONTROLLER] gestor received: '{gestor}'");
+                Console.WriteLine($"[DEBUG-CONTROLLER] empresa received: '{empresa}'");
+                Console.WriteLine($"[DEBUG-CONTROLLER] estado received: '{estado}'");
                 var result = await _ticketService.GetPagedByUserRolAsync(
                     idUser, codRol, page, pageSize,
                     estadoIdsList, globalFilter, sortField, sortOrder,

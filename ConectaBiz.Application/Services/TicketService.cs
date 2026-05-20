@@ -1150,9 +1150,11 @@ namespace ConectaBiz.Application.Services
                 }
             }
             // Filtro por nombre de consultor (busca en las asignaciones activas)
+            Console.WriteLine($"[DEBUG-SERVICE] nombreConsultor parameter value: '{nombreConsultor}'");
             if (!string.IsNullOrWhiteSpace(nombreConsultor))
             {
                 var nc = nombreConsultor.Trim().ToLower();
+                Console.WriteLine($"[DEBUG-SERVICE] Applying nombreConsultor filter with query: '{nc}'");
                 query = query.Where(t =>
                     t.ConsultorAsignaciones.Any(ca =>
                         ca.Activo &&

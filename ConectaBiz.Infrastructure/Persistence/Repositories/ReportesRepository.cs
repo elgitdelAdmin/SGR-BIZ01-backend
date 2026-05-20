@@ -29,8 +29,19 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public Task<IEnumerable<IDictionary<string, object>>> GetDetalleTareasConsultorAsync()
             => Query(@"SELECT * FROM conectabiz.""REP_DETALLE_TAREAS_CONSULTOR""();", null);
 
-        public Task<IEnumerable<IDictionary<string, object>>> GetDashboardTicketsConsultorAsync()
-            => Query(@"SELECT * FROM conectabiz.dashboardticketsconsultor();", null);
+        public Task<IEnumerable<IDictionary<string, object>>> GetDashboardTicketsConsultorAsync(
+            int[]? consultores = null,
+            int[]? tipos = null,
+            string[]? tickets = null,
+            int[]? estados = null)
+            => Query(@"SELECT * FROM conectabiz.dashboardticketsconsultor(@p_consultores, @p_tipos, @p_tickets, @p_estados);",
+                     new
+                     {
+                         p_consultores = consultores,
+                         p_tipos = tipos,
+                         p_tickets = tickets,
+                         p_estados = estados
+                     });
 
         public async Task<IEnumerable<IDictionary<string, object>>> ObtenerDatosReporteAsync(
             int? idTipoReporte,
