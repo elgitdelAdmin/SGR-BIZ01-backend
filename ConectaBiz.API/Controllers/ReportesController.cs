@@ -50,6 +50,13 @@ namespace ConectaBiz.API.Controllers
             return Ok(data);
         }
 
+        [HttpGet("DashboardTicketsConsultor")]
+        public async Task<IActionResult> DashboardTicketsConsultor()
+        {
+            var data = await _service.ConsultarDashboardTicketsConsultorAsync();
+            return Ok(data);
+        }
+
         [HttpPost("GenerarExcel")]
         public async Task<IActionResult> GenerarExcel([FromBody] FiltrosReporteRequest filtros)
         {

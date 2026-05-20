@@ -11,6 +11,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<IDictionary<string, object>>> GetAutorizadosGestorCuentaAsync(DateTime fecha);
         Task<IEnumerable<IDictionary<string, object>>> GetNoCerradosAsync(DateTime fecha);
         Task<IEnumerable<IDictionary<string, object>>> GetDetalleTareasConsultorAsync();
+        Task<IEnumerable<IDictionary<string, object>>> GetDashboardTicketsConsultorAsync();
         
         Task<IEnumerable<IDictionary<string, object>>> ObtenerDatosReporteAsync(
             int? idTipoReporte,
