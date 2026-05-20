@@ -1001,7 +1001,8 @@ namespace ConectaBiz.Application.Services
             string? empresa = null,
             string? gestor = null,
             string? prioridad = null,
-            string? estado = null)
+            string? estado = null,
+            string? nombreConsultor = null)
         {
             Console.WriteLine($"[DEBUG] GetPagedByUserRolAsync Start - User: {idUser}, Role: {codRol}, Page: {page}, PageSize: {pageSize}");
             Console.WriteLine($"[DEBUG] Params - CodTicket: '{codTicket}', CodTicketInterno: '{codTicketInterno}', GlobalFilter: '{globalFilter}'");
@@ -1148,6 +1149,19 @@ namespace ConectaBiz.Application.Services
                         query = query.Where(t => false);
                 }
             }
+            // Filtro por nombre de consultor (busca en las asignaciones activas)
+            if (!string.IsNullOrWhiteSpace(nombreConsultor))
+            {
+                var nc = nombreConsultor.Trim().ToLower();
+                query = query.Where(t =>
+                    t.ConsultorAsignaciones.Any(ca =>
+                        ca.Activo &&
+                        ca.Consultor != null &&
+                        ca.Consultor.Persona != null &&
+                        (ca.Consultor.Persona.Nombres.ToLower().Contains(nc) ||
+                         ca.Consultor.Persona.ApellidoPaterno.ToLower().Contains(nc) ||
+                         ca.Consultor.Persona.ApellidoMaterno.ToLower().Contains(nc))));
+            }
             // ────────────────────────────────────────────────────────────────
 
             // 4) Contar total ANTES de paginar
@@ -1174,6 +1188,9 @@ namespace ConectaBiz.Application.Services
 
             // 6) Paginación
             var tickets = await query
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+                    .ThenInclude(ca => ca.Consultor)
+                        .ThenInclude(c => c.Persona)
                 .Skip(page * pageSize)
                 .Take(pageSize)
                 .AsNoTracking()
@@ -1213,6 +1230,11 @@ namespace ConectaBiz.Application.Services
                     NombreGestor = t.Empresa?.Gestor?.Persona != null
                         ? $"{t.Empresa.Gestor.Persona.Nombres} {t.Empresa.Gestor.Persona.ApellidoPaterno}"
                         : null,
+                    NombreConsultores = string.Join("/",
+                        t.ConsultorAsignaciones
+                            .Where(ca => ca.Activo && ca.Consultor?.Persona != null)
+                            .Select(ca => $"{ca.Consultor.Persona.Nombres} {ca.Consultor.Persona.ApellidoPaterno} {ca.Consultor.Persona.ApellidoMaterno}".Trim())
+                            .Distinct()),
                     HorasTrabajadas = horasTrabajadas,
                     HorasPlanificadas = horasPlanificadas,
                     FechaCreacion = t.FechaCreacion

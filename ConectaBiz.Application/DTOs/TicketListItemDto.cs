@@ -17,6 +17,10 @@ public class TicketListItemDto
     public int IdEmpresa { get; set; }
     public string? EmpresaRazonSocial { get; set; }
     public string? NombreGestor { get; set; }
+    /// <summary>
+    /// Nombres completos de los consultores asignados al ticket (separados por coma).
+    /// </summary>
+    public string? NombreConsultores { get; set; }
     public int HorasTrabajadas { get; set; }
     public int HorasPlanificadas { get; set; }
     public DateTime? FechaCreacion { get; set; }

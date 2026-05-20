@@ -41,6 +41,7 @@ namespace ConectaBiz.Application.Interfaces
             string? empresa = null,
             string? gestor = null,
             string? prioridad = null,
-            string? estado = null);
+            string? estado = null,
+            string? nombreConsultor = null);
     }
 }

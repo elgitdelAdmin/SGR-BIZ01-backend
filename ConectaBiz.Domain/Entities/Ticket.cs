@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
@@ -55,6 +55,8 @@ public class TicketConsultorAsignacion
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
     public virtual Ticket Ticket { get; set; } = null!;
+    [ForeignKey(nameof(IdConsultor))]
+    public virtual Consultor Consultor { get; set; } = null!;
     public ICollection<DetalleTareasConsultor> DetalleTareasConsultor { get; set; } = new List<DetalleTareasConsultor>();
     public ICollection<DetallePlanificacionConsultor> DetallePlanificacionConsultor { get; set; } = new List<DetallePlanificacionConsultor>();
 }

@@ -147,7 +147,8 @@ namespace ConectaBiz.API.Controllers
             [FromQuery] string? empresa = null,
             [FromQuery] string? gestor = null,
             [FromQuery] string? prioridad = null,
-            [FromQuery] string? estado = null
+            [FromQuery] string? estado = null,
+            [FromQuery] string? nombreConsultor = null
             )
         {
             try
@@ -164,7 +165,8 @@ namespace ConectaBiz.API.Controllers
                 var result = await _ticketService.GetPagedByUserRolAsync(
                     idUser, codRol, page, pageSize,
                     estadoIdsList, globalFilter, sortField, sortOrder,
-                    codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado);
+                    codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado,
+                    nombreConsultor);
 
                 return Ok(result);
             }
