@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -361,11 +361,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
-                .Include(t => t.ConsultorAsignaciones
-                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones
-                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
+                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo));
         }
 

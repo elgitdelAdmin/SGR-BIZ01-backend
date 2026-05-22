@@ -454,9 +454,8 @@ namespace ConectaBiz.Application.Services
         //public async Task ActualizarEstadoDeAprobadoAEnEjecucion()
         //{
         //    // 1. Obtener estados
-        //    var estados = await _parametrosCatalogo.GetByTipoParametroAsync(AppConstants.TiposParametros.EstadoTicket);
-        //    var idEstadoAprobado = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.APROBADO)?.Id ?? throw new Exception("No se encontró el estado APROBADO");
-        //    var idEstadoEnEjecucion = estados.FirstOrDefault(p => p.Codigo == AppConstants.Estados.EN_EJECUCION)?.Id ?? throw new Exception("No se encontró el estado EN_EJECUCION");
+        //    var idEstadoAprobado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ASIGNADO).Id;
+        //    var idEstadoEnEjecucion = _listaEstados.First(x => x.Codigo == AppConstants.Estados.EN_EJECUCION).Id;
 
         //    // 2. Obtener tickets aprobados
         //    var ticketsAprobados = await _ticketRepository.GetByEstadoAsync(idEstadoAprobado);
