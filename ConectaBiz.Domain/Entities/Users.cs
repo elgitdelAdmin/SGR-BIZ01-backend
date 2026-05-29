@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,18 +15,16 @@ namespace ConectaBiz.Domain.Entities
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLogin { get; set; }
-        public int IdSocio { get; set; } // Clave foránea
-        public int IdRol { get; set; } // Clave foránea
+        public int IdSocio { get; set; } // Clave foránea (socio por defecto)
         public int IdPersona { get; set; } // Clave foránea
         public bool Activo { get; set; }
 
         // Propiedades de navegación
         public virtual ICollection<PersonaUser> Personas { get; set; } = new List<PersonaUser>();
-        public virtual ICollection<UserRol> Roles { get; set; } = new List<UserRol>();
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public virtual ICollection<UserRolSocio> UserRolSocios { get; set; } = new List<UserRolSocio>();
         public Socio Socio { get; set; }
         public Persona Persona { get; set; }
-        public Rol Rol { get; set; }
     }
 
     public class RefreshToken
@@ -90,21 +88,10 @@ namespace ConectaBiz.Domain.Entities
         public DateTime? FechaModificacion { get; set; }
         public string? UsuarioModificacion { get; set; }
         public bool Activo { get; set; }
-        public ICollection<User> Users { get; set; } = new List<User>();
+        public virtual ICollection<UserRolSocio> UserRolSocios { get; set; } = new List<UserRolSocio>();
     }
 
 
-    public class UserRol
-    {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public int RolId { get; set; }
-        public DateTime FechaAsignacion { get; set; }
-
-        // Propiedades de navegación
-        public virtual User User { get; set; }
-        public virtual Rol Rol { get; set; }
-    }
 
     public class Permiso
     {
@@ -153,5 +140,20 @@ namespace ConectaBiz.Domain.Entities
         public int? UserId { get; set; }
 
         public virtual User? User { get; set; }
+    }
+
+    public class UserRolSocio
+    {
+        public int IdUser { get; set; }
+        public int IdRol { get; set; }
+        public int IdSocio { get; set; }
+        public DateTime FechaAsignacion { get; set; } = DateTime.Now;
+        public string UsuarioCreacion { get; set; } = string.Empty;
+        public bool Activo { get; set; } = true;
+
+        // Propiedades de navegación
+        public virtual User User { get; set; }
+        public virtual Rol Rol { get; set; }
+        public virtual Socio Socio { get; set; }
     }
 }

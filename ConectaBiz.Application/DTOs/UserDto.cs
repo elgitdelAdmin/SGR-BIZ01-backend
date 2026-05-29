@@ -11,10 +11,24 @@ namespace ConectaBiz.Application.DTOs
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public int IdRol { get; set; }
         public SocioDto Socio { get; set; }
         public PersonaDto Persona { get; set; }
-        public RolDto Rol { get; set; }
+        public List<UserRolSocioDto> RolSocios { get; set; } = new List<UserRolSocioDto>();
+    }
+
+    public class UserRolSocioDto
+    {
+        public int IdRol { get; set; }
+        public int IdSocio { get; set; }
+        public string RolNombre { get; set; } = string.Empty;
+        public string RolCodigo { get; set; } = string.Empty;
+        public string SocioNombre { get; set; } = string.Empty;
+    }
+
+    public class RolSocioItemDto
+    {
+        public int IdRol { get; set; }
+        public int IdSocio { get; set; }
     }
 
     public class LoginRequestDto
@@ -29,7 +43,7 @@ namespace ConectaBiz.Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public int IdSocio { get; set; }
-        public int IdRol { get; set; }
+        public List<RolSocioItemDto> RolSocios { get; set; } = new List<RolSocioItemDto>();
         public string UsuarioCreacion { get; set; } = string.Empty;
         public DateTime FechaCreacion { get; set; }
         public CreatePersonaDto Persona { get; set; }
@@ -39,9 +53,9 @@ namespace ConectaBiz.Application.DTOs
         public int Id { get; set; }
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
-        public string? Password { get; set; } // Opcional para actualizar contraseña
+        public string? Password { get; set; }
         public int IdSocio { get; set; }
-        public int IdRol { get; set; }
+        public List<RolSocioItemDto> RolSocios { get; set; } = new List<RolSocioItemDto>();
         public string UsuarioActualizacion { get; set; } = string.Empty;
         public UpdatePersonaDto? Persona { get; set; }
     }
@@ -53,6 +67,21 @@ namespace ConectaBiz.Application.DTOs
         public int? IdConsultor { get; set; }
         public UserDto User { get; set; } = new UserDto();
         public List<NotificacionTicketDto>? NotificacionTicket { get; set; } = new List<NotificacionTicketDto>();
+        public bool RequiereSeleccionRol { get; set; } = false;
+        public List<UserRolSocioDto>? RolSociosDisponibles { get; set; }
+        // Rol y socio seleccionados (se llenan en login directo o step2)
+        public int? IdRolSeleccionado { get; set; }
+        public int? IdSocioSeleccionado { get; set; }
+        public string? CodRolSeleccionado { get; set; }
+        public string? NombreSocioSeleccionado { get; set; }
+    }
+
+    public class LoginStep2RequestDto
+    {
+        public int IdUser { get; set; }
+        public int IdRol { get; set; }
+        public int IdSocio { get; set; }
+        public string TempToken { get; set; } = string.Empty;
     }
 
     public class RefreshTokenRequestDto

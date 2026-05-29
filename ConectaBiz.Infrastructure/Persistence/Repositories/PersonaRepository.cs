@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
@@ -118,8 +118,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<Persona> GetByResponsableTipoNumDocumentoAsync(int tipoDocumento, string numeroDocumento, string codigoRol)
         {
             return await _context.Persona
-                .Include(p => p.Users.Where(u => u.Activo && u.Rol.Codigo == codigoRol))
-                    .ThenInclude(u => u.Rol)
+                .Include(p => p.Users.Where(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.Rol.Codigo == codigoRol)))
+                    .ThenInclude(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
                 .FirstOrDefaultAsync(p =>
                     p.TipoDocumento == tipoDocumento &&
                     p.NumeroDocumento == numeroDocumento);

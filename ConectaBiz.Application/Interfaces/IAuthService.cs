@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,7 @@ namespace ConectaBiz.Application.Interfaces
     public interface IAuthService
     {
         Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest);
+        Task<AuthResponseDto> LoginStep2Async(LoginStep2RequestDto request);
         Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest);
         Task<UserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
         Task<bool> DeleteUserAsync(int id);
@@ -21,7 +22,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<UserDto> GetByIdAsync(int id);
         Task<IEnumerable<UserDto>> GetUsersByIdAsync(int[] ids);
         Task<UserDto> GetByIdSocioIdRolIdAsync(int idsocio, int idrol, int idpersona);
-        Task<IEnumerable<RolDto>> GetAllRolAsync();
+        Task<IEnumerable<RolDto>> GetAllRolAsync(bool includeSuperAdmin = false);
         Task<RolDto> GetRolByCodigoAsync(string codigo);
         Task<OperationResultDto> ChangePasswordAsync(ChangePasswordDto changePasswordDto);
         Task<OperationResultDto> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);

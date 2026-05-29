@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
@@ -88,12 +88,13 @@ namespace ConectaBiz.API.Controllers
         {
             try
             {
-                var usersDto = await _authService.GetAllRolAsync();
+                bool isSuperAdmin = User.IsInRole("SUPERADMIN");
+                var usersDto = await _authService.GetAllRolAsync(isSuperAdmin);
                 return Ok(usersDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los consultores");
+                _logger.LogError(ex, "Error al obtener todos los roles");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
@@ -166,10 +167,27 @@ namespace ConectaBiz.API.Controllers
             }
             catch (Exception ex)
             {
-
                 throw;
             }
-           
+        }
+
+        [HttpPost("login-step2")]
+        public async Task<ActionResult<AuthResponseDto>> LoginStep2([FromBody] LoginStep2RequestDto requestDto)
+        {
+            try
+            {
+                var response = await _authService.LoginStep2Async(requestDto);
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en login-step2");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Error al procesar la solicitud" });
+            }
         }
         [HttpPost("MarcarNotificacionComoLeida")]
         public async Task<ActionResult<AuthResponseDto>> MarcarComoLeidaAsync(int idUser, int[] idsNotificaciones)

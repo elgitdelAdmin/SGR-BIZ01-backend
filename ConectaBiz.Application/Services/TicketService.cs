@@ -144,7 +144,7 @@ namespace ConectaBiz.Application.Services
             await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
             return dto;
         }
-        public async Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        public async Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null)
         {
             List<TicketDto> listadoTickets = new List<TicketDto>();
 
@@ -215,6 +215,25 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
+               .Select(t =>
+               {
+                   t.HorasTrabajadas = t.ConsultorAsignaciones
+                       .SelectMany(ca => ca.DetalleTareasConsultor)
+                       .Sum(dt => (int?)dt.Horas) ?? 0;
+                   t.HorasPlanificadas = t.ConsultorAsignaciones
+                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
+                      .Sum(dt => (int?)dt.Horas) ?? 0;
+                   return t;
+               })
+               .ToList();
+            }
+            else if (codRol == AppConstants.Roles.Admin)
+            {
+                int socioIdToUse = idSocio ?? 0;
+                var tickets = await _ticketRepository.GetBySocioAsync(socioIdToUse);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await PopulatePlaceholderAssignmentsAsync(listadoTickets);
                 listadoTickets = listadoTickets
@@ -1186,6 +1205,7 @@ namespace ConectaBiz.Application.Services
 
         public async Task<PagedResultDto<TicketListItemDto>> GetPagedByUserRolAsync(
             int idUser, string codRol,
+            int? idSocio,
             int page, int pageSize,
             List<int>? estadoIds = null,
             string? globalFilter = null,
@@ -1199,7 +1219,7 @@ namespace ConectaBiz.Application.Services
             string? estado = null,
             string? nombreConsultor = null)
         {
-            Console.WriteLine($"[DEBUG] GetPagedByUserRolAsync Start - User: {idUser}, Role: {codRol}, Page: {page}, PageSize: {pageSize}");
+            Console.WriteLine($"[DEBUG] GetPagedByUserRolAsync Start - User: {idUser}, Role: {codRol}, Socio: {idSocio}, Page: {page}, PageSize: {pageSize}");
             Console.WriteLine($"[DEBUG] Params - CodTicket: '{codTicket}', CodTicketInterno: '{codTicketInterno}', GlobalFilter: '{globalFilter}'");
             if (estadoIds != null) Console.WriteLine($"[DEBUG] EstadoIds received: {string.Join(",", estadoIds)}");
 
@@ -1235,9 +1255,9 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.Admin)
             {
                 Console.WriteLine("[DEBUG] Role detected: ADMIN");
-                var userDto = await _authService.GetByIdAsync(idUser);
-                Console.WriteLine($"[DEBUG] Admin IdSocio: {userDto?.Socio?.Id}");
-                query = _ticketRepository.GetQueryableBySocio(Convert.ToInt32(userDto.Socio.Id));
+                int socioIdToUse = idSocio ?? 0;
+                Console.WriteLine($"[DEBUG] Admin IdSocio (from param): {socioIdToUse}");
+                query = _ticketRepository.GetQueryableBySocio(socioIdToUse);
             }
             else
             {

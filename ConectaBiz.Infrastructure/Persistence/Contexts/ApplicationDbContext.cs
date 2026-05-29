@@ -34,6 +34,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<RolPermisoModulo> RolPermisoModulos { get; set; }
         public DbSet<Socio> Socios { get; set; }
         public DbSet<NotificacionTicket> NotificacionTickets { get; set; }
+        public DbSet<UserRolSocio> UserRolSocios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -78,7 +79,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasIndex(e => e.Username).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.HasIndex(e => e.IdSocio);
-                entity.HasIndex(e => e.IdRol);
                 entity.HasIndex(e => e.IdPersona);
                 entity.HasIndex(e => e.Activo);
 
@@ -92,11 +92,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .WithMany(s => s.Users)
                     .HasForeignKey(e => e.IdPersona)
                     .OnDelete(DeleteBehavior.Restrict); 
-
-                entity.HasOne(e => e.Rol)
-                    .WithMany(r => r.Users) 
-                    .HasForeignKey(e => e.IdRol)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
             // Configuración de PasswordResetToken
             modelBuilder.Entity<PasswordResetToken>(entity =>
@@ -653,6 +648,38 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasForeignKey(e => e.IdTicket)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_NotificacionTicket_Ticket");
+            });
+
+            // Configuración de UserRolSocio
+            modelBuilder.Entity<UserRolSocio>(entity =>
+            {
+                entity.ToTable("UserRolSocio", "conectabiz");
+                entity.HasKey(e => new { e.IdUser, e.IdRol, e.IdSocio });
+
+                entity.Property(e => e.FechaAsignacion).HasColumnType("timestamp without time zone").IsRequired().HasDefaultValueSql("now()");
+                entity.Property(e => e.UsuarioCreacion).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
+
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.UserRolSocios)
+                    .HasForeignKey(e => e.IdUser)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_URS_User");
+
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.UserRolSocios)
+                    .HasForeignKey(e => e.IdRol)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_URS_Rol");
+
+                entity.HasOne(e => e.Socio)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdSocio)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_URS_Socio");
+
+                entity.HasIndex(e => new { e.IdUser, e.IdSocio }).HasDatabaseName("IX_URS_User_Socio");
+                entity.HasIndex(e => new { e.IdSocio, e.IdRol }).HasDatabaseName("IX_URS_Socio_Rol");
             });
         }
     }

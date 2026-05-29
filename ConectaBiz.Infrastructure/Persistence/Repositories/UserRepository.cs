@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
@@ -19,7 +19,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                 .Include(c => c.Persona)
                 .Include(c => c.Socio)
-                .Include(c => c.Rol)
+                .Include(c => c.UserRolSocios).ThenInclude(urs => urs.Rol)
+                .Include(c => c.UserRolSocios).ThenInclude(urs => urs.Socio)
                 .Where(c => c.Activo)
                 .AsNoTracking()
                 .ToListAsync();
@@ -27,11 +28,11 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<User>> GetAllUsuarioByIdSocio(int idSocio)
         {
             return await _context.Users
-                .Where(c => c.Activo && c.IdSocio == idSocio)
+                .Where(c => c.Activo && (c.IdSocio == idSocio || c.UserRolSocios.Any(urs => urs.IdSocio == idSocio && urs.Activo)))
                 .Include(c => c.Persona)
                 .Include(c => c.Socio)
-                .Include(c => c.Rol)
-                .Where(c => c.Activo)
+                .Include(c => c.UserRolSocios).ThenInclude(urs => urs.Rol)
+                .Include(c => c.UserRolSocios).ThenInclude(urs => urs.Socio)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -40,7 +41,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                  .Include(u => u.Socio)
                  .Include(u => u.Persona)
-                                 .Include(u => u.Rol)
+                 .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
+                 .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Socio)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
         public async Task<User?> GetByEmailAsync(string email)
@@ -48,7 +50,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                 .Include(u => u.Socio)
                 .Include(u => u.Persona)
-                .Include(u => u.Rol)
+                .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
+                .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Socio)
                 .FirstOrDefaultAsync(u => u.Persona.Correo == email);
         }
 
@@ -58,7 +61,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                 .Include(u => u.Socio)
                 .Include(u => u.Persona)
-                .Include(u => u.Rol)
+                .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
+                .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Socio)
                 .Where(u => ids.Contains(u.Id))
                 .ToListAsync();
         }
@@ -69,12 +73,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                 .Include(u => u.Socio)
                 .Include(u => u.Persona)
-                .FirstOrDefaultAsync(u => u.IdPersona == idPersona && u.IdSocio == idsocio && u.IdRol == idrol);
+                .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
+                .FirstOrDefaultAsync(u => u.IdPersona == idPersona && u.UserRolSocios.Any(urs => urs.IdSocio == idsocio && urs.IdRol == idrol && urs.Activo));
         }
         public async Task<IEnumerable<Rol>> GetAllRolAsync()
         {
             return await _context.Roles
-                .Include(c => c.Users)
                 .Where(c => c.Activo)
                 .AsNoTracking()
                 .ToListAsync();
@@ -94,7 +98,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Users
                  .Include(u => u.Socio)
                  .Include(u => u.Persona)
-                 .Include(u => u.Rol)
+                 .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Rol)
+                 .Include(u => u.UserRolSocios).ThenInclude(urs => urs.Socio)
                  .Where(c => c.Activo)
                 .FirstOrDefaultAsync(u => u.Username == username);
         }

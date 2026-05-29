@@ -12,7 +12,14 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<User, UserDto>()
                 .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
-                .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol));
+                .ForMember(dest => dest.RolSocios, opt => opt.MapFrom(src => src.UserRolSocios.Where(urs => urs.Activo).Select(urs => new UserRolSocioDto
+                {
+                    IdRol = urs.IdRol,
+                    IdSocio = urs.IdSocio,
+                    RolNombre = urs.Rol != null ? urs.Rol.Nombre : "",
+                    RolCodigo = urs.Rol != null ? urs.Rol.Codigo : "",
+                    SocioNombre = urs.Socio != null ? urs.Socio.NombreComercial : ""
+                }).ToList()));
 
             CreateMap<Rol, RolDto>();
 
@@ -40,7 +47,8 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<Persona, PersonaConUsuariosEmpresaDto>()
                 .ForMember(dest => dest.Users, opt => opt.MapFrom(src => src.Users));
             CreateMap<User, UserEmpresaDto>()
-                .ForMember(dest => dest.RolCodigo, opt => opt.MapFrom(src => src.Rol.Codigo));
+                .ForMember(dest => dest.RolCodigo, opt => opt.MapFrom(src =>
+                    src.UserRolSocios.Where(urs => urs.Activo).Select(urs => urs.Rol != null ? urs.Rol.Codigo : "").FirstOrDefault() ?? ""));
 
             CreateMap<UpdatePersonaDto, Persona>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
