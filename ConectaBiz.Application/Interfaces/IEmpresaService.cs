@@ -13,7 +13,7 @@ namespace ConectaBiz.Application.Interfaces
     {
         Task<IEnumerable<EmpresaDto>> GetAllAsync();
         Task<IEnumerable<EmpresaDto>> GetByIdSocio(int idSocio);
-        Task<IEnumerable<EmpresaDto>> GetByIdUserIdRolAsync(int idUser, string codRol);
+        Task<IEnumerable<EmpresaDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null);
         Task<IEnumerable<EmpresaDto>> GetAllActiveAsync();
         Task<EmpresaDto?> GetByIdAsync(int id);
         Task<PersonaConUsuariosEmpresaDto> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento);

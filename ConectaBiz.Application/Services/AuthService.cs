@@ -70,11 +70,11 @@ namespace ConectaBiz.Application.Services
             var user = await _userRepository.GetByIdSocioIdRolIdPersonaAsync(idsocio, idrol, idpersona);
             return _mapper.Map<UserDto>(user);
         }
-        public async Task<IEnumerable<RolDto>> GetAllRolAsync()
+        public async Task<IEnumerable<RolDto>> GetAllRolAsync(bool includeSuperAdmin = false)
         {
             var roles = await _userRepository.GetAllRolAsync();
             var rolesDto = _mapper.Map<IEnumerable<RolDto>>(roles);
-            return rolesDto.Where(r => r.Codigo != AppConstants.Roles.SuperAdmin);
+            return rolesDto.Where(r => r.Codigo != AppConstants.Roles.SuperAdmin || includeSuperAdmin);
         }
         public async Task<RolDto> GetRolByIdAsync(int id)
         {
@@ -91,47 +91,132 @@ namespace ConectaBiz.Application.Services
             try
             {
                 var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
-                //await _ticketService.Value.ActualizarEstadoDeAprobadoAEnEjecucion();
-
-                var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
 
                 if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash))
                 {
                     throw new UnauthorizedAccessException("Credenciales inválidas");
                 }
 
+                var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
+
                 user.LastLogin = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
                 await _userRepository.UpdateAsync(user);
 
-                var accessToken = _tokenService.GenerateAccessToken(user);
-                var refreshToken = _tokenService.GenerateRefreshToken();
-
-                var refreshTokenEntity = new RefreshToken
+                var activeRolSocios = user.UserRolSocios.Where(urs => urs.Activo).ToList();
+                if (!activeRolSocios.Any())
                 {
-                    Token = refreshToken,
-                    ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified),
-                    UserId = user.Id
-                };
+                    throw new UnauthorizedAccessException("El usuario no tiene roles o socios asignados.");
+                }
 
-                await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
-
-                var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
-                return new AuthResponseDto
+                if (activeRolSocios.Count > 1)
                 {
-                    AccessToken = accessToken,
-                    RefreshToken = refreshToken,
-                    ExpiresAt = DateTime.UtcNow.AddHours(1),
-                    User = _mapper.Map<UserDto>(user),
-                    IdConsultor = consultor?.Id,
-                    NotificacionTicket = notificacionTicketDto.ToList()
-                };
+                    var tempToken = _tokenService.GenerateAccessToken(user);
+                    return new AuthResponseDto
+                    {
+                        AccessToken = tempToken,
+                        RequiereSeleccionRol = true,
+                        RolSociosDisponibles = activeRolSocios.Select(urs => new UserRolSocioDto
+                        {
+                            IdRol = urs.IdRol,
+                            IdSocio = urs.IdSocio,
+                            RolNombre = urs.Rol != null ? urs.Rol.Nombre : "",
+                            RolCodigo = urs.Rol != null ? urs.Rol.Codigo : "",
+                            SocioNombre = urs.Socio != null ? urs.Socio.NombreComercial : ""
+                        }).ToList(),
+                        User = _mapper.Map<UserDto>(user),
+                        NotificacionTicket = notificacionTicketDto.ToList()
+                    };
+                }
+                else
+                {
+                    var single = activeRolSocios.First();
+                    var accessToken = _tokenService.GenerateAccessToken(user, single.IdRol, single.IdSocio, single.Rol.Codigo);
+                    var refreshToken = _tokenService.GenerateRefreshToken();
+
+                    var refreshTokenEntity = new RefreshToken
+                    {
+                        Token = refreshToken,
+                        ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified),
+                        UserId = user.Id
+                    };
+
+                    await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
+
+                    var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
+                    return new AuthResponseDto
+                    {
+                        AccessToken = accessToken,
+                        RefreshToken = refreshToken,
+                        ExpiresAt = DateTime.UtcNow.AddHours(1),
+                        User = _mapper.Map<UserDto>(user),
+                        IdConsultor = consultor?.Id,
+                        NotificacionTicket = notificacionTicketDto.ToList(),
+                        RequiereSeleccionRol = false,
+                        IdRolSeleccionado = single.IdRol,
+                        IdSocioSeleccionado = single.IdSocio,
+                        CodRolSeleccionado = single.Rol.Codigo,
+                        NombreSocioSeleccionado = single.Socio != null ? single.Socio.NombreComercial : ""
+                    };
+                }
             }
             catch (Exception ex)
             {
-
                 throw;
             }
+        }
 
+        public async Task<AuthResponseDto> LoginStep2Async(LoginStep2RequestDto request)
+        {
+            var userId = _tokenService.ValidateToken(request.TempToken);
+            if (userId == null || userId != request.IdUser)
+            {
+                throw new UnauthorizedAccessException("Sesión temporal inválida o expirada");
+            }
+
+            var user = await _userRepository.GetByIdAsync(request.IdUser);
+            if (user == null || !user.Activo)
+            {
+                throw new UnauthorizedAccessException("Usuario no encontrado o inactivo");
+            }
+
+            var matchingRolSocio = user.UserRolSocios.FirstOrDefault(urs => urs.Activo && urs.IdRol == request.IdRol && urs.IdSocio == request.IdSocio);
+            if (matchingRolSocio == null)
+            {
+                throw new UnauthorizedAccessException("El rol o socio seleccionado no está asignado a este usuario.");
+            }
+
+            user.LastLogin = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+            await _userRepository.UpdateAsync(user);
+
+            var accessToken = _tokenService.GenerateAccessToken(user, matchingRolSocio.IdRol, matchingRolSocio.IdSocio, matchingRolSocio.Rol.Codigo);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            var refreshTokenEntity = new RefreshToken
+            {
+                Token = refreshToken,
+                ExpiryDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(7), DateTimeKind.Unspecified),
+                UserId = user.Id
+            };
+
+            await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
+
+            var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
+            var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
+
+            return new AuthResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken,
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                User = _mapper.Map<UserDto>(user),
+                IdConsultor = consultor?.Id,
+                NotificacionTicket = notificacionTicketDto.ToList(),
+                RequiereSeleccionRol = false,
+                IdRolSeleccionado = matchingRolSocio.IdRol,
+                IdSocioSeleccionado = matchingRolSocio.IdSocio,
+                CodRolSeleccionado = matchingRolSocio.Rol.Codigo,
+                NombreSocioSeleccionado = matchingRolSocio.Socio != null ? matchingRolSocio.Socio.NombreComercial : ""
+            };
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest)
@@ -153,15 +238,38 @@ namespace ConectaBiz.Application.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password),
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
                 IdSocio = registerRequest.IdSocio,
-                IdRol = registerRequest.IdRol,
                 IdPersona = persona.Id,
                 Activo = true
             };
 
-            var userCreado = await _userRepository.CreateAsync(user);
-            var rol = await _userRepository.GetRolByIdAsync(registerRequest.IdRol);
+            foreach (var item in registerRequest.RolSocios)
+            {
+                user.UserRolSocios.Add(new UserRolSocio
+                {
+                    IdRol = item.IdRol,
+                    IdSocio = item.IdSocio,
+                    FechaAsignacion = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                    UsuarioCreacion = registerRequest.UsuarioCreacion,
+                    Activo = true
+                });
+            }
 
-            if (rol.Codigo == AppConstants.Roles.GestorCuenta || rol.Codigo == AppConstants.Roles.GestorConsultoria)
+            var userCreado = await _userRepository.CreateAsync(user);
+
+            var roles = new List<Rol>();
+            foreach (var item in registerRequest.RolSocios)
+            {
+                var rol = await _userRepository.GetRolByIdAsync(item.IdRol);
+                if (rol != null && !roles.Any(r => r.Id == rol.Id))
+                {
+                    roles.Add(rol);
+                }
+            }
+
+            bool esGestor = roles.Any(r => r.Codigo == AppConstants.Roles.GestorCuenta || r.Codigo == AppConstants.Roles.GestorConsultoria);
+            bool esConsultor = roles.Any(r => r.Codigo == AppConstants.Roles.Consultor);
+
+            if (esGestor)
             {
                 if (!await _gestorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
@@ -186,7 +294,7 @@ namespace ConectaBiz.Application.Services
                     await _gestorRepository.UpdateAsync(gestorExistente);
                 }
             }
-            if (rol.Codigo == AppConstants.Roles.Consultor)
+            if (esConsultor)
             {
                 if (!await _consultorRepository.ExistsByPersonaIdAsync(persona.Id))
                 {
@@ -212,7 +320,19 @@ namespace ConectaBiz.Application.Services
                     await _consultorRepository.UpdateUserAsync(consultorexistente);
                 }
             }
-            var accessToken = _tokenService.GenerateAccessToken(user);
+
+            string accessToken = "";
+            if (registerRequest.RolSocios.Any())
+            {
+                var first = registerRequest.RolSocios.First();
+                var firstRol = roles.FirstOrDefault(r => r.Id == first.IdRol);
+                accessToken = _tokenService.GenerateAccessToken(user, first.IdRol, first.IdSocio, firstRol?.Codigo ?? "");
+            }
+            else
+            {
+                accessToken = _tokenService.GenerateAccessToken(user);
+            }
+
             var refreshToken = _tokenService.GenerateRefreshToken();
 
             var refreshTokenEntity = new RefreshToken
@@ -232,6 +352,7 @@ namespace ConectaBiz.Application.Services
                 User = _mapper.Map<UserDto>(user)
             };
         }
+
         public async Task<UserDto?> UpdateUserAsync(UpdateUserDto updateUserDto)
         {
             var existingUser = await _userRepository.GetByIdAsync(updateUserDto.Id);
@@ -253,105 +374,137 @@ namespace ConectaBiz.Application.Services
             // Actualizar datos del usuario
             existingUser.Username = updateUserDto.Username;
             existingUser.Email = updateUserDto.Email;
-            
-            int oldRolId = existingUser.IdRol;
-            int newRolId = updateUserDto.IdRol;
-
             existingUser.IdSocio = updateUserDto.IdSocio;
-            existingUser.IdRol = updateUserDto.IdRol;
 
-            if (oldRolId != newRolId)
+            var currentRolSocios = existingUser.UserRolSocios.ToList();
+
+            // 1. Obtener los roles que tenía activos antes
+            var oldRoles = currentRolSocios.Where(urs => urs.Activo).Select(urs => urs.Rol).Where(r => r != null).ToList();
+
+            // 2. Sincronizar UserRolSocios
+            // Desactivar los que ya no están
+            foreach (var current in currentRolSocios)
             {
-                var oldRol = await _userRepository.GetRolByIdAsync(oldRolId);
-                var newRol = await _userRepository.GetRolByIdAsync(newRolId);
-
-                if (oldRol != null && newRol != null)
+                if (!updateUserDto.RolSocios.Any(newRs => newRs.IdRol == current.IdRol && newRs.IdSocio == current.IdSocio))
                 {
-                    // 1. Si el rol anterior era CONSULTOR y el nuevo no lo es:
-                    if (oldRol.Codigo == AppConstants.Roles.Consultor && newRol.Codigo != AppConstants.Roles.Consultor)
-                    {
-                        var consultor = await _consultorRepository.GetByIdUserAsync(existingUser.Id);
-                        if (consultor != null)
-                        {
-                            consultor.Activo = false;
-                            consultor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
-                            consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                            await _consultorRepository.UpdateUserAsync(consultor);
-                        }
-                    }
+                    current.Activo = false;
+                }
+                else
+                {
+                    current.Activo = true; // reactivar si estuviera inactivo
+                }
+            }
 
-                    // 2. Si el rol anterior era un Gestor (GESTORCUENTA o GESTORCONSULTORIA) y el nuevo no lo es:
-                    bool eraGestor = oldRol.Codigo == AppConstants.Roles.GestorCuenta || oldRol.Codigo == AppConstants.Roles.GestorConsultoria;
-                    bool esNuevoGestor = newRol.Codigo == AppConstants.Roles.GestorCuenta || newRol.Codigo == AppConstants.Roles.GestorConsultoria;
-                    if (eraGestor && !esNuevoGestor)
+            // Insertar nuevos
+            foreach (var newRs in updateUserDto.RolSocios)
+            {
+                if (!currentRolSocios.Any(current => current.IdRol == newRs.IdRol && current.IdSocio == newRs.IdSocio))
+                {
+                    existingUser.UserRolSocios.Add(new UserRolSocio
                     {
-                        var gestor = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
-                        if (gestor != null)
-                        {
-                            gestor.Activo = false;
-                            gestor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
-                            gestor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                            await _gestorRepository.UpdateAsync(gestor);
-                        }
-                    }
+                        IdRol = newRs.IdRol,
+                        IdSocio = newRs.IdSocio,
+                        FechaAsignacion = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
+                        UsuarioCreacion = updateUserDto.UsuarioActualizacion,
+                        Activo = true
+                    });
+                }
+            }
 
-                    // 3. Si el nuevo rol es CONSULTOR y antes no lo era:
-                    if (newRol.Codigo == AppConstants.Roles.Consultor && oldRol.Codigo != AppConstants.Roles.Consultor)
-                    {
-                        if (!await _consultorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
-                        {
-                            var consultor = new Consultor
-                            {
-                                PersonaId = existingUser.IdPersona,
-                                IdNivelExperiencia = null,
-                                IdModalidadLaboral = null,
-                                IdSocio = updateUserDto.IdSocio,
-                                IdUser = existingUser.Id,
-                                UsuarioCreacion = updateUserDto.UsuarioActualizacion,
-                                FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                                Activo = true
-                            };
-                            await _consultorRepository.CreateAsync(consultor);
-                        }
-                        else
-                        {
-                            var consultorExistente = await _consultorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
-                            consultorExistente.IdUser = existingUser.Id;
-                            consultorExistente.Activo = true;
-                            consultorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
-                            consultorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                            await _consultorRepository.UpdateUserAsync(consultorExistente);
-                        }
-                    }
+            // 3. Determinar los nuevos roles asignados
+            var newRoles = new List<Rol>();
+            foreach (var item in updateUserDto.RolSocios)
+            {
+                var rol = await _userRepository.GetRolByIdAsync(item.IdRol);
+                if (rol != null && !newRoles.Any(r => r.Id == rol.Id))
+                {
+                    newRoles.Add(rol);
+                }
+            }
 
-                    // 4. Si el nuevo rol es un Gestor (GESTORCUENTA o GESTORCONSULTORIA) y antes no lo era:
-                    if (esNuevoGestor && !eraGestor)
+            bool eraConsultor = oldRoles.Any(r => r.Codigo == AppConstants.Roles.Consultor);
+            bool esNuevoConsultor = newRoles.Any(r => r.Codigo == AppConstants.Roles.Consultor);
+
+            bool eraGestor = oldRoles.Any(r => r.Codigo == AppConstants.Roles.GestorCuenta || r.Codigo == AppConstants.Roles.GestorConsultoria);
+            bool esNuevoGestor = newRoles.Any(r => r.Codigo == AppConstants.Roles.GestorCuenta || r.Codigo == AppConstants.Roles.GestorConsultoria);
+
+            // 4. Sincronizar Consultores
+            if (eraConsultor && !esNuevoConsultor)
+            {
+                var consultor = await _consultorRepository.GetByIdUserAsync(existingUser.Id);
+                if (consultor != null)
+                {
+                    consultor.Activo = false;
+                    consultor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                    consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _consultorRepository.UpdateUserAsync(consultor);
+                }
+            }
+            if (esNuevoConsultor && !eraConsultor)
+            {
+                if (!await _consultorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
+                {
+                    var consultor = new Consultor
                     {
-                        if (!await _gestorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
-                        {
-                            var gestor = new Gestor
-                            {
-                                PersonaId = existingUser.IdPersona,
-                                IdNivelExperiencia = null,
-                                IdModalidadLaboral = null,
-                                IdSocio = updateUserDto.IdSocio,
-                                IdUser = existingUser.Id,
-                                UsuarioCreacion = updateUserDto.UsuarioActualizacion,
-                                FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                                Activo = true
-                            };
-                            await _gestorRepository.CreateAsync(gestor);
-                        }
-                        else
-                        {
-                            var gestorExistente = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
-                            gestorExistente.IdUser = existingUser.Id;
-                            gestorExistente.Activo = true;
-                            gestorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
-                            gestorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                            await _gestorRepository.UpdateAsync(gestorExistente);
-                        }
-                    }
+                        PersonaId = existingUser.IdPersona,
+                        IdNivelExperiencia = null,
+                        IdModalidadLaboral = null,
+                        IdSocio = updateUserDto.IdSocio,
+                        IdUser = existingUser.Id,
+                        UsuarioCreacion = updateUserDto.UsuarioActualizacion,
+                        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                        Activo = true
+                    };
+                    await _consultorRepository.CreateAsync(consultor);
+                }
+                else
+                {
+                    var consultorExistente = await _consultorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                    consultorExistente.IdUser = existingUser.Id;
+                    consultorExistente.Activo = true;
+                    consultorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                    consultorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _consultorRepository.UpdateUserAsync(consultorExistente);
+                }
+            }
+
+            // 5. Sincronizar Gestores
+            if (eraGestor && !esNuevoGestor)
+            {
+                var gestor = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                if (gestor != null)
+                {
+                    gestor.Activo = false;
+                    gestor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                    gestor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _gestorRepository.UpdateAsync(gestor);
+                }
+            }
+            if (esNuevoGestor && !eraGestor)
+            {
+                if (!await _gestorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
+                {
+                    var gestor = new Gestor
+                    {
+                        PersonaId = existingUser.IdPersona,
+                        IdNivelExperiencia = null,
+                        IdModalidadLaboral = null,
+                        IdSocio = updateUserDto.IdSocio,
+                        IdUser = existingUser.Id,
+                        UsuarioCreacion = updateUserDto.UsuarioActualizacion,
+                        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                        Activo = true
+                    };
+                    await _gestorRepository.CreateAsync(gestor);
+                }
+                else
+                {
+                    var gestorExistente = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                    gestorExistente.IdUser = existingUser.Id;
+                    gestorExistente.Activo = true;
+                    gestorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                    gestorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    await _gestorRepository.UpdateAsync(gestorExistente);
                 }
             }
 
@@ -387,6 +540,7 @@ namespace ConectaBiz.Application.Services
             var updatedUser = await _userRepository.UpdateUserAsync(existingUser);
             return _mapper.Map<UserDto>(updatedUser);
         }
+
         public async Task<bool> DeleteUserAsync(int id)
         {
             return await _userRepository.DeleteUserAsync(id);

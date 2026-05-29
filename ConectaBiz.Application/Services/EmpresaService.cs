@@ -47,10 +47,15 @@ namespace ConectaBiz.Application.Services
             var empresas = await _empresaRepository.GetByIdSocio(idSocio);
             return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
         }
-        public async Task<IEnumerable<EmpresaDto>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        public async Task<IEnumerable<EmpresaDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null)
         {
-            IEnumerable<EmpresaDto> listadoEmpresas= Enumerable.Empty<EmpresaDto>();
-            if (codRol == AppConstants.Roles.GestorCuenta)
+            IEnumerable<EmpresaDto> listadoEmpresas = Enumerable.Empty<EmpresaDto>();
+            if (codRol == AppConstants.Roles.SuperAdmin)
+            {
+                var empresas = await _empresaRepository.GetAllAsync();
+                listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+            }
+            else if (codRol == AppConstants.Roles.GestorCuenta)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var empresas = await _empresaRepository.GetByIdGestorCuenta(gestorDto.Id, gestorDto.IdSocio);
@@ -58,8 +63,18 @@ namespace ConectaBiz.Application.Services
             }
             else
             {
-                UserDto userDto = await _userService.GetByIdAsync(idUser);
-                var empresas = await _empresaRepository.GetByIdSocio(userDto.Socio.Id);
+                int socioIdToUse = 0;
+                if (idSocio.HasValue && idSocio.Value > 0)
+                {
+                    socioIdToUse = idSocio.Value;
+                }
+                else
+                {
+                    UserDto userDto = await _userService.GetByIdAsync(idUser);
+                    socioIdToUse = userDto.Socio?.Id ?? 0;
+                }
+
+                var empresas = await _empresaRepository.GetByIdSocio(socioIdToUse);
                 listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
             }
             return listadoEmpresas;

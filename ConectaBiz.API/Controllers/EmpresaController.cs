@@ -48,11 +48,11 @@ namespace ConectaBiz.API.Controllers
             }
         }
         [HttpGet("user/{idUser}/rol/{codRol}")]
-        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdUserIdRolAsync(int idUser, string codRol, [FromQuery] int? idSocio = null)
         {
             try
             {
-                var empresas = await _empresaService.GetByIdUserIdRolAsync(idUser, codRol);
+                var empresas = await _empresaService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
                 return Ok(empresas);
             }
             catch (Exception ex)

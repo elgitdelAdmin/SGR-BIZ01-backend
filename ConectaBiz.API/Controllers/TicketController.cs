@@ -114,11 +114,11 @@ namespace ConectaBiz.API.Controllers
             }
         }
         [HttpGet("user/{idUser}/rol/{codRol}")]
-        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserIdRolAsync(int idUser, string codRol)
+        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserIdRolAsync(int idUser, string codRol, [FromQuery] int? idSocio = null)
         {
             try
             {
-                var tickets = await _ticketService.GetByIdUserIdRolAsync(idUser, codRol);
+                var tickets = await _ticketService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
                 return Ok(tickets);
             }
             catch (Exception ex)
@@ -134,6 +134,7 @@ namespace ConectaBiz.API.Controllers
         [HttpGet("user/{idUser}/rol/{codRol}/paged")]
         public async Task<ActionResult<PagedResultDto<TicketListItemDto>>> GetPagedByUserRolAsync(
             int idUser, string codRol,
+            [FromQuery] int? idSocio = null,
             [FromQuery] int page = 0,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? estadoIds = null,
@@ -167,7 +168,7 @@ namespace ConectaBiz.API.Controllers
                 Console.WriteLine($"[DEBUG-CONTROLLER] empresa received: '{empresa}'");
                 Console.WriteLine($"[DEBUG-CONTROLLER] estado received: '{estado}'");
                 var result = await _ticketService.GetPagedByUserRolAsync(
-                    idUser, codRol, page, pageSize,
+                    idUser, codRol, idSocio, page, pageSize,
                     estadoIdsList, globalFilter, sortField, sortOrder,
                     codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado,
                     nombreConsultor);
