@@ -26,6 +26,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
 
@@ -69,9 +70,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Ticket
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Include(t => t.TicketHistorialEstado)
                 .Include(t => t.Empresa)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -82,6 +82,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Ticket
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .FirstOrDefaultAsync(t => t.CodTicket == codTicket);
         }
 
@@ -92,9 +93,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
         public async Task<IEnumerable<Ticket>> GetBySocioAsync(int idSocio)
@@ -103,6 +103,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Where(t =>
                     t.Empresa != null &&
                     t.Empresa.IdSocio == idSocio)
@@ -114,6 +115,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Where(t =>
                     t.Empresa != null &&
                     t.Empresa.IdSocio == idSocio &&
@@ -142,6 +144,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Where(t => t.IdEstadoTicket == idEstado)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
         public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
@@ -154,9 +157,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
         public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
@@ -167,6 +169,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
         public async Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor)
@@ -179,11 +182,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
                     .ThenInclude(ca => ca.DetalleTareasConsultor
                         .Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones
-                    .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor
-                        .Where(dp => dp.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
 
@@ -299,6 +299,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await query
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
         public async Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket)
@@ -321,6 +322,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Ticket
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .FirstOrDefaultAsync(t => t.CodReqSgrCsti == codReqSgrCsti);
         }
 
@@ -334,9 +336,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
 
         public IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor)
@@ -348,9 +348,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo))
-                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo));
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo));
         }
 
         public IQueryable<Ticket> GetQueryableByConsultor(int idConsultor)
@@ -362,9 +361,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo));
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
 
         public IQueryable<Ticket> GetQueryableByEmpresa(int idEmpresa)
@@ -375,9 +372,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
 
         public IQueryable<Ticket> GetQueryableBySocio(int idSocio)
@@ -388,9 +383,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
 
         public IQueryable<Ticket> GetQueryableAll()
@@ -400,9 +393,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                    .ThenInclude(ca => ca.DetallePlanificacionConsultor.Where(dt => dt.Activo));
+                    .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
         public async Task<List<string>> GetAllCodTicketInternosAsync()
         {

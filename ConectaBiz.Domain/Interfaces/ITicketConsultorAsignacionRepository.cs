@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +11,11 @@ namespace ConectaBiz.Domain.Interfaces
     {
         Task<IEnumerable<TicketConsultorAsignacion>> GetByTicketIdAsync(int idTicket);
         Task<IEnumerable<TicketConsultorAsignacion>> GetActivosByTicketIdAsync(int idTicket);
+        /// <summary>
+        /// Retorna las asignaciones activas del ticket incluyendo su colección DetallePlanificacionConsultor.
+        /// Usado para el auto-vínculo especialización ↔ planificación.
+        /// </summary>
+        Task<IEnumerable<TicketConsultorAsignacion>> GetActivosConPlanificacionByTicketIdAsync(int idTicket);
         Task<TicketConsultorAsignacion> CreateAsync(TicketConsultorAsignacion asignacion);
         Task<IEnumerable<TicketConsultorAsignacion>> CreateRangeAsync(List<TicketConsultorAsignacion> asignaciones);
         Task<IEnumerable<DetalleTareasConsultor>> CreateTareasRangeAsync(List<DetalleTareasConsultor> detallesTareas);
@@ -21,5 +26,8 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<TicketConsultorAsignacion>> UpdateRangeAsync(List<TicketConsultorAsignacion> asignaciones);
         Task<bool> DeactivateAllByTicketIdAsync(int idTicket, string usuarioDesasignacion);
         Task<bool> DeleteAsync(int id);
+        Task<bool> AnyPlanificacionActivaAsync(int idPlanificacion);
+        Task<IEnumerable<DetallePlanificacionConsultor>> GetPlanificacionesByIdsAsync(IEnumerable<int> ids);
+        Task<IEnumerable<DetallePlanificacionConsultor>> GetPlanificacionesByFrenteIdsAsync(IEnumerable<int> frenteIds);
     }
 }

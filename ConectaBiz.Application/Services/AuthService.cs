@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BCrypt.Net;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
@@ -251,10 +251,109 @@ namespace ConectaBiz.Application.Services
             }
 
             // Actualizar datos del usuario
-            //existingUser.Username = updateUserDto.Username;
+            existingUser.Username = updateUserDto.Username;
             existingUser.Email = updateUserDto.Email;
-            //existingUser.IdSocio = updateUserDto.IdSocio;
-            //existingUser.IdRol = updateUserDto.IdRol;
+            
+            int oldRolId = existingUser.IdRol;
+            int newRolId = updateUserDto.IdRol;
+
+            existingUser.IdSocio = updateUserDto.IdSocio;
+            existingUser.IdRol = updateUserDto.IdRol;
+
+            if (oldRolId != newRolId)
+            {
+                var oldRol = await _userRepository.GetRolByIdAsync(oldRolId);
+                var newRol = await _userRepository.GetRolByIdAsync(newRolId);
+
+                if (oldRol != null && newRol != null)
+                {
+                    // 1. Si el rol anterior era CONSULTOR y el nuevo no lo es:
+                    if (oldRol.Codigo == AppConstants.Roles.Consultor && newRol.Codigo != AppConstants.Roles.Consultor)
+                    {
+                        var consultor = await _consultorRepository.GetByIdUserAsync(existingUser.Id);
+                        if (consultor != null)
+                        {
+                            consultor.Activo = false;
+                            consultor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                            consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                            await _consultorRepository.UpdateUserAsync(consultor);
+                        }
+                    }
+
+                    // 2. Si el rol anterior era un Gestor (GESTORCUENTA o GESTORCONSULTORIA) y el nuevo no lo es:
+                    bool eraGestor = oldRol.Codigo == AppConstants.Roles.GestorCuenta || oldRol.Codigo == AppConstants.Roles.GestorConsultoria;
+                    bool esNuevoGestor = newRol.Codigo == AppConstants.Roles.GestorCuenta || newRol.Codigo == AppConstants.Roles.GestorConsultoria;
+                    if (eraGestor && !esNuevoGestor)
+                    {
+                        var gestor = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                        if (gestor != null)
+                        {
+                            gestor.Activo = false;
+                            gestor.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                            gestor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                            await _gestorRepository.UpdateAsync(gestor);
+                        }
+                    }
+
+                    // 3. Si el nuevo rol es CONSULTOR y antes no lo era:
+                    if (newRol.Codigo == AppConstants.Roles.Consultor && oldRol.Codigo != AppConstants.Roles.Consultor)
+                    {
+                        if (!await _consultorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
+                        {
+                            var consultor = new Consultor
+                            {
+                                PersonaId = existingUser.IdPersona,
+                                IdNivelExperiencia = null,
+                                IdModalidadLaboral = null,
+                                IdSocio = updateUserDto.IdSocio,
+                                IdUser = existingUser.Id,
+                                UsuarioCreacion = updateUserDto.UsuarioActualizacion,
+                                FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                                Activo = true
+                            };
+                            await _consultorRepository.CreateAsync(consultor);
+                        }
+                        else
+                        {
+                            var consultorExistente = await _consultorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                            consultorExistente.IdUser = existingUser.Id;
+                            consultorExistente.Activo = true;
+                            consultorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                            consultorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                            await _consultorRepository.UpdateUserAsync(consultorExistente);
+                        }
+                    }
+
+                    // 4. Si el nuevo rol es un Gestor (GESTORCUENTA o GESTORCONSULTORIA) y antes no lo era:
+                    if (esNuevoGestor && !eraGestor)
+                    {
+                        if (!await _gestorRepository.ExistsByPersonaIdAsync(existingUser.IdPersona))
+                        {
+                            var gestor = new Gestor
+                            {
+                                PersonaId = existingUser.IdPersona,
+                                IdNivelExperiencia = null,
+                                IdModalidadLaboral = null,
+                                IdSocio = updateUserDto.IdSocio,
+                                IdUser = existingUser.Id,
+                                UsuarioCreacion = updateUserDto.UsuarioActualizacion,
+                                FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                                Activo = true
+                            };
+                            await _gestorRepository.CreateAsync(gestor);
+                        }
+                        else
+                        {
+                            var gestorExistente = await _gestorRepository.GetByIdPersonaAsync(existingUser.IdPersona);
+                            gestorExistente.IdUser = existingUser.Id;
+                            gestorExistente.Activo = true;
+                            gestorExistente.UsuarioActualizacion = updateUserDto.UsuarioActualizacion;
+                            gestorExistente.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                            await _gestorRepository.UpdateAsync(gestorExistente);
+                        }
+                    }
+                }
+            }
 
             // Actualizar contraseña si se proporciona
             if (!string.IsNullOrEmpty(updateUserDto.Password))

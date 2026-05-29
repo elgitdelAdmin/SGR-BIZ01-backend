@@ -98,45 +98,63 @@ namespace ConectaBiz.Application.Services
         public async Task<TicketDto?> GetByIdAsync(int id)
         {
             var ticket = await _ticketRepository.GetByIdWithRelationsAsync(id);
-            return ticket != null ? _mapper.Map<TicketDto>(ticket) : null;
+            if (ticket == null) return null;
+            var dto = _mapper.Map<TicketDto>(ticket);
+            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            return dto;
         }
 
         public async Task<TicketDto?> GetByCodTicketAsync(string codTicket)
         {
             var ticket = await _ticketRepository.GetByCodTicketAsync(codTicket);
-            return ticket != null ? _mapper.Map<TicketDto>(ticket) : null;
+            if (ticket == null) return null;
+            var dto = _mapper.Map<TicketDto>(ticket);
+            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            return dto;
         }
 
         public async Task<IEnumerable<TicketDto>> GetByEmpresaAsync(int idEmpresa)
         {
             var tickets = await _ticketRepository.GetByEmpresaAsync(idEmpresa);
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+            await PopulatePlaceholderAssignmentsAsync(dtos);
+            return dtos;
         }
 
         public async Task<IEnumerable<TicketDto>> GetByEstadoAsync(int idEstado)
         {
             var tickets = await _ticketRepository.GetByEstadoAsync(idEstado);
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+            await PopulatePlaceholderAssignmentsAsync(dtos);
+            return dtos;
         }
         public async Task<TicketDto?> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp)
         {
             var ticket = await _ticketRepository.GetByIdSocioNumContribuyenteEmpAsync(idSocio, numContribuyenteEmp);
-            return ticket != null ? _mapper.Map<TicketDto>(ticket) : null;
+            if (ticket == null) return null;
+            var dto = _mapper.Map<TicketDto>(ticket);
+            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            return dto;
         }
         public async Task<TicketDto?> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp)
         {
             var ticket = await _ticketRepository.GetByNumContribuyenteSocioEmpAsync(numContribuyenteSocio, numContribuyenteEmp);
-            return ticket != null ? _mapper.Map<TicketDto>(ticket) : null;
+            if (ticket == null) return null;
+            var dto = _mapper.Map<TicketDto>(ticket);
+            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            return dto;
         }
         public async Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol)
         {
-            IEnumerable<TicketDto> listadoTickets = Enumerable.Empty<TicketDto>();
+            List<TicketDto> listadoTickets = new List<TicketDto>();
 
             if (codRol == AppConstants.Roles.GestorCuenta)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
-                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
                 .Select(t =>
                 {
                     t.HorasTrabajadas = t.ConsultorAsignaciones
@@ -155,6 +173,9 @@ namespace ConectaBiz.Application.Services
                 var tickets = await _ticketRepository.GetByGestorConsultoriaAsync(gestorDto.Id);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Where(t => t.FrenteSubFrentes != null && t.FrenteSubFrentes.Count > 0)
+               .ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
@@ -171,7 +192,9 @@ namespace ConectaBiz.Application.Services
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
-                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
                   .Select(t =>
                   {
                       // Sumar solo las horas del consultor específico
@@ -192,7 +215,9 @@ namespace ConectaBiz.Application.Services
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
-                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
@@ -208,7 +233,9 @@ namespace ConectaBiz.Application.Services
             else
             {
                 var tickets = await _ticketRepository.GetAllAsync();
-                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
+                listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                listadoTickets = listadoTickets
                .Select(t =>
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
@@ -226,7 +253,9 @@ namespace ConectaBiz.Application.Services
         public async Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
         {
             var tickets = await _ticketRepository.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+            await PopulatePlaceholderAssignmentsAsync(dtos);
+            return dtos;
         }
         public async Task<string> GenerarCodigoTicketAsync(int idTipoTicket)
         {
@@ -398,7 +427,7 @@ namespace ConectaBiz.Application.Services
 
 
                 var candidatos = new List<int> { idUserEmpresa, (int)gestorDto.IdUser, (int)gestorConsultoriaDto.IdUser };
-                candidatos.AddRange(idsConsultores);
+                candidatos.AddRange(idsConsultores.Where(id => id > 0));
 
                 // 2. Traer notificaciones ya existentes
                 t0 = sw.ElapsedMilliseconds;
@@ -423,7 +452,10 @@ namespace ConectaBiz.Application.Services
                     if (idsConsultores.Contains(id))
                     {
                         var consultorDto = await _consultorService.GetByIdAsync(id);
-                        lstNotificaciones.Add(CrearNotificacion(ticketId, consultorDto.IdUser, codTicket, mensaje));
+                        if (consultorDto != null)
+                        {
+                            lstNotificaciones.Add(CrearNotificacion(ticketId, consultorDto.IdUser, codTicket, mensaje));
+                        }
                     }
                     else
                     {
@@ -543,11 +575,21 @@ namespace ConectaBiz.Application.Services
                 var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones, jsonOptions);
                 updateDto.ConsultorAsignaciones = consultores;
 
+                if (consultores != null)
+                {
+                    foreach (var c in consultores)
+                    {
+                        if (c.IdConsultor == 0)
+                        {
+                            c.IdConsultor = null;
+                        }
+                    }
+                }
+
                 var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteUpdateDto>>(updateDto.frenteSubFrentes);
                 updateDto.FrenteSubFrentes = frentesSubfrentes;
 
                 var existingTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
-                if (existingTicket == null)
                 if (existingTicket == null)
                 {
                     throw new KeyNotFoundException($"No se encontró el ticket con ID: {id}");
@@ -568,70 +610,290 @@ namespace ConectaBiz.Application.Services
                     await CreateHistorialCambioEstadoAsync(id, estadoAnterior, updateDto);
                 }
 
-                // Validar y actualizar asignaciones de consultores solo si hay cambios
-                var (modificados, agregados, tareasModificadas, tareasAgregadas, planificacionModificadas , planificacionAgregadas) = await GetConsultorAsignacionesDiffAsync(id, updateDto.ConsultorAsignaciones);
-
-                // 🔹 Procesar asignaciones modificadas (incluye eliminaciones lógicas)
-                if (modificados.Count > 0)
-                {
-                    var listaModificados = _mapper.Map<List<TicketConsultorAsignacion>>(modificados).Select(x => {x.IdTicket = id ;return x;}).ToList();
-                    await _consultorAsignacionRepository.UpdateRangeAsync(listaModificados);
-                }
-
-                // 🔹 Procesar asignaciones agregadas (nuevas)
-                if (agregados.Count > 0)
-                {
-                    var listaAgregados = _mapper.Map<List<TicketConsultorAsignacion>>(agregados).Select(x => {x.IdTicket = id;x.Id = 0;return x;}).ToList();
-                    await _consultorAsignacionRepository.CreateRangeAsync(listaAgregados);
-
-                    // Crear Notificaciones solo para nuevas asignaciones
-                    var empresa = await _empresaRepository.GetByIdAsync(existingTicket.IdEmpresa);
-                    int[] idsConsultoresNuevos = agregados.Select(c => c.IdConsultor).ToArray();
-                    await CrearNotificacionesAsignacionTicket(id,existingTicket.CodTicket,(int)empresa.IdUser,(int)empresa.IdGestor,(int)updateDto.IdGestorConsultoria,idsConsultoresNuevos);
-                }
-
-                // 🔹 Procesar tareas modificadas (incluye eliminaciones lógicas)
-                if (tareasModificadas.Count > 0)
-                {
-                    var listaTareasModificadas = _mapper.Map<List<DetalleTareasConsultor>>(tareasModificadas);
-                    await _consultorAsignacionRepository.UpdateTareasRangeAsync(listaTareasModificadas);
-                }
-
-                // 🔹 Procesar tareas agregadas (nuevas)
-                if (tareasAgregadas.Count > 0)
-                {
-                    var listaTareasAgregadas = _mapper.Map<List<DetalleTareasConsultor>>(tareasAgregadas).Select(x => {x.Id = 0;return x;}).ToList();
-                    await _consultorAsignacionRepository.CreateTareasRangeAsync(listaTareasAgregadas);
-                }
-                // 🔹 Procesar planificaciones modificadas (incluye eliminaciones lógicas)
-                if (planificacionModificadas.Count > 0)
-                {
-                    var listaPlanificacionModificadas = _mapper.Map<List<DetallePlanificacionConsultor>>(planificacionModificadas);
-                    await _consultorAsignacionRepository.UpdatePlanificacionRangeAsync(listaPlanificacionModificadas);
-                }
-
-                // 🔹 Procesar tareas agregadas (nuevas)
-                if (planificacionAgregadas.Count > 0)
-                {
-                    var listaPlanificacionsAgregadas = _mapper.Map<List<DetallePlanificacionConsultor>>(planificacionAgregadas).Select(x => { x.Id = 0; return x; }).ToList();
-                    await _consultorAsignacionRepository.CreatePlanificacionRangeAsync(listaPlanificacionsAgregadas);
-                }
-
-                // Validar y actualizar frentes y subfrentes solo si hay cambios
+                // 1️⃣ Validar y actualizar frentes y subfrentes primero (para tener sus IDs de base de datos)
                 var (frenteSubFrentesmodificados, frenteSubFrentesagregados) = await GetConsulFrenteSubFrentesfAsync(id, updateDto.FrenteSubFrentes);
                 var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
+
+                var listaFrentesModificados = new List<TicketFrenteSubFrente>();
+                var listaFrentesAgregados = new List<TicketFrenteSubFrente>();
 
                 if (frenteSubFrentesmodificados.Count > 0)
                 {
                     lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha modificado una asignación al ticket {existingTicket.CodTicket}"));
-                    var listaModificados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesmodificados).Select(x => { x.IdTicket = id; x.UsuarioModificacion = updateDto.UsuarioActualizacion; x.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); return x; }).ToList();
-                    await _frenteSubFrenteRepository.UpdateRangeAsync(listaModificados);
+                    listaFrentesModificados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesmodificados).Select(x => { x.IdTicket = id; x.UsuarioModificacion = updateDto.UsuarioActualizacion; x.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); return x; }).ToList();
+                    await _frenteSubFrenteRepository.UpdateRangeAsync(listaFrentesModificados);
                 }
                 if (frenteSubFrentesagregados.Count > 0)
                 {
                     lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha agregado una asignación al ticket {existingTicket.CodTicket}"));
-                    var listaAgregados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesagregados).Select(x => { x.IdTicket = id; x.UsuarioCreacion = updateDto.UsuarioActualizacion; x.Id = 0; x.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); x.FechaModificacion = null; return x; }).ToList();
-                    await _frenteSubFrenteRepository.CreateRangeAsync(listaAgregados);
+                    listaFrentesAgregados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesagregados).Select(x => { x.IdTicket = id; x.UsuarioCreacion = updateDto.UsuarioActualizacion; x.Id = 0; x.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); x.FechaModificacion = null; return x; }).ToList();
+                    await _frenteSubFrenteRepository.CreateRangeAsync(listaFrentesAgregados);
+                }
+
+                // 2️⃣ Obtener un mapa actualizado de todos los frentes activos de este ticket para resolver IdTicketFrenteSubFrente
+                var todosFrentesActivos = await _frenteSubFrenteRepository.GetActivosByTicketIdAsync(id);
+                // Usar ToLookup en vez de ToDictionary para soportar múltiples frenteSubFrentes con el mismo IdSubFrente
+                var frenteIdLookup = todosFrentesActivos.ToLookup(f => f.IdSubFrente, f => f.Id);
+                // Mapa directo por Id de TicketFrenteSubFrente para resolución exacta
+                var frenteByIdMap = todosFrentesActivos.ToDictionary(f => f.Id, f => f);
+
+                // Validar y actualizar asignaciones de consultores solo si hay cambios
+                var asignacionesList = updateDto.ConsultorAsignaciones ?? new List<TicketConsultorAsignacionUpdateDto>();
+
+                var nuevasPlanificacionesAInsertar = new List<DetallePlanificacionConsultor>();
+                var planificacionesAModificar = new List<DetallePlanificacionConsultor>();
+                
+                var nuevasTareasAInsertar = new List<DetalleTareasConsultor>();
+                var tareasAModificar = new List<DetalleTareasConsultor>();
+
+                var planIdsProcesados = new HashSet<int>();
+                var tareaIdsProcesados = new HashSet<int>();
+
+                var asignacionesAModificar = new List<TicketConsultorAsignacion>();
+                var nuevasAsignacionesAInsertar = new List<TicketConsultorAsignacion>();
+
+                var mapaNuevasAsignaciones = new List<(TicketConsultorAsignacionUpdateDto Dto, TicketConsultorAsignacion Entity)>();
+                
+                // Mapa para trackear el planning record activo por cada IdSubFrente
+                var activePlanificacionBySubFrente = new Dictionary<int, DetallePlanificacionConsultor>();
+                // Trackear qué IDs de TicketFrenteSubFrente ya se asignaron (para duplicados)
+                var usedFrenteSubFrenteIds = new HashSet<int>();
+
+                foreach (var asigDto in asignacionesList)
+                {
+                    asigDto.FechaAsignacion = DateTime.SpecifyKind(asigDto.FechaAsignacion, DateTimeKind.Local);
+                    asigDto.FechaDesasignacion = DateTime.SpecifyKind(asigDto.FechaDesasignacion, DateTimeKind.Local);
+
+                    bool esPlaceholder = asigDto.IdConsultor == null || asigDto.IdConsultor == 0;
+                    
+                    // Resolver IdTicketFrenteSubFrente: primero usar el que envía el frontend, luego buscar por IdSubFrente
+                    int resolvedFrenteSubFrenteId = 0;
+                    if (asigDto.IdTicketFrenteSubFrente.HasValue && asigDto.IdTicketFrenteSubFrente.Value > 0
+                        && frenteByIdMap.ContainsKey(asigDto.IdTicketFrenteSubFrente.Value))
+                    {
+                        resolvedFrenteSubFrenteId = asigDto.IdTicketFrenteSubFrente.Value;
+                        usedFrenteSubFrenteIds.Add(resolvedFrenteSubFrenteId);
+                    }
+                    else if (asigDto.IdSubFrente.HasValue)
+                    {
+                        // Buscar el primer ID de TicketFrenteSubFrente disponible para este subfrente
+                        var candidatos = frenteIdLookup[asigDto.IdSubFrente.Value];
+                        foreach (var candidatoId in candidatos)
+                        {
+                            if (!usedFrenteSubFrenteIds.Contains(candidatoId))
+                            {
+                                resolvedFrenteSubFrenteId = candidatoId;
+                                usedFrenteSubFrenteIds.Add(candidatoId);
+                                break;
+                            }
+                        }
+                        // Si todos estaban usados, usar el primero disponible
+                        if (resolvedFrenteSubFrenteId == 0 && candidatos.Any())
+                        {
+                            resolvedFrenteSubFrenteId = candidatos.First();
+                        }
+                    }
+
+                    if (asigDto.Id == 0)
+                    {
+                        if (!esPlaceholder)
+                        {
+                            var entity = _mapper.Map<TicketConsultorAsignacion>(asigDto);
+                            entity.IdTicket = id;
+                            entity.Id = 0;
+                            entity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId > 0 ? resolvedFrenteSubFrenteId : (int?)null;
+                            nuevasAsignacionesAInsertar.Add(entity);
+                            mapaNuevasAsignaciones.Add((asigDto, entity));
+                        }
+                        else
+                        {
+                            foreach (var planDto in asigDto.DetallePlanificacionConsultor)
+                            {
+                                if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
+                                {
+                                    continue;
+                                }
+
+                                planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
+                                planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
+                                var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
+                                planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
+
+                                if (planDto.Id == 0)
+                                {
+                                    planEntity.Id = 0;
+                                    nuevasPlanificacionesAInsertar.Add(planEntity);
+                                }
+                                else
+                                {
+                                    planificacionesAModificar.Add(planEntity);
+                                }
+
+                                if (planDto.Activo && asigDto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(asigDto.IdSubFrente.Value))
+                                {
+                                    activePlanificacionBySubFrente[asigDto.IdSubFrente.Value] = planEntity;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!esPlaceholder)
+                        {
+                            var entity = _mapper.Map<TicketConsultorAsignacion>(asigDto);
+                            entity.IdTicket = id;
+                            entity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId > 0 ? resolvedFrenteSubFrenteId : (int?)null;
+                            asignacionesAModificar.Add(entity);
+                        }
+
+                        foreach (var planDto in asigDto.DetallePlanificacionConsultor)
+                        {
+                            if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
+                            {
+                                continue;
+                            }
+
+                            planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
+                            planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
+                            var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
+                            planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
+
+                            if (planDto.Id == 0)
+                            {
+                                planEntity.Id = 0;
+                                nuevasPlanificacionesAInsertar.Add(planEntity);
+                            }
+                            else
+                            {
+                                planificacionesAModificar.Add(planEntity);
+                            }
+
+                            if (planDto.Activo && asigDto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(asigDto.IdSubFrente.Value))
+                            {
+                                activePlanificacionBySubFrente[asigDto.IdSubFrente.Value] = planEntity;
+                            }
+                        }
+
+                        if (!esPlaceholder)
+                        {
+                            foreach (var tareaDto in asigDto.DetalleTareasConsultor)
+                            {
+                                if (tareaDto.Id > 0 && !tareaIdsProcesados.Add(tareaDto.Id))
+                                {
+                                    continue;
+                                }
+
+                                tareaDto.FechaInicio = DateTime.SpecifyKind(tareaDto.FechaInicio, DateTimeKind.Local);
+                                tareaDto.FechaFin = DateTime.SpecifyKind(tareaDto.FechaFin, DateTimeKind.Local);
+                                var tareaEntity = _mapper.Map<DetalleTareasConsultor>(tareaDto);
+                                tareaEntity.IdTicketConsultorAsignacion = asigDto.Id;
+
+                                if (tareaDto.Id == 0)
+                                {
+                                    tareaEntity.Id = 0;
+                                    nuevasTareasAInsertar.Add(tareaEntity);
+                                }
+                                else
+                                {
+                                    tareasAModificar.Add(tareaEntity);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (asignacionesAModificar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.UpdateRangeAsync(asignacionesAModificar);
+                }
+
+                if (nuevasAsignacionesAInsertar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.CreateRangeAsync(nuevasAsignacionesAInsertar);
+
+                    var empresa = await _empresaRepository.GetByIdAsync(existingTicket.IdEmpresa);
+                    int[] idsConsultoresNuevos = nuevasAsignacionesAInsertar
+                        .Select(c => c.IdConsultor)
+                        .Where(idConsultor => idConsultor.HasValue && idConsultor.Value > 0)
+                        .Select(idConsultor => idConsultor.Value)
+                        .ToArray();
+                    await CrearNotificacionesAsignacionTicket(id, existingTicket.CodTicket, (int)empresa.IdUser, (int)empresa.IdGestor, (int)updateDto.IdGestorConsultoria, idsConsultoresNuevos);
+
+                    foreach (var item in mapaNuevasAsignaciones)
+                    {
+                        int newAsignacionId = item.Entity.Id;
+                        
+                        int resolvedFrenteSubFrenteId = 0;
+                        if (item.Entity.IdTicketFrenteSubFrente.HasValue)
+                        {
+                            resolvedFrenteSubFrenteId = item.Entity.IdTicketFrenteSubFrente.Value;
+                        }
+                        else if (item.Dto.IdSubFrente.HasValue)
+                        {
+                            resolvedFrenteSubFrenteId = frenteIdLookup[item.Dto.IdSubFrente.Value].FirstOrDefault();
+                        }
+
+                        foreach (var planDto in item.Dto.DetallePlanificacionConsultor)
+                        {
+                            if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
+                            {
+                                continue;
+                            }
+
+                            planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
+                            planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
+                            var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
+                            planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
+
+                            if (planDto.Id == 0)
+                            {
+                                planEntity.Id = 0;
+                                nuevasPlanificacionesAInsertar.Add(planEntity);
+                            }
+                            else
+                            {
+                                planificacionesAModificar.Add(planEntity);
+                            }
+
+                            if (planDto.Activo && item.Dto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(item.Dto.IdSubFrente.Value))
+                            {
+                                activePlanificacionBySubFrente[item.Dto.IdSubFrente.Value] = planEntity;
+                            }
+                        }
+
+                        foreach (var tareaDto in item.Dto.DetalleTareasConsultor)
+                        {
+                            if (tareaDto.Id > 0 && !tareaIdsProcesados.Add(tareaDto.Id))
+                            {
+                                continue;
+                            }
+
+                            tareaDto.FechaInicio = DateTime.SpecifyKind(tareaDto.FechaInicio, DateTimeKind.Local);
+                            tareaDto.FechaFin = DateTime.SpecifyKind(tareaDto.FechaFin, DateTimeKind.Local);
+                            var tareaEntity = _mapper.Map<DetalleTareasConsultor>(tareaDto);
+                            tareaEntity.Id = 0;
+                            tareaEntity.IdTicketConsultorAsignacion = newAsignacionId;
+                            nuevasTareasAInsertar.Add(tareaEntity);
+                        }
+                    }
+                }
+
+                if (tareasAModificar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.UpdateTareasRangeAsync(tareasAModificar);
+                }
+                if (nuevasTareasAInsertar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.CreateTareasRangeAsync(nuevasTareasAInsertar);
+                }
+
+                if (planificacionesAModificar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.UpdatePlanificacionRangeAsync(planificacionesAModificar);
+                }
+                if (nuevasPlanificacionesAInsertar.Count > 0)
+                {
+                    await _consultorAsignacionRepository.CreatePlanificacionRangeAsync(nuevasPlanificacionesAInsertar);
                 }
 
                 if (lstNotificaciones.Any())
@@ -686,7 +948,9 @@ namespace ConectaBiz.Application.Services
 
                 // Obtener el ticket actualizado con relaciones
                 var updatedTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
-                return _mapper.Map<TicketDto>(updatedTicket);
+                var resultDto = _mapper.Map<TicketDto>(updatedTicket);
+                await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { resultDto });
+                return resultDto;
             }
             catch (Exception ex)
             {
@@ -694,6 +958,7 @@ namespace ConectaBiz.Application.Services
                 throw;
             }
         }
+
         private void AplicarRepositorios(Ticket existingTicket, TicketUpdateDto updateDto)
         {
             // Si el front no envía nada, no tocamos lo existente
@@ -818,15 +1083,19 @@ namespace ConectaBiz.Application.Services
 
                 if (asignacion.Id == 0)
                 {
-                    // ✅ Nueva asignación (Id = 0)
-                    agregados.Add(asignacion);
+                    // ✅ Nueva asignación (Id = 0) - solo si tiene consultor asignado
+                    if (asignacion.IdConsultor.HasValue && asignacion.IdConsultor.Value > 0)
+                    {
+                        agregados.Add(asignacion);
+                    }
                 }
                 else
                 {
-                    // ✅ Asignación existente (Id > 0) - puede ser modificación o eliminación lógica
-                    // Si Activo = false, es eliminación lógica
-                    // Si Activo = true, es modificación/actualización
-                    modificados.Add(asignacion);
+                    // ✅ Asignación existente (Id > 0) - solo si tiene consultor asignado
+                    if (asignacion.IdConsultor.HasValue && asignacion.IdConsultor.Value > 0)
+                    {
+                        modificados.Add(asignacion);
+                    }
                 }
             }
 
@@ -1192,6 +1461,7 @@ namespace ConectaBiz.Application.Services
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.Consultor)
                         .ThenInclude(c => c.Persona)
+                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                 .Skip(page * pageSize)
                 .Take(pageSize)
                 .AsNoTracking()
@@ -1202,6 +1472,30 @@ namespace ConectaBiz.Application.Services
             var estados = _listaEstados?.ToList() ?? new List<Parametro>();
             var prioridades = _listaPrioridades?.ToList() ?? new List<Parametro>();
 
+            // Obtener planificaciones para calcular horas planificadas de forma agregada
+            var frenteIds = tickets
+                .Where(t => t.FrenteSubFrentes != null)
+                .SelectMany(t => t.FrenteSubFrentes)
+                .Where(fsf => fsf.Activo)
+                .Select(fsf => fsf.Id)
+                .Distinct()
+                .ToList();
+
+            var planningEntities = frenteIds.Any()
+                ? await _consultorAsignacionRepository.GetPlanificacionesByFrenteIdsAsync(frenteIds)
+                : new List<DetallePlanificacionConsultor>();
+
+            var frenteToTicketMap = tickets
+                .Where(t => t.FrenteSubFrentes != null)
+                .SelectMany(t => t.FrenteSubFrentes)
+                .Where(fsf => fsf.Activo)
+                .ToDictionary(fsf => fsf.Id, fsf => fsf.IdTicket);
+
+            var planHorasByTicket = planningEntities
+                .Where(p => p.Activo && frenteToTicketMap.ContainsKey(p.IdTicketFrenteSubFrente))
+                .GroupBy(p => frenteToTicketMap[p.IdTicketFrenteSubFrente])
+                .ToDictionary(g => g.Key, g => g.Sum(p => (int)p.Horas));
+
             // 8) Mapear a DTO ligero
             var items = tickets.Select(t =>
             {
@@ -1210,10 +1504,7 @@ namespace ConectaBiz.Application.Services
                     .SelectMany(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                     .Sum(dt => (int?)dt.Horas) ?? 0;
 
-                var horasPlanificadas = t.ConsultorAsignaciones
-                    .Where(ca => ca.Activo)
-                    .SelectMany(ca => ca.DetallePlanificacionConsultor.Where(dp => dp.Activo))
-                    .Sum(dp => (int?)dp.Horas) ?? 0;
+                var horasPlanificadas = planHorasByTicket.TryGetValue(t.Id, out int hPlan) ? hPlan : 0;
 
                 return new TicketListItemDto
                 {
@@ -1254,6 +1545,113 @@ namespace ConectaBiz.Application.Services
         public async Task<List<string>> GetAllCodTicketInternosAsync()
         {
             return await _ticketRepository.GetAllCodTicketInternosAsync();
+        }
+
+        private async Task PopulatePlaceholderAssignmentsAsync(IEnumerable<TicketDto> dtos)
+        {
+            if (dtos == null || !dtos.Any()) return;
+
+            // 1. Collect all database IDs from active FrenteSubFrentes of all dtos
+            var frenteIds = dtos
+                .Where(d => d.FrenteSubFrentes != null)
+                .SelectMany(d => d.FrenteSubFrentes)
+                .Where(fsf => fsf.Activo)
+                .Select(fsf => fsf.Id)
+                .Distinct()
+                .ToList();
+
+            if (!frenteIds.Any()) return;
+
+            // 2. Fetch those DetallePlanificacionConsultor records by Frente IDs
+            var planningEntities = await _consultorAsignacionRepository.GetPlanificacionesByFrenteIdsAsync(frenteIds);
+            var planningDtos = _mapper.Map<List<DetallePlanificacionConsultorDto>>(planningEntities);
+            
+            // Group planning records by IdTicketFrenteSubFrente
+            var planningByFrenteMap = planningDtos
+                .GroupBy(p => p.IdTicketFrenteSubFrente)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // 3. For each TicketDto, reconstruct placeholder assignments if needed, and map planning to real assignments
+            foreach (var ticketDto in dtos)
+            {
+                if (ticketDto.FrenteSubFrentes == null) continue;
+                if (ticketDto.ConsultorAsignaciones == null)
+                {
+                    ticketDto.ConsultorAsignaciones = new List<TicketConsultorAsignacionDto>();
+                }
+
+                foreach (var frenteSubFrente in ticketDto.FrenteSubFrentes.Where(fsf => fsf.Activo))
+                {
+                    if (planningByFrenteMap.TryGetValue(frenteSubFrente.Id, out var planningDtosForFrente) && planningDtosForFrente.Any())
+                    {
+                        // Buscar asignaciones reales para este subfrente
+                        var realAsignaciones = ticketDto.ConsultorAsignaciones
+                            .Where(ca => ca.Activo && ca.IdSubFrente == frenteSubFrente.IdSubFrente && ca.IdConsultor.HasValue && ca.IdConsultor.Value > 0)
+                            .ToList();
+
+                        if (realAsignaciones.Any())
+                        {
+                            foreach (var realAsig in realAsignaciones)
+                            {
+                                if (realAsig.DetallePlanificacionConsultor == null)
+                                {
+                                    realAsig.DetallePlanificacionConsultor = new List<DetallePlanificacionConsultorDto>();
+                                }
+                                foreach (var planningDto in planningDtosForFrente)
+                                {
+                                    if (!realAsig.DetallePlanificacionConsultor.Any(dp => dp.Id == planningDto.Id))
+                                    {
+                                        realAsig.DetallePlanificacionConsultor.Add(planningDto);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Si no hay asignación real, buscar o crear placeholder
+                            var placeholderAsig = ticketDto.ConsultorAsignaciones
+                                .FirstOrDefault(ca => ca.Activo && ca.IdSubFrente == frenteSubFrente.IdSubFrente && (ca.IdConsultor == null || ca.IdConsultor == 0));
+
+                            if (placeholderAsig == null)
+                            {
+                                placeholderAsig = new TicketConsultorAsignacionDto
+                                {
+                                    Id = 0,
+                                    IdTicket = ticketDto.Id,
+                                    IdSubFrente = frenteSubFrente.IdSubFrente,
+                                    IdFrente = frenteSubFrente.IdFrente,
+                                    IdTicketFrenteSubFrente = frenteSubFrente.Id,
+                                    IdConsultor = 0,
+                                    IdTipoActividad = 25,
+                                    FechaAsignacion = frenteSubFrente.FechaInicio,
+                                    FechaDesasignacion = frenteSubFrente.FechaFin,
+                                    Activo = true,
+                                    DetalleTareasConsultor = new List<DetalleTareasConsultorDto>(),
+                                    DetallePlanificacionConsultor = new List<DetallePlanificacionConsultorDto>(),
+                                    EsPlaceholder = true
+                                };
+                                ticketDto.ConsultorAsignaciones.Add(placeholderAsig);
+                            }
+                            else if (placeholderAsig.IdTicketFrenteSubFrente == null || placeholderAsig.IdTicketFrenteSubFrente == 0)
+                            {
+                                placeholderAsig.IdTicketFrenteSubFrente = frenteSubFrente.Id;
+                            }
+
+                            if (placeholderAsig.DetallePlanificacionConsultor == null)
+                            {
+                                placeholderAsig.DetallePlanificacionConsultor = new List<DetallePlanificacionConsultorDto>();
+                            }
+                            foreach (var planningDto in planningDtosForFrente)
+                            {
+                                if (!placeholderAsig.DetallePlanificacionConsultor.Any(dp => dp.Id == planningDto.Id))
+                                {
+                                    placeholderAsig.DetallePlanificacionConsultor.Add(planningDto);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -347,7 +347,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.IdTicket).IsRequired();
                 entity.Property(e => e.IdFrente);
                 entity.Property(e => e.IdSubFrente);
-                entity.Property(e => e.IdConsultor).IsRequired();
+                entity.Property(e => e.IdConsultor);
+                entity.Property(e => e.IdTicketFrenteSubFrente);
                 entity.Property(e => e.FechaAsignacion).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.FechaDesasignacion).HasColumnType("timestamp").IsRequired();
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
@@ -357,6 +358,11 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .WithMany(p => p.ConsultorAsignaciones)
                     .HasForeignKey(d => d.IdTicket)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.TicketFrenteSubFrente)
+                    .WithMany()
+                    .HasForeignKey(d => d.IdTicketFrenteSubFrente)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<DetalleTareasConsultor>(entity =>
@@ -375,7 +381,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasForeignKey(d => d.IdTicketConsultorAsignacion)
                     .OnDelete(DeleteBehavior.Restrict);
             });
-            modelBuilder.Entity<DetallePlanificacionConsultor>(entity =>
+             modelBuilder.Entity<DetallePlanificacionConsultor>(entity =>
             {
                 entity.ToTable("DetallePlanificacionConsultor", "conectabiz");
                 entity.HasKey(e => e.Id);
@@ -385,10 +391,11 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Horas).IsRequired();
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
+                entity.Property(e => e.IdTicketFrenteSubFrente).IsRequired();
 
-                entity.HasOne(d => d.TicketConsultorAsignacion)
+                entity.HasOne(d => d.TicketFrenteSubFrente)
                     .WithMany(p => p.DetallePlanificacionConsultor)
-                    .HasForeignKey(d => d.IdTicketConsultorAsignacion)
+                    .HasForeignKey(d => d.IdTicketFrenteSubFrente)
                     .OnDelete(DeleteBehavior.Restrict);
             });
             

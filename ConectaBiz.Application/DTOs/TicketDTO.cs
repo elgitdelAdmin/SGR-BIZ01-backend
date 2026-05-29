@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -45,15 +45,17 @@ public class TicketConsultorAsignacionDto
 {
     public int? Id { get; set; } 
     public int IdTicket { get; set; }
-    public int IdConsultor { get; set; }
+    public int? IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
     public int? IdFrente { get; set; }
     public int? IdSubFrente { get; set; }
+    public int? IdTicketFrenteSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
     public List<DetalleTareasConsultorDto> DetalleTareasConsultor { get; set; } = new();
     public List<DetallePlanificacionConsultorDto> DetallePlanificacionConsultor { get; set; } = new();
+    public bool? EsPlaceholder { get; set; }
 }
 
 public class DetalleTareasConsultorDto
@@ -70,12 +72,13 @@ public class DetalleTareasConsultorDto
 public class DetallePlanificacionConsultorDto
 {
     public int Id { get; set; }
-    public int IdTicketConsultorAsignacion { get; set; }
+    public int? IdTicketConsultorAsignacion { get; set; }
+    public int IdTicketFrenteSubFrente { get; set; }
     public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public decimal Horas { get; set; }
-    public string Descripcion { get; set; }
+    public string Descripcion { get; set; } = string.Empty;
     public bool Activo { get; set; }
 }
 
@@ -106,6 +109,7 @@ public class TicketFrenteSubFrenteDto
     public DateTime? FechaModificacion { get; set; }
     public string? UsuarioModificacion { get; set; }
     public bool Activo { get; set; } = true;
+    public List<DetallePlanificacionConsultorDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 
 public class TicketHistorialEstadoDto
@@ -213,20 +217,22 @@ public class TicketFrenteSubFrenteUpdateDto
 // ===== TICKET CONSULTOR ASIGNACIONES DTOs =====
 public class TicketConsultorAsignacionInsertDto
 {
-    public int IdConsultor { get; set; }
+    public int? IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
     public int? IdFrente { get; set; }
     public int? IdSubFrente { get; set; }
+    public int? IdTicketFrenteSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
 }
 public class TicketConsultorAsignacionUpdateDto
 {
     public int Id { get; set; }
-    public int IdConsultor { get; set; }
+    public int? IdConsultor { get; set; }
     public int IdTipoActividad { get; set; }
     public int? IdFrente { get; set; }
     public int? IdSubFrente { get; set; }
+    public int? IdTicketFrenteSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
@@ -247,11 +253,12 @@ public class DetalleTareasConsultorUpdateDto
 public class DetallePlanificacionConsultorUpdateDto
 {
     public int Id { get; set; }
-    public int IdTicketConsultorAsignacion { get; set; }
+    public int? IdTicketConsultorAsignacion { get; set; }
+    public int? IdTicketFrenteSubFrente { get; set; }
     public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
     public decimal Horas { get; set; }
-    public string Descripcion { get; set; }
+    public string Descripcion { get; set; } = string.Empty;
     public bool Activo { get; set; } = true;
 }

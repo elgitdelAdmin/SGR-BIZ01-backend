@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -65,9 +65,20 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 if (frentesSubFrentes == null || !frentesSubFrentes.Any())
                     throw new ArgumentException("La lista no puede estar vacía.");
 
+                var ids = frentesSubFrentes.Select(x => x.Id).ToList();
+                var existentesIds = await _context.TicketFrenteSubFrente
+                    .Where(x => ids.Contains(x.Id))
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
                 // Iteramos sobre las entidades mapeadas
                 foreach (var entidad in frentesSubFrentes)
                 {
+                    if (!existentesIds.Contains(entidad.Id))
+                    {
+                        continue; // Evita error de concurrencia si la fila ya no existe físicamente
+                    }
+
                     // Verificamos si ya hay una entidad con el mismo Id trackeada
                     var tracked = _context.ChangeTracker.Entries<TicketFrenteSubFrente>()
                         .FirstOrDefault(e => e.Entity.Id == entidad.Id);

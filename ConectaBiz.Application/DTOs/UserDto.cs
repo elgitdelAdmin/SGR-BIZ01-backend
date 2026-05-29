@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,8 +40,8 @@ namespace ConectaBiz.Application.DTOs
         public string Username { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Password { get; set; } // Opcional para actualizar contraseña
-        //public int IdSocio { get; set; }
-        //public int IdRol { get; set; }
+        public int IdSocio { get; set; }
+        public int IdRol { get; set; }
         public string UsuarioActualizacion { get; set; } = string.Empty;
         public UpdatePersonaDto? Persona { get; set; }
     }

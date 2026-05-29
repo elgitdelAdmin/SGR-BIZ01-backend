@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +28,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
 
         public async Task<IEnumerable<TicketConsultorAsignacion>> GetActivosByTicketIdAsync(int idTicket)
+        {
+            return await _context.TicketConsultorAsignacion
+                .Where(tca => tca.IdTicket == idTicket && tca.Activo)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Retorna las asignaciones activas del ticket incluyendo sus detalles de planificación.
+        /// Usado para auto-vincular IdDetallePlanificacionConsultor en TicketFrenteSubFrente.
+        /// </summary>
+        public async Task<IEnumerable<TicketConsultorAsignacion>> GetActivosConPlanificacionByTicketIdAsync(int idTicket)
         {
             return await _context.TicketConsultorAsignacion
                 .Where(tca => tca.IdTicket == idTicket && tca.Activo)
@@ -145,10 +156,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
                 // Obtener los IDs que vamos a actualizar
                 var ids = asignaciones.Select(x => x.Id).ToList();
+                var existentesIds = await _context.TicketConsultorAsignacion
+                    .Where(x => ids.Contains(x.Id))
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+                var filtradas = asignaciones.Where(x => existentesIds.Contains(x.Id)).ToList();
+                if (filtradas.Count == 0)
+                    return asignaciones;
 
                 // Detach las entidades que podrían estar siendo rastreadas
                 var trackedEntities = _context.ChangeTracker.Entries<TicketConsultorAsignacion>()
-                    .Where(e => ids.Contains(e.Entity.Id))
+                    .Where(e => existentesIds.Contains(e.Entity.Id))
                     .ToList();
 
                 foreach (var entity in trackedEntities)
@@ -156,7 +175,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     entity.State = EntityState.Detached;
                 }
 
-                _context.TicketConsultorAsignacion.UpdateRange(asignaciones);
+                _context.TicketConsultorAsignacion.UpdateRange(filtradas);
                 await _context.SaveChangesAsync();
                 return asignaciones;
             }
@@ -174,10 +193,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
                 // Obtener los IDs que vamos a actualizar
                 var ids = detallesTareas.Select(x => x.Id).ToList();
+                var existentesIds = await _context.DetalleTareasConsultor
+                    .Where(x => ids.Contains(x.Id))
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+                var filtradas = detallesTareas.Where(x => existentesIds.Contains(x.Id)).ToList();
+                if (filtradas.Count == 0)
+                    return detallesTareas;
 
                 // Detach las entidades que podrían estar siendo rastreadas
                 var trackedEntities = _context.ChangeTracker.Entries<DetalleTareasConsultor>()
-                    .Where(e => ids.Contains(e.Entity.Id))
+                    .Where(e => existentesIds.Contains(e.Entity.Id))
                     .ToList();
 
                 foreach (var entity in trackedEntities)
@@ -185,7 +212,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     entity.State = EntityState.Detached;
                 }
 
-                _context.DetalleTareasConsultor.UpdateRange(detallesTareas);
+                _context.DetalleTareasConsultor.UpdateRange(filtradas);
                 await _context.SaveChangesAsync();
 
                 return detallesTareas;
@@ -205,10 +232,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
                 // Obtener los IDs que vamos a actualizar
                 var ids = detallesPlanificacion.Select(x => x.Id).ToList();
+                var existentesIds = await _context.DetallePlanificacionConsultor
+                    .Where(x => ids.Contains(x.Id))
+                    .Select(x => x.Id)
+                    .ToListAsync();
+
+                var filtradas = detallesPlanificacion.Where(x => existentesIds.Contains(x.Id)).ToList();
+                if (filtradas.Count == 0)
+                    return detallesPlanificacion;
 
                 // Detach las entidades que podrían estar siendo rastreadas
                 var trackedEntities = _context.ChangeTracker.Entries<DetallePlanificacionConsultor>()
-                    .Where(e => ids.Contains(e.Entity.Id))
+                    .Where(e => existentesIds.Contains(e.Entity.Id))
                     .ToList();
 
                 foreach (var entity in trackedEntities)
@@ -216,7 +251,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     entity.State = EntityState.Detached;
                 }
 
-                _context.DetallePlanificacionConsultor.UpdateRange(detallesPlanificacion);
+                _context.DetallePlanificacionConsultor.UpdateRange(filtradas);
                 await _context.SaveChangesAsync();
 
                 return detallesPlanificacion;
@@ -251,6 +286,28 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             asignacion.Activo = false;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> AnyPlanificacionActivaAsync(int idPlanificacion)
+        {
+            return await _context.DetallePlanificacionConsultor
+                .AnyAsync(dp => dp.Id == idPlanificacion && dp.Activo);
+        }
+
+        public async Task<IEnumerable<DetallePlanificacionConsultor>> GetPlanificacionesByIdsAsync(IEnumerable<int> ids)
+        {
+            if (ids == null || !ids.Any()) return new List<DetallePlanificacionConsultor>();
+            return await _context.DetallePlanificacionConsultor
+                .Where(dp => ids.Contains(dp.Id) && dp.Activo)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<DetallePlanificacionConsultor>> GetPlanificacionesByFrenteIdsAsync(IEnumerable<int> frenteIds)
+        {
+            if (frenteIds == null || !frenteIds.Any()) return new List<DetallePlanificacionConsultor>();
+            return await _context.DetallePlanificacionConsultor
+                .Where(dp => dp.Activo && frenteIds.Contains(dp.IdTicketFrenteSubFrente))
+                .ToListAsync();
         }
     }
 }
