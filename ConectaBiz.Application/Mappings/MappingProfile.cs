@@ -295,7 +295,8 @@ namespace ConectaBiz.Application.Mappings
               .ForMember(dest => dest.NombrePersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable != null
                     ? $"{src.PersonaResponsable.Nombres} {src.PersonaResponsable.ApellidoPaterno} {src.PersonaResponsable.ApellidoMaterno}".Trim()
                     : null))
-                 .ForMember(dest => dest.PersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable));
+                 .ForMember(dest => dest.PersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable))
+                 .ForMember(dest => dest.NombreSocio, opt => opt.MapFrom(src => src.Socio != null ? src.Socio.NombreComercial : null));
 
 
             CreateMap<CreateEmpresaDto, Empresa>()
@@ -322,6 +323,7 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.Correo, opt => opt.MapFrom(src => src.Persona.Correo))
                 .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Persona.Direccion))
                 .ForMember(dest => dest.FechaNacimiento, opt => opt.MapFrom(src => src.Persona.FechaNacimiento))
+                .ForMember(dest => dest.NombreSocio, opt => opt.MapFrom(src => src.Socio != null ? src.Socio.NombreComercial : null))
                 .ForMember(dest => dest.FrentesSubFrente, opt => opt.MapFrom(src => src.GestorFrenteSubFrente));
 
             // Mapeo de GestorFrenteSubFrente

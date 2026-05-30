@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -19,9 +19,9 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<Ticket>> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp);
         Task<IEnumerable<Ticket>> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp);
         Task<IEnumerable<Ticket>> GetByEstadoAsync(int idEstado);
-        Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor);
-        Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor);
-        Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor);
+        Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor, int? idSocio = null);
+        Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor, int? idSocio = null);
+        Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor, int? idSocio = null);
         Task<Ticket> CreateAsync(Ticket ticket);
         Task<List<Ticket>> CreateRangeAsync(List<Ticket> tickets);
         Task<Ticket> UpdateAsync(Ticket ticket);
@@ -34,9 +34,9 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
 
         // ── Métodos IQueryable para paginación server-side ──
-        IQueryable<Ticket> GetQueryableByGestor(int idGestor);
-        IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor);
-        IQueryable<Ticket> GetQueryableByConsultor(int idConsultor);
+        IQueryable<Ticket> GetQueryableByGestor(int idGestor, int? idSocio = null);
+        IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor, int? idSocio = null);
+        IQueryable<Ticket> GetQueryableByConsultor(int idConsultor, int? idSocio = null);
         IQueryable<Ticket> GetQueryableByEmpresa(int idEmpresa);
         IQueryable<Ticket> GetQueryableBySocio(int idSocio);
         IQueryable<Ticket> GetQueryableAll();

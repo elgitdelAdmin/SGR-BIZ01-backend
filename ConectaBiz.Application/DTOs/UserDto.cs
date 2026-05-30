@@ -74,6 +74,7 @@ namespace ConectaBiz.Application.DTOs
         public int? IdSocioSeleccionado { get; set; }
         public string? CodRolSeleccionado { get; set; }
         public string? NombreSocioSeleccionado { get; set; }
+        public string? NombreRolSeleccionado { get; set; }
     }
 
     public class LoginStep2RequestDto

@@ -46,6 +46,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Gestores
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.Id == id);
         }
@@ -54,6 +55,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Gestores
                 .Where(g => ids.Contains(g.Id))                
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente
                                .Where(gf => gf.Activo))        
                 .AsNoTracking()                                
@@ -64,6 +66,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Gestores
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                  .Where(g =>
                     g.Activo &&
@@ -76,6 +79,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Gestores
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.PersonaId == idPersona);
         }
@@ -83,6 +87,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Gestores
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.IdUser == iduser);
         }
@@ -90,6 +95,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Gestores
                 .Include(g => g.Persona)
+                .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                 .FirstOrDefaultAsync(g => g.PersonaId == personaId);
         }

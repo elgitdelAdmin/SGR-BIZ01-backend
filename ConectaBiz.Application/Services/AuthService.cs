@@ -155,7 +155,8 @@ namespace ConectaBiz.Application.Services
                         IdRolSeleccionado = single.IdRol,
                         IdSocioSeleccionado = single.IdSocio,
                         CodRolSeleccionado = single.Rol.Codigo,
-                        NombreSocioSeleccionado = single.Socio != null ? single.Socio.NombreComercial : ""
+                        NombreSocioSeleccionado = single.Socio != null ? single.Socio.NombreComercial : "",
+                        NombreRolSeleccionado = single.Rol != null ? single.Rol.Nombre : ""
                     };
                 }
             }
@@ -215,7 +216,8 @@ namespace ConectaBiz.Application.Services
                 IdRolSeleccionado = matchingRolSocio.IdRol,
                 IdSocioSeleccionado = matchingRolSocio.IdSocio,
                 CodRolSeleccionado = matchingRolSocio.Rol.Codigo,
-                NombreSocioSeleccionado = matchingRolSocio.Socio != null ? matchingRolSocio.Socio.NombreComercial : ""
+                NombreSocioSeleccionado = matchingRolSocio.Socio != null ? matchingRolSocio.Socio.NombreComercial : "",
+                NombreRolSeleccionado = matchingRolSocio.Rol != null ? matchingRolSocio.Rol.Nombre : ""
             };
         }
 
