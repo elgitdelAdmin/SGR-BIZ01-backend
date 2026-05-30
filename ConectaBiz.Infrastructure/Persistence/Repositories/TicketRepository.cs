@@ -147,13 +147,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
-        public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor)
+        public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor, int? idSocio = null)
         {
-            // Lista de gestores válidos: el recibido por parámetro (puedes agregar otros si deseas)
-            var idsGestores = new List<int> { idGestor };
+            var query = _context.Ticket
+                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor);
 
-            return await _context.Ticket
-                .Where(t => t.Empresa.IdGestor.HasValue && idsGestores.Contains(t.Empresa.IdGestor.Value))
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return await query
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
@@ -161,10 +165,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
-        public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor)
+        public async Task<IEnumerable<Ticket>> GetByGestorConsultoriaAsync(int idGestor, int? idSocio = null)
         {
-            return await _context.Ticket
-                .Where(t => t.IdGestorConsultoria == idGestor)
+            var query = _context.Ticket
+                .Where(t => t.IdGestorConsultoria == idGestor);
+
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return await query
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
@@ -172,11 +183,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
         }
-        public async Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor)
+        public async Task<IEnumerable<Ticket>> GetByConsultorAsync(int idConsultor, int? idSocio = null)
         {
-            return await _context.Ticket
+            var query = _context.Ticket
                 .Where(t => t.Activo &&
-                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
+                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo));
+
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return await query
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones
                     .Where(ca => ca.Activo && ca.IdConsultor == idConsultor))
@@ -328,10 +346,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         // ── Métodos IQueryable para paginación server-side ──────────────
 
-        public IQueryable<Ticket> GetQueryableByGestor(int idGestor)
+        public IQueryable<Ticket> GetQueryableByGestor(int idGestor, int? idSocio = null)
         {
-            return _context.Ticket
-                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor)
+            var query = _context.Ticket
+                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor);
+
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return query
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
@@ -339,10 +364,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
 
-        public IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor)
+        public IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor, int? idSocio = null)
         {
-            return _context.Ticket
-                .Where(t => t.IdGestorConsultoria == idGestor)
+            var query = _context.Ticket
+                .Where(t => t.IdGestorConsultoria == idGestor);
+
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return query
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
@@ -352,11 +384,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo));
         }
 
-        public IQueryable<Ticket> GetQueryableByConsultor(int idConsultor)
+        public IQueryable<Ticket> GetQueryableByConsultor(int idConsultor, int? idSocio = null)
         {
-            return _context.Ticket
+            var query = _context.Ticket
                 .Where(t => t.Activo &&
-                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo))
+                            t.ConsultorAsignaciones.Any(ca => ca.IdConsultor == idConsultor && ca.Activo));
+
+            if (idSocio.HasValue && idSocio.Value > 0)
+            {
+                query = query.Where(t => t.Empresa != null && t.Empresa.IdSocio == idSocio.Value);
+            }
+
+            return query
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)

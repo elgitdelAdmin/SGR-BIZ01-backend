@@ -27,6 +27,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable) 
+                .Include(e => e.Socio)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -37,6 +38,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
+                .Include(e => e.Socio)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -47,6 +49,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
+                .Include(e => e.Socio)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -57,7 +60,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                 .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.Socio)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -72,6 +75,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                         .Include(e => e.Pais)
                         .Include(e => e.Gestor)
                         .Include(e => e.PersonaResponsable)
+                        .Include(e => e.Socio)
                         .FirstOrDefaultAsync(e => e.Id == id);
                 }
                 catch (Exception) when (retry < 2)

@@ -151,7 +151,7 @@ namespace ConectaBiz.Application.Services
             if (codRol == AppConstants.Roles.GestorCuenta)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
-                var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id);
+                var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await PopulatePlaceholderAssignmentsAsync(listadoTickets);
                 listadoTickets = listadoTickets
@@ -170,7 +170,7 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.GestorConsultoria)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
-                var tickets = await _ticketRepository.GetByGestorConsultoriaAsync(gestorDto.Id);
+                var tickets = await _ticketRepository.GetByGestorConsultoriaAsync(gestorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Where(t => t.FrenteSubFrentes != null && t.FrenteSubFrentes.Count > 0)
                .ToList();
@@ -191,7 +191,7 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.Consultor)
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
-                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id);
+                var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await PopulatePlaceholderAssignmentsAsync(listadoTickets);
                 listadoTickets = listadoTickets
@@ -1230,13 +1230,13 @@ namespace ConectaBiz.Application.Services
             {
                 Console.WriteLine("[DEBUG] Role detected: GestorCuenta");
                 var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
-                query = _ticketRepository.GetQueryableByGestor(gestorDto.Id);
+                query = _ticketRepository.GetQueryableByGestor(gestorDto.Id, idSocio);
             }
             else if (codRol == AppConstants.Roles.GestorConsultoria)
             {
                 Console.WriteLine("[DEBUG] Role detected: GestorConsultoria");
                 var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
-                query = _ticketRepository.GetQueryableByGestorConsultoria(gestorDto.Id);
+                query = _ticketRepository.GetQueryableByGestorConsultoria(gestorDto.Id, idSocio);
                 // GestorConsultoria filtra por FrenteSubFrentes
                 query = query.Where(t => t.FrenteSubFrentes.Any(fsf => fsf.Activo));
             }
@@ -1244,7 +1244,7 @@ namespace ConectaBiz.Application.Services
             {
                 Console.WriteLine("[DEBUG] Role detected: Consultor");
                 var consultorDto = await _consultorService.GetByIdUserAsync(idUser);
-                query = _ticketRepository.GetQueryableByConsultor(consultorDto.Id);
+                query = _ticketRepository.GetQueryableByConsultor(consultorDto.Id, idSocio);
             }
             else if (codRol == AppConstants.Roles.Empresa)
             {
