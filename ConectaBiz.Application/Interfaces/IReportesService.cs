@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ConectaBiz.Domain.Entities;
+
 namespace ConectaBiz.Application.Interfaces
 {
     public interface IReportesService
@@ -16,7 +18,7 @@ namespace ConectaBiz.Application.Interfaces
         );
 
         Task<IEnumerable<IDictionary<string, object>>> ConsultarDetalleReporteAsync(FiltrosReporteRequest filtros);
-        Task<IEnumerable<IDictionary<string, object>>> ConsultarDashboardTicketsConsultorAsync(
+        Task<IEnumerable<DashboardTicketConsultorDto>> ConsultarDashboardTicketsConsultorAsync(
             int[]? consultores = null,
             int[]? tipos = null,
             string[]? tickets = null,

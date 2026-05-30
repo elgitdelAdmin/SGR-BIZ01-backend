@@ -27,6 +27,12 @@ builder.WebHost.UseUrls("http://0.0.0.0:5000");
 
 // Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
 
 // Add Infrastructure Layer
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -94,6 +100,7 @@ app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowFrontend");
+app.UseResponseCompression();
 
 app.MapControllers();
 

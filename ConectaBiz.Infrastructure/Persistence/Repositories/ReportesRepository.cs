@@ -3,6 +3,7 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Interfaces;
+using ConectaBiz.Domain.Entities;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -12,6 +13,11 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
     public class ReportesRepository : IReportesRepository
     {
         private readonly string _cs;
+
+        static ReportesRepository()
+        {
+            SqlMapper.AddTypeHandler(new JsonbStringTypeHandler());
+        }
 
         public ReportesRepository(IConfiguration cfg)
         {
@@ -29,12 +35,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public Task<IEnumerable<IDictionary<string, object>>> GetDetalleTareasConsultorAsync()
             => Query(@"SELECT * FROM conectabiz.""REP_DETALLE_TAREAS_CONSULTOR""();", null);
 
-        public Task<IEnumerable<IDictionary<string, object>>> GetDashboardTicketsConsultorAsync(
+        public Task<IEnumerable<DashboardTicketConsultorDto>> GetDashboardTicketsConsultorAsync(
             int[]? consultores = null,
             int[]? tipos = null,
             string[]? tickets = null,
             int[]? estados = null)
-            => Query(@"SELECT * FROM conectabiz.dashboardticketsconsultor(@p_consultores, @p_tipos, @p_tickets, @p_estados);",
+            => Query<DashboardTicketConsultorDto>(@"SELECT * FROM conectabiz.dashboardticketsconsultor(@p_consultores, @p_tipos, @p_tickets, @p_estados);",
                      new
                      {
                          p_consultores = consultores,
@@ -247,6 +253,31 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 replacement, 
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase
             );
+        }
+
+        private async Task<IEnumerable<T>> Query<T>(string sql, object? p)
+        {
+            await using var cn = new NpgsqlConnection(_cs);
+            return await cn.QueryAsync<T>(sql, p);
+        }
+    }
+
+    public class JsonbStringTypeHandler : SqlMapper.TypeHandler<string>
+    {
+        public override string? Parse(object value)
+        {
+            if (value == null || value == DBNull.Value)
+                return null;
+            return value.ToString();
+        }
+
+        public override void SetValue(System.Data.IDbDataParameter parameter, string? value)
+        {
+            parameter.Value = value ?? (object)DBNull.Value;
+            if (parameter is Npgsql.NpgsqlParameter np)
+            {
+                np.NpgsqlDbType = NpgsqlTypes.NpgsqlDbType.Jsonb;
+            }
         }
     }
 }

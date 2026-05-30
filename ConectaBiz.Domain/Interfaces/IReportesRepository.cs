@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ConectaBiz.Domain.Entities;
+
 namespace ConectaBiz.Domain.Interfaces
 {
     public interface IReportesRepository
@@ -11,7 +13,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<IDictionary<string, object>>> GetAutorizadosGestorCuentaAsync(DateTime fecha);
         Task<IEnumerable<IDictionary<string, object>>> GetNoCerradosAsync(DateTime fecha);
         Task<IEnumerable<IDictionary<string, object>>> GetDetalleTareasConsultorAsync();
-        Task<IEnumerable<IDictionary<string, object>>> GetDashboardTicketsConsultorAsync(
+        Task<IEnumerable<DashboardTicketConsultorDto>> GetDashboardTicketsConsultorAsync(
             int[]? consultores = null,
             int[]? tipos = null,
             string[]? tickets = null,

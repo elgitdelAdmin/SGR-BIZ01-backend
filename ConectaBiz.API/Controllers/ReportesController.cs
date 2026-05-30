@@ -1,5 +1,6 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
