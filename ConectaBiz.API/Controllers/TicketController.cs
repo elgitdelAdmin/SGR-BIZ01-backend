@@ -182,24 +182,6 @@ namespace ConectaBiz.API.Controllers
         }
         
         /// <summary>
-        /// Obtiene tickets por usuario
-        /// </summary>
-        //[HttpGet("usuario/{idUser}")]
-        //public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserAsync(int idUser)
-        //{
-        //    try
-        //    {
-        //        var tickets = await _ticketService.GetByIdUserAsync(idUser);
-        //        return Ok(tickets);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error al obtener tickets por idUsuario: {idUser}", idUser);
-        //        return StatusCode(500, "Error interno del servidor");
-        //    }
-        //}
-
-        /// <summary>
         /// Obtiene tickets con filtros opcionales
         /// </summary>
         [HttpGet("filtros")]
@@ -261,51 +243,6 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-        //[HttpPost]
-        //public async Task<ActionResult<TicketDto>> CrearTicket([FromBody] TicketInsertDto insertDto)
-        //{
-        //    try
-        //    {
-        //        if (!ModelState.IsValid)
-        //            return BadRequest(ModelState);
-
-        //        var ticket = await _ticketService.CreateAsync(insertDto);
-        //        return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        _logger.LogWarning(ex, "Error de validación al crear ticket");
-        //        return BadRequest(ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error al crear el ticket");
-        //        return StatusCode(500, "Error interno del servidor");
-        //    }
-        //}
-        //// Subir ZIP
-        //[HttpPost("subir-archivo/{ticketId}")]
-        //public async Task<ActionResult<TicketZipFileDto>> SubirArchivo(int ticketId, IFormFile zipFile)
-        //{
-        //    try
-        //    {
-        //        var result = await _ticketService.UploadZipFileAsync(ticketId, zipFile);
-        //        return Ok(result);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        _logger.LogWarning(ex, "Error al subir archivo");
-        //        return BadRequest(ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "Error interno al subir archivo");
-        //        return StatusCode(500, "Error interno del servidor");
-        //    }
-        //}
-        /// <summary>
-        /// Actualiza un ticket existente
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<ActionResult<TicketDto>> Update(int id, [FromForm] TicketUpdateDto updateDto)
         {

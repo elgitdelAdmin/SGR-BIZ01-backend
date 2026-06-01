@@ -212,6 +212,7 @@ public class TicketFrenteSubFrenteUpdateDto
     public DateTime FechaModificacion { get; set; }
     public bool Activo { get; set; }
     public string UsuarioActualizacion { get; set; }
+    public List<DetallePlanificacionConsultorUpdateDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 
 // ===== TICKET CONSULTOR ASIGNACIONES DTOs =====
@@ -237,7 +238,6 @@ public class TicketConsultorAsignacionUpdateDto
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
     public List<DetalleTareasConsultorUpdateDto> DetalleTareasConsultor { get; set; } = new();
-    public List<DetallePlanificacionConsultorUpdateDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 public class DetalleTareasConsultorUpdateDto
 {

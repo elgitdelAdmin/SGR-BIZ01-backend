@@ -539,14 +539,17 @@ namespace ConectaBiz.Application.Services
 
             if (updateDto.ConsultorAsignaciones.Any())
             {
-                var (asigMod, asigAg, _, _, _, _) =await GetConsultorAsignacionesDiffAsync(ticketActual.Id,updateDto.ConsultorAsignaciones);
+                var (asigMod, asigAg, _, _) =await GetConsultorAsignacionesDiffAsync(ticketActual.Id,updateDto.ConsultorAsignaciones);
                 huboCambiosAsignaciones = asigMod.Any() || asigAg.Any();
             }
+
+            bool tienePlanificacion = (updateDto.FrenteSubFrentes != null && updateDto.FrenteSubFrentes.Any(fsf => fsf.DetallePlanificacionConsultor != null && fsf.DetallePlanificacionConsultor.Any(dp => dp.Activo)))
+                || (ticketActual.FrenteSubFrentes != null && ticketActual.FrenteSubFrentes.Any(fsf => fsf.DetallePlanificacionConsultor != null && fsf.DetallePlanificacionConsultor.Any(dp => dp.Activo)));
 
             switch (codigoEstadoActual)
             {
                 case AppConstants.Estados.ATENDIDO:
-                    if (huboCambiosFrentes)
+                    if (tienePlanificacion)
                     {
                         idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ASIGNACION).Id;
                     }
@@ -556,6 +559,13 @@ namespace ConectaBiz.Application.Services
                     if (huboCambiosAsignaciones)
                     {
                         idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ASIGNADO).Id;
+                    }
+                    break;
+
+                case AppConstants.Estados.PENDIENTE_ATENCION:
+                    if (huboCambiosFrentes)
+                    {
+                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ATENDIDO).Id;
                     }
                     break;
             }
@@ -586,7 +596,7 @@ namespace ConectaBiz.Application.Services
                     }
                 }
 
-                var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteUpdateDto>>(updateDto.frenteSubFrentes);
+                var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteUpdateDto>>(updateDto.frenteSubFrentes, jsonOptions);
                 updateDto.FrenteSubFrentes = frentesSubfrentes;
 
                 var existingTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
@@ -642,11 +652,57 @@ namespace ConectaBiz.Application.Services
 
                 var nuevasPlanificacionesAInsertar = new List<DetallePlanificacionConsultor>();
                 var planificacionesAModificar = new List<DetallePlanificacionConsultor>();
+                var planIdsProcesados = new HashSet<int>();
+
+                if (updateDto.FrenteSubFrentes != null)
+                {
+                    foreach (var frenteDto in updateDto.FrenteSubFrentes)
+                    {
+                        if (!frenteDto.Activo) continue;
+
+                        int resolvedFrenteSubFrenteId = 0;
+                        if (frenteDto.Id > 0 && frenteByIdMap.ContainsKey(frenteDto.Id))
+                        {
+                            resolvedFrenteSubFrenteId = frenteDto.Id;
+                        }
+                        else if (frenteDto.IdSubFrente.HasValue)
+                        {
+                            resolvedFrenteSubFrenteId = frenteIdLookup[frenteDto.IdSubFrente.Value].FirstOrDefault();
+                        }
+
+                        if (resolvedFrenteSubFrenteId == 0) continue;
+
+                        if (frenteDto.DetallePlanificacionConsultor != null)
+                        {
+                            foreach (var planDto in frenteDto.DetallePlanificacionConsultor)
+                            {
+                                if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
+                                {
+                                    continue;
+                                }
+
+                                planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
+                                planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
+                                var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
+                                planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
+
+                                if (planDto.Id == 0)
+                                {
+                                    planEntity.Id = 0;
+                                    nuevasPlanificacionesAInsertar.Add(planEntity);
+                                }
+                                else
+                                {
+                                    planificacionesAModificar.Add(planEntity);
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 var nuevasTareasAInsertar = new List<DetalleTareasConsultor>();
                 var tareasAModificar = new List<DetalleTareasConsultor>();
 
-                var planIdsProcesados = new HashSet<int>();
                 var tareaIdsProcesados = new HashSet<int>();
 
                 var asignacionesAModificar = new List<TicketConsultorAsignacion>();
@@ -654,8 +710,6 @@ namespace ConectaBiz.Application.Services
 
                 var mapaNuevasAsignaciones = new List<(TicketConsultorAsignacionUpdateDto Dto, TicketConsultorAsignacion Entity)>();
                 
-                // Mapa para trackear el planning record activo por cada IdSubFrente
-                var activePlanificacionBySubFrente = new Dictionary<int, DetallePlanificacionConsultor>();
                 // Trackear qué IDs de TicketFrenteSubFrente ya se asignaron (para duplicados)
                 var usedFrenteSubFrenteIds = new HashSet<int>();
 
@@ -705,36 +759,6 @@ namespace ConectaBiz.Application.Services
                             nuevasAsignacionesAInsertar.Add(entity);
                             mapaNuevasAsignaciones.Add((asigDto, entity));
                         }
-                        else
-                        {
-                            foreach (var planDto in asigDto.DetallePlanificacionConsultor)
-                            {
-                                if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
-                                {
-                                    continue;
-                                }
-
-                                planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
-                                planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
-                                var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
-                                planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
-
-                                if (planDto.Id == 0)
-                                {
-                                    planEntity.Id = 0;
-                                    nuevasPlanificacionesAInsertar.Add(planEntity);
-                                }
-                                else
-                                {
-                                    planificacionesAModificar.Add(planEntity);
-                                }
-
-                                if (planDto.Activo && asigDto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(asigDto.IdSubFrente.Value))
-                                {
-                                    activePlanificacionBySubFrente[asigDto.IdSubFrente.Value] = planEntity;
-                                }
-                            }
-                        }
                     }
                     else
                     {
@@ -744,38 +768,7 @@ namespace ConectaBiz.Application.Services
                             entity.IdTicket = id;
                             entity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId > 0 ? resolvedFrenteSubFrenteId : (int?)null;
                             asignacionesAModificar.Add(entity);
-                        }
 
-                        foreach (var planDto in asigDto.DetallePlanificacionConsultor)
-                        {
-                            if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
-                            {
-                                continue;
-                            }
-
-                            planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
-                            planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
-                            var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
-                            planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
-
-                            if (planDto.Id == 0)
-                            {
-                                planEntity.Id = 0;
-                                nuevasPlanificacionesAInsertar.Add(planEntity);
-                            }
-                            else
-                            {
-                                planificacionesAModificar.Add(planEntity);
-                            }
-
-                            if (planDto.Activo && asigDto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(asigDto.IdSubFrente.Value))
-                            {
-                                activePlanificacionBySubFrente[asigDto.IdSubFrente.Value] = planEntity;
-                            }
-                        }
-
-                        if (!esPlaceholder)
-                        {
                             foreach (var tareaDto in asigDto.DetalleTareasConsultor)
                             {
                                 if (tareaDto.Id > 0 && !tareaIdsProcesados.Add(tareaDto.Id))
@@ -822,44 +815,6 @@ namespace ConectaBiz.Application.Services
                     foreach (var item in mapaNuevasAsignaciones)
                     {
                         int newAsignacionId = item.Entity.Id;
-                        
-                        int resolvedFrenteSubFrenteId = 0;
-                        if (item.Entity.IdTicketFrenteSubFrente.HasValue)
-                        {
-                            resolvedFrenteSubFrenteId = item.Entity.IdTicketFrenteSubFrente.Value;
-                        }
-                        else if (item.Dto.IdSubFrente.HasValue)
-                        {
-                            resolvedFrenteSubFrenteId = frenteIdLookup[item.Dto.IdSubFrente.Value].FirstOrDefault();
-                        }
-
-                        foreach (var planDto in item.Dto.DetallePlanificacionConsultor)
-                        {
-                            if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
-                            {
-                                continue;
-                            }
-
-                            planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
-                            planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
-                            var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
-                            planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
-
-                            if (planDto.Id == 0)
-                            {
-                                planEntity.Id = 0;
-                                nuevasPlanificacionesAInsertar.Add(planEntity);
-                            }
-                            else
-                            {
-                                planificacionesAModificar.Add(planEntity);
-                            }
-
-                            if (planDto.Activo && item.Dto.IdSubFrente.HasValue && !activePlanificacionBySubFrente.ContainsKey(item.Dto.IdSubFrente.Value))
-                            {
-                                activePlanificacionBySubFrente[item.Dto.IdSubFrente.Value] = planEntity;
-                            }
-                        }
 
                         foreach (var tareaDto in item.Dto.DetalleTareasConsultor)
                         {
@@ -1061,9 +1016,7 @@ namespace ConectaBiz.Application.Services
             List<TicketConsultorAsignacionUpdateDto> modificados, 
             List<TicketConsultorAsignacionUpdateDto> agregados, 
             List<DetalleTareasConsultorUpdateDto> tareasModificadas, 
-            List<DetalleTareasConsultorUpdateDto> tareasAgregadas,
-            List<DetallePlanificacionConsultorUpdateDto> planificacionModificadas,
-            List<DetallePlanificacionConsultorUpdateDto> planificacionAgregadas
+            List<DetalleTareasConsultorUpdateDto> tareasAgregadas
             )>
           GetConsultorAsignacionesDiffAsync(int idTicket, List<TicketConsultorAsignacionUpdateDto> newAsignaciones)
         {
@@ -1071,8 +1024,6 @@ namespace ConectaBiz.Application.Services
             var agregados = new List<TicketConsultorAsignacionUpdateDto>();
             var tareasModificadas = new List<DetalleTareasConsultorUpdateDto>();
             var tareasAgregadas = new List<DetalleTareasConsultorUpdateDto>();
-            var planificacionModificadas = new List<DetallePlanificacionConsultorUpdateDto>();
-            var planificacionAgregadas = new List<DetallePlanificacionConsultorUpdateDto>();
 
             // 🔹 Procesar asignaciones basándose únicamente en Id y Activo
             foreach (var asignacion in newAsignaciones)
@@ -1122,31 +1073,7 @@ namespace ConectaBiz.Application.Services
                     }
                 }
             }
-
-            // 🔹 Procesar planificacion basándose únicamente en Id y Activo
-            foreach (var asignacion in newAsignaciones)
-            {
-                foreach (var planificacion in asignacion.DetallePlanificacionConsultor)
-                {
-                    // Ajustar fechas a hora local
-                    planificacion.FechaInicio = DateTime.SpecifyKind(planificacion.FechaInicio, DateTimeKind.Local);
-                    planificacion.FechaFin = DateTime.SpecifyKind(planificacion.FechaFin, DateTimeKind.Local);
-
-                    if (planificacion.Id == 0)
-                    {
-                        // ✅ Nueva planificacion (Id = 0)
-                        planificacionAgregadas.Add(planificacion);
-                    }
-                    else
-                    {
-                        // ✅ Planificacion existente (Id > 0) - puede ser modificación o eliminación lógica
-                        // Si Activo = false, es eliminación lógica
-                        // Si Activo = true, es modificación/actualización
-                        planificacionModificadas.Add(planificacion);
-                    }
-                }
-            }
-            return (modificados, agregados, tareasModificadas, tareasAgregadas, planificacionModificadas, planificacionAgregadas);
+            return (modificados, agregados, tareasModificadas, tareasAgregadas);
         }
 
         public async Task<bool> DeleteAsync(int id)
