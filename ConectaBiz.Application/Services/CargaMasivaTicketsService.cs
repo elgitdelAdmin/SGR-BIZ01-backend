@@ -917,6 +917,20 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     };
                 }).ToList() ?? new List<TicketFrenteSubFrente>();
 
+            // Vincular las asignaciones con sus especializaciones (TicketFrenteSubFrente) en memoria antes de guardar
+            foreach (var ca in ticket.ConsultorAsignaciones)
+            {
+                if (ca.IdSubFrente.HasValue)
+                {
+                    var matchingFsf = ticket.FrenteSubFrentes
+                        .FirstOrDefault(fsf => fsf.IdSubFrente == ca.IdSubFrente.Value);
+                    if (matchingFsf != null)
+                    {
+                        ca.TicketFrenteSubFrente = matchingFsf;
+                    }
+                }
+            }
+
             return ticket;
         }).ToList();
 
