@@ -21,6 +21,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
     private readonly IEmpresaService _empresaService;
     private readonly IConsultorService _consultorService;
     private readonly ITicketConsultorAsignacionRepository _consultorAsignacionRepository;
+    private readonly ISubFrenteRepository _subFrenteRepository;
     private readonly IMapper _mapper;
 
     // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
@@ -33,6 +34,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
     private IEnumerable<Parametro> _listaParametros;
     private IEnumerable<Parametro> _listaTipoActividad;
     private IEnumerable<Ticket> _listaTicketsExistentes;
+    private IEnumerable<SubFrente> _listaSubFrentes;
     private string _tipoCarga;
     private int? _tipoTicket;
 
@@ -44,6 +46,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         IParametroRepository parametroRepository,
         IEmpresaService empresaService,
         IConsultorService consultorService,
+        ISubFrenteRepository subFrenteRepository,
         IMapper mapper)
     {
         _empresaRepository = empresaRepository;
@@ -53,6 +56,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         _parametroRepository = parametroRepository;
         _empresaService = empresaService;
         _consultorService = consultorService;
+        _subFrenteRepository = subFrenteRepository;
         _mapper = mapper;
     }
 
@@ -113,7 +117,6 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
     }
 
 
-    // 🔹 Cargar todos los datos necesarios
     private async Task InicializarDatosAsync(string numDocContribuyenteEmpresa)
     {
         _listaParametros = await _parametroRepository.GetAllAsync();
@@ -125,6 +128,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
         _empresaDto = await _empresaService.GetByNumDocContribuyenteAsync(numDocContribuyenteEmpresa,AppConstants.Socios.CstiNumDocContribuyente);
         _listaTicketsExistentes = await _ticketRepository.GetByNumContribuyenteSocioEmpAsync(AppConstants.Socios.CstiNumDocContribuyente, numDocContribuyenteEmpresa);
         _listaConsultores = await _consultorService.GetByNumDocContribuyenteSocioAsync(AppConstants.Socios.CstiNumDocContribuyente);
+        _listaSubFrentes = await _subFrenteRepository.GetActiveAsync();
     }
 
     // Obtener consultor
@@ -612,6 +616,22 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     }
                 }
 
+                // Validar GrupoAsignacion o GrupoAsignación
+                string valorGrupo = fila.TryGetValue("GrupoAsignacion", out var g1) ? g1 
+                                  : fila.TryGetValue("GrupoAsignación", out var g2) ? g2 
+                                  : null;
+
+                if (valorGrupo == null)
+                {
+                    filaValida = false;
+                    columnasVacias.Add("GrupoAsignacion (NO ENCONTRADA)");
+                }
+                else if (string.IsNullOrWhiteSpace(valorGrupo))
+                {
+                    filaValida = false;
+                    columnasVacias.Add("GrupoAsignacion (VACÍO)");
+                }
+
                 if (!filaValida)
                 {
                     // 🔹 LOG: Detalle exacto de qué falló
@@ -643,7 +663,9 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             "IdPrioridad",
             "Descripcion",
             "UsuarioCreacion",
-            "Asignado"
+            "Asignado",
+            "GrupoAsignacion",
+            "GrupoAsignación"
         };
 
         // ✅ Convertir filas del Excel en objetos DTO
@@ -659,6 +681,10 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 WriteIndented = false
             });
 
+            string grupoAsignacionValor = d.TryGetValue("GrupoAsignacion", out var v1) ? v1 
+                                        : d.TryGetValue("GrupoAsignación", out var v2) ? v2 
+                                        : "";
+
             return new CargaMasivaGenericoDto
             {
                 CodTicket = d.ContainsKey("CodTicket") ? d["CodTicket"] : "",
@@ -669,6 +695,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 Descripcion = d.ContainsKey("Descripcion") ? d["Descripcion"] : "",
                 UsuarioCreacion = d.ContainsKey("UsuarioCreacion") ? d["UsuarioCreacion"] : "",
                 Asignado = d.ContainsKey("Asignado") ? d["Asignado"] : "",
+                GrupoAsignacion = grupoAsignacionValor,
                 DatosCargaMasiva = jsonExtras
             };
         }).ToList();
@@ -742,6 +769,25 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     throw new Exception($"Error creando TicketConsultorAsignacionInsertDto para ticket {i.CodTicket}: {ex.Message}");
                 }
 
+                var frenteSubFrentesInsertList = new List<TicketFrenteSubFrenteInsertDto>();
+                if (!string.IsNullOrWhiteSpace(i.GrupoAsignacion))
+                {
+                    var grupo = i.GrupoAsignacion.Trim();
+                    var matchingSubFrente = _listaSubFrentes?.FirstOrDefault(sf =>
+                        ParseValor1(sf.Valor1).Any(v => v.Equals(grupo, StringComparison.OrdinalIgnoreCase))
+                    );
+
+                    if (matchingSubFrente != null)
+                    {
+                        frenteSubFrentesInsertList.Add(new TicketFrenteSubFrenteInsertDto
+                        {
+                            IdFrente = matchingSubFrente.IdFrente,
+                            IdSubFrente = matchingSubFrente.Id,
+                            Cantidad = 1
+                        });
+                    }
+                }
+
                 // 🔹 Construir TicketInsertDto
                 return new TicketInsertMasivoDto
                 {
@@ -760,9 +806,11 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     IdGestorConsultoria = 100,
                     EsCargaMasiva = true,
                     DatosCargaMasiva = System.Text.Json.JsonSerializer.Serialize(i, new JsonSerializerOptions { WriteIndented = true }),
+                    GrupoAsignacion = i.GrupoAsignacion,
                     ConsultorAsignaciones = ticketConsultorInsertDto != null
                         ? new List<TicketConsultorAsignacionInsertDto> { ticketConsultorInsertDto }
-                        : new List<TicketConsultorAsignacionInsertDto>()
+                        : new List<TicketConsultorAsignacionInsertDto>(),
+                    FrenteSubFrentes = frenteSubFrentesInsertList
                 };
             }
             catch (Exception exInner)
@@ -806,7 +854,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
             string fechaHora = DateTime.Now.ToString("yyyyMMdd");
             string codTicket = $"{ObtenerCodigoTicketPorId(insertDto.IdTipoTicket)}-{fechaHora}-{nextId}";
 
-            return new Ticket
+            var ticket = new Ticket
             {
                 CodTicketInterno = insertDto.CodTicketInterno,
                 Titulo = insertDto.Titulo,
@@ -817,7 +865,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 IdUsuarioResponsableCliente = insertDto.IdUsuarioResponsableCliente ?? 0,
                 IdPrioridad = insertDto.IdPrioridad,
                 Descripcion = insertDto.Descripcion,
-                UsuarioCreacion = insertDto.UsuarioCreacion?.Substring(0, Math.Min(50, insertDto.UsuarioCreacion.Length)),
+                UsuarioCreacion = "CargaMasivaExcel",
                 IdGestor = insertDto.IdGestor,
                 Activo = true,
                 FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
@@ -828,21 +876,74 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 DatosCargaMasiva = insertDto.DatosCargaMasiva,
                 // 🔹 Mapear asignaciones de consultores sin IdTicket aún
                 ConsultorAsignaciones = insertDto.ConsultorAsignaciones?
-                    .Select(a => new TicketConsultorAsignacion
+                    .Select(a =>
                     {
-                        Id = 0, // evita duplicados al insertar
-                        IdConsultor = a.IdConsultor,
-                        IdTipoActividad = a.IdTipoActividad,
-                        FechaAsignacion = DateTime.SpecifyKind(a.FechaAsignacion, DateTimeKind.Local),
-                        FechaDesasignacion = DateTime.SpecifyKind(a.FechaDesasignacion, DateTimeKind.Local),
-                        Activo = true
+                        var firstFsf = insertDto.FrenteSubFrentes?.FirstOrDefault();
+                        return new TicketConsultorAsignacion
+                        {
+                            Id = 0, // evita duplicados al insertar
+                            IdConsultor = a.IdConsultor,
+                            IdTipoActividad = a.IdTipoActividad,
+                            FechaAsignacion = DateTime.SpecifyKind(a.FechaAsignacion, DateTimeKind.Local),
+                            FechaDesasignacion = DateTime.SpecifyKind(a.FechaDesasignacion, DateTimeKind.Local),
+                            IdFrente = firstFsf?.IdFrente,
+                            IdSubFrente = firstFsf?.IdSubFrente,
+                            Activo = true
+                        };
                     }).ToList() ?? new List<TicketConsultorAsignacion>()
             };
+
+            ticket.FrenteSubFrentes = insertDto.FrenteSubFrentes?
+                .Select(fsf =>
+                {
+                    string descCortada = insertDto.Descripcion ?? "";
+                    if (descCortada.Length > 200)
+                    {
+                        descCortada = descCortada.Substring(0, 200);
+                    }
+
+                    return new TicketFrenteSubFrente
+                    {
+                        Id = 0,
+                        IdFrente = fsf.IdFrente,
+                        IdSubFrente = fsf.IdSubFrente,
+                        Cantidad = fsf.Cantidad,
+                        Descripcion = descCortada,
+                        FechaInicio = DateTime.SpecifyKind(insertDto.FechaSolicitud, DateTimeKind.Local),
+                        FechaFin = DateTime.SpecifyKind(insertDto.FechaSolicitud, DateTimeKind.Local),
+                        FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                        UsuarioCreacion = "CargaMasivaExcel",
+                        Activo = true
+                    };
+                }).ToList() ?? new List<TicketFrenteSubFrente>();
+
+            return ticket;
         }).ToList();
 
         // 🔹 Guardar todos los tickets en batch
         var ticketsGuardados = await _ticketRepository.CreateRangeAsync(tickets);
         return ticketsGuardados;
+    }
+
+    private List<string> ParseValor1(string? valor1)
+    {
+        if (string.IsNullOrWhiteSpace(valor1))
+            return new List<string>();
+
+        var trimmed = valor1.Trim();
+        if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<List<string>>(trimmed) ?? new List<string>();
+            }
+            catch
+            {
+                // Fallback si la deserialización falla
+            }
+        }
+
+        return new List<string> { trimmed };
     }
 
 
