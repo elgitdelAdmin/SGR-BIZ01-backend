@@ -1,4 +1,4 @@
-﻿// ConectaBiz.Infrastructure/DependencyInjection.cs
+// ConectaBiz.Infrastructure/DependencyInjection.cs
 using System.Text;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
@@ -74,6 +74,8 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
             services.AddScoped<IReportesService, ReportesService>();
+            services.AddHttpClient<IWhatsAppService, WhatsAppService>();
+            services.AddScoped<INotificacionWhatsAppService, NotificacionWhatsAppService>();
 
             services.AddSingleton<IParametrosCatalogo, ParametrosCatalogo>();
 
