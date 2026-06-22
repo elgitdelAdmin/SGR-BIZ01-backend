@@ -72,24 +72,48 @@ namespace ConectaBiz.Application.Services
                     return;
                 }
 
+                // Obtener IDs de los estados a excluir
+                var estadosAExcluir = new[]
+                {
+                    AppConstants.Estados.CERRADO,
+                    AppConstants.Estados.CANCELADO,
+                    AppConstants.Estados.RECHAZADO,
+                    AppConstants.Estados.ANULADO
+                };
+                var idsEstadosAExcluir = _parametrosCatalogo.Current.ListaEstados
+                    .Where(e => estadosAExcluir.Contains(e.Codigo))
+                    .Select(e => e.Id)
+                    .ToList();
+
                 var hoy = DateTime.Now;
                 var haceUnMes = hoy.AddMonths(-1);
 
-                _logger.LogInformation("Consultando tickets pendientes de atención desde {Desde} hasta {Hasta}...", haceUnMes, hoy);
+                _logger.LogInformation("Consultando tickets desde {Desde} hasta {Hasta}...", haceUnMes, hoy);
 
-                // Consultar los tickets que cumplen el filtro (GetQueryableAll ya incluye Empresa, Gestor y Persona)
-                var ticketsPendientes = await _ticketRepository.GetQueryableAll()
-                    .Where(t => t.IdEstadoTicket == estadoPendiente.Id
-                             && t.FechaSolicitud >= haceUnMes
+                // Consultar todos los tickets del último mes que estén activos, excluyendo los estados CERRADO, CANCELADO, RECHAZADO, ANULADO
+                var todosLosTickets = await _ticketRepository.GetQueryableAll()
+                    .Include(t => t.FrenteSubFrentes)
+                    .Where(t => t.Activo 
+                             && t.FechaSolicitud >= haceUnMes 
                              && t.FechaSolicitud <= hoy
-                             && t.Activo)
+                             && !idsEstadosAExcluir.Contains(t.IdEstadoTicket))
                     .ToListAsync();
 
-                _logger.LogInformation("Se encontraron {Count} tickets pendientes de atención del último mes.", ticketsPendientes.Count);
+                // Separar en memoria
+                var ticketsPendientes = todosLosTickets
+                    .Where(t => t.IdEstadoTicket == estadoPendiente.Id)
+                    .ToList();
 
-                if (ticketsPendientes.Count == 0)
+                var ticketsConFrenteVencido = todosLosTickets
+                    .Where(t => t.FrenteSubFrentes.Any(fs => fs.Activo && fs.FechaFin < hoy))
+                    .ToList();
+
+                _logger.LogInformation("Se encontraron {Count} tickets pendientes de atención.", ticketsPendientes.Count);
+                _logger.LogInformation("Se encontraron {Count} tickets con frentes vencidos.", ticketsConFrenteVencido.Count);
+
+                if (ticketsPendientes.Count == 0 && ticketsConFrenteVencido.Count == 0)
                 {
-                    // Si no hay tickets, igual registramos la ejecución para evitar reintentos continuos hoy
+                    // Si no hay tickets de ningún tipo, igual registramos la ejecución para evitar reintentos continuos hoy
                     if (ejecutarCuenta) RegistrarEjecucion(horaCuentaAEjecutar, _historialEnviosGestoresCuenta);
                     if (ejecutarConsultores) RegistrarEjecucion(horaConsultoresAEjecutar, _historialEnviosConsultores);
                     return;
@@ -103,7 +127,7 @@ namespace ConectaBiz.Application.Services
 
                 if (ejecutarConsultores)
                 {
-                    await NotificarGestoresConsultorialAsync(ticketsPendientes);
+                    await NotificarGestoresConsultorialAsync(ticketsPendientes, ticketsConFrenteVencido);
                     RegistrarEjecucion(horaConsultoresAEjecutar, _historialEnviosConsultores);
                 }
             }
@@ -177,7 +201,9 @@ namespace ConectaBiz.Application.Services
             }
         }
 
-        private async Task NotificarGestoresConsultorialAsync(List<ConectaBiz.Domain.Entities.Ticket> ticketsPendientes)
+        private async Task NotificarGestoresConsultorialAsync(
+            List<ConectaBiz.Domain.Entities.Ticket> ticketsPendientes,
+            List<ConectaBiz.Domain.Entities.Ticket> ticketsConFrenteVencido)
         {
             _logger.LogInformation("Iniciando FASE 2: Notificar a Gestores de Consultoría y Teléfono Adicional...");
 
@@ -200,21 +226,15 @@ namespace ConectaBiz.Application.Services
                 _logger.LogInformation("Preparando reporte consolidado para {Count} Gestores de Consultoría y Teléfono Adicional...", gestoresConsultoria.Count);
 
                 // Armar lista de tickets con su respectivo gestor de cuenta asignado (incluyendo código interno si existe)
-                var lineasTickets = new List<string>();
-                foreach (var ticket in ticketsPendientes)
-                {
-                    var gestorDeCuenta = ticket.Empresa?.Gestor;
-                    var nombreGestorDeCuenta = gestorDeCuenta?.Persona != null
-                        ? $"{gestorDeCuenta.Persona.Nombres} {gestorDeCuenta.Persona.ApellidoPaterno}".Trim()
-                        : "Sin gestor";
-
-                    var ticketStr = string.IsNullOrWhiteSpace(ticket.CodTicketInterno)
-                        ? ticket.CodTicket
-                        : $"{ticket.CodTicket} / {ticket.CodTicketInterno.Trim()}";
-
-                    lineasTickets.Add($"{ticketStr} (Gestor: {nombreGestorDeCuenta})");
-                }
+                var lineasTickets = ticketsPendientes.Select(FormatearLineaTicket).ToList();
                 var listadoTicketsString = "- " + string.Join("\n- ", lineasTickets);
+
+                // Armar lista para tickets con frentes activos/planificados en curso (vencidos)
+                var hoy = DateTime.Now;
+                var lineasFrenteVencido = ticketsConFrenteVencido.Select(t => FormatearLineaTicketConFechas(t, hoy)).ToList();
+                var listadoFrentesVencidosString = lineasFrenteVencido.Count > 0
+                    ? "- " + string.Join("\n- ", lineasFrenteVencido)
+                    : null;
 
                 // 1. Enviar a cada Gestor de Consultoría
                 foreach (var gc in gestoresConsultoria)
@@ -236,7 +256,12 @@ namespace ConectaBiz.Application.Services
                     }
 
                     // Formatear mensaje consolidado
-                    var mensajeConsolidado = $"¡Hola {nombreGc}! 👋 Tienes algunos tickets pendientes de atención esperándote:\n\n{listadoTicketsString}\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
+                    var mensajeConsolidado = $"¡Hola {nombreGc}! 👋 Tienes algunos tickets pendientes de atención esperándote:\n\n{listadoTicketsString}";
+                    if (listadoFrentesVencidosString != null)
+                    {
+                        mensajeConsolidado += $"\n\n*Tienes tickets con asignaciones vencidas que no están cerrados:*\n{listadoFrentesVencidosString}";
+                    }
+                    mensajeConsolidado += "\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
 
                     var dto = new EnviarWhatsAppDto
                     {
@@ -267,7 +292,12 @@ namespace ConectaBiz.Application.Services
                         telefonoLimpio = "51" + telefonoLimpio;
                     }
 
-                    var mensajeAdicional = $"¡Hola! 👋 Tienes algunos tickets pendientes de atención esperándote:\n\n{listadoTicketsString}\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
+                    var mensajeAdicional = $"¡Hola! 👋 Tienes algunos tickets pendientes de atención esperándote:\n\n{listadoTicketsString}";
+                    if (listadoFrentesVencidosString != null)
+                    {
+                        mensajeAdicional += $"\n\n*Tienes tickets con asignaciones vencidas que no están cerrados:*\n{listadoFrentesVencidosString}";
+                    }
+                    mensajeAdicional += "\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
 
                     var dto = new EnviarWhatsAppDto
                     {
@@ -338,6 +368,46 @@ namespace ConectaBiz.Application.Services
             var hoyString = DateTime.Now.ToString("yyyy-MM-dd");
             var claveHistorial = $"{hoyString}_{horaStr.Trim()}";
             historial.Add(claveHistorial);
+        }
+
+        private static string FormatearLineaTicket(ConectaBiz.Domain.Entities.Ticket ticket)
+        {
+            var gestor = ticket.Empresa?.Gestor?.Persona;
+            var nombreGestor = gestor != null
+                ? $"{gestor.Nombres} {gestor.ApellidoPaterno}".Trim()
+                : "Sin gestor";
+
+            var ticketStr = string.IsNullOrWhiteSpace(ticket.CodTicketInterno)
+                ? ticket.CodTicket
+                : $"{ticket.CodTicket} / {ticket.CodTicketInterno.Trim()}";
+
+            return $"{ticketStr} (Gestor: {nombreGestor})";
+        }
+
+        private static string FormatearLineaTicketConFechas(ConectaBiz.Domain.Entities.Ticket ticket, DateTime hoy)
+        {
+            var gestor = ticket.Empresa?.Gestor?.Persona;
+            var nombreGestor = gestor != null
+                ? $"{gestor.Nombres} {gestor.ApellidoPaterno}".Trim()
+                : "Sin gestor";
+
+            var ticketStr = string.IsNullOrWhiteSpace(ticket.CodTicketInterno)
+                ? ticket.CodTicket
+                : $"{ticket.CodTicket} / {ticket.CodTicketInterno.Trim()}";
+
+            var frentesVencidos = ticket.FrenteSubFrentes
+                .Where(fs => fs.Activo && fs.FechaFin < hoy)
+                .ToList();
+
+            var rangoFechas = "";
+            if (frentesVencidos.Count > 0)
+            {
+                var minInicio = frentesVencidos.Min(fs => fs.FechaInicio);
+                var maxFin = frentesVencidos.Max(fs => fs.FechaFin);
+                rangoFechas = $" [Inicio: {minInicio:dd/MM/yyyy} - Fin: {maxFin:dd/MM/yyyy}]";
+            }
+
+            return $"{ticketStr} (Gestor: {nombreGestor}){rangoFechas}";
         }
     }
 }
