@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,6 +37,7 @@ namespace ConectaBiz.Domain.Entities
         public string? UsuarioRegistro { get; set; }
         public string? UsuarioModificacion { get; set; }
         public string? Nivel { get; set; }
+        public string? Valor1 { get; set; }
 
         // Propiedades de navegación
         public virtual Frente Frente { get; set; }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.Application.DTOs
@@ -21,6 +21,7 @@ namespace ConectaBiz.Application.DTOs
         public string Descripcion { get; set; }
         public string UsuarioCreacion { get; set; }
         public string Asignado { get; set; }
+        public string GrupoAsignacion { get; set; }
         public string DatosCargaMasiva { get; set; }
     }
     public class CargaMasivaIncidentesAlicorpDto
@@ -181,6 +182,8 @@ namespace ConectaBiz.Application.DTOs
         public int? IdGestorConsultoria { get; set; }        
         public bool EsCargaMasiva { get; set; } = false;
         public string? DatosCargaMasiva { get; set; }
+        public string? GrupoAsignacion { get; set; }
         public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
+        public List<TicketFrenteSubFrenteInsertDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteInsertDto>();
     }
 }

@@ -1276,10 +1276,6 @@ namespace ConectaBiz.Application.Services
                 {
                     Console.WriteLine("[DEBUG] Specific Code Search detected - Bypassing status filter for all roles.");
                 }
-                else if (codRol == AppConstants.Roles.Admin)
-                {
-                    Console.WriteLine("[DEBUG] Role is ADMIN - Ignoring status filter per request.");
-                }
                 else
                 {
                     query = query.Where(t => estadoIds.Contains(t.IdEstadoTicket));

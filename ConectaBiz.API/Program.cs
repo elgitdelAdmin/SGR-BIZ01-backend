@@ -83,6 +83,11 @@ builder.Services.Configure<ReportesPorCorreoJobSettings>(
 
 builder.Services.AddHostedService<ReportesPorCorreoWorker>();
 
+builder.Services.Configure<WhatsAppJobSettings>(
+    builder.Configuration.GetSection("WhatsAppJobSettings")
+);
+builder.Services.AddHostedService<WhatsAppNotificationWorker>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

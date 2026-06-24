@@ -37,6 +37,7 @@ namespace ConectaBiz.Application.DTOs
         public string? UsuarioRegistro { get; set; }
         public string? UsuarioModificacion { get; set; }
         public string? Nivel { get; set; }
+        public string? Valor1 { get; set; }
     }
     public class CreateFrenteDto
     {
@@ -95,6 +96,7 @@ namespace ConectaBiz.Application.DTOs
 
         [StringLength(20, ErrorMessage = "El nivel no puede exceder 20 caracteres")]
         public string? Nivel { get; set; }
+        public string? Valor1 { get; set; }
     }
     public class UpdateSubFrenteDto
     {
@@ -119,6 +121,7 @@ namespace ConectaBiz.Application.DTOs
 
         [StringLength(20, ErrorMessage = "El nivel no puede exceder 20 caracteres")]
         public string? Nivel { get; set; }
+        public string? Valor1 { get; set; }
     }
 
     public class ConsultorAsociadoDto

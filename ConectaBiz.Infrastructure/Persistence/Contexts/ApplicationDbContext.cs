@@ -239,6 +239,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UsuarioRegistro).HasMaxLength(50);
                 entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
                 entity.Property(e => e.Nivel).HasMaxLength(20);
+                entity.Property(e => e.Valor1).HasColumnType("text");
 
                 entity.HasIndex(e => e.Codigo).IsUnique();
                 entity.HasIndex(e => e.Activo);
