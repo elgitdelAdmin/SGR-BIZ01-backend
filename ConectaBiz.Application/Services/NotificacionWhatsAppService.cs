@@ -213,8 +213,7 @@ namespace ConectaBiz.Application.Services
             // Buscar usuarios con rol GESTORCONSULTORIA
             var usuarios = await _userRepository.GetAllAsync();
             var gestoresConsultoria = usuarios
-                .Where(u => u.Rol != null 
-                         && u.Rol.Codigo == AppConstants.Roles.GestorConsultoria 
+                .Where(u => u.UserRolSocios.Any(urs => urs.Rol != null && urs.Rol.Codigo == AppConstants.Roles.GestorConsultoria && urs.Activo)
                          && u.Persona != null)
                 .ToList();
 
