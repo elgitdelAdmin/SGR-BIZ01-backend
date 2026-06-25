@@ -322,7 +322,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UrlArchivos);
                 entity.Property(e => e.Repositorios);
                 entity.Property(e => e.IdReqSgrCsti);
-                entity.Property(e => e.IdGestor);
                 entity.Property(e => e.IdGestorConsultoria);
                 entity.Property(e => e.CodReqSgrCsti).HasMaxLength(50);
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
