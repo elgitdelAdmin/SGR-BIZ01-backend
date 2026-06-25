@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
@@ -80,8 +80,9 @@ namespace ConectaBiz.Application.Services
                 socioExistente.Telefono1 = socioUpdateDto.Telefono1;
                 socioExistente.Telefono2 = socioUpdateDto.Telefono2;
                 socioExistente.Email = socioUpdateDto.Email;
+                socioExistente.Logo = socioUpdateDto.Logo;
                 socioExistente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-            socioExistente.UsuarioModificacion = socioUpdateDto.UsuarioModificacion;
+                socioExistente.UsuarioModificacion = socioUpdateDto.UsuarioModificacion;
 
                 var socioActualizado = await _socioRepository.ActualizarAsync(socioExistente);
                 return _mapper.Map<SocioDto>(socioActualizado);

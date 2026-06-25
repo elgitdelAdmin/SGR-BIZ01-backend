@@ -866,7 +866,6 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 IdPrioridad = insertDto.IdPrioridad,
                 Descripcion = insertDto.Descripcion,
                 UsuarioCreacion = "CargaMasivaExcel",
-                IdGestor = insertDto.IdGestor,
                 Activo = true,
                 FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
                 UrlArchivos = null,

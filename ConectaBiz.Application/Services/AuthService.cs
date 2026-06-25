@@ -108,6 +108,12 @@ namespace ConectaBiz.Application.Services
                     throw new UnauthorizedAccessException("El usuario no tiene roles o socios asignados.");
                 }
 
+                var superAdminRolSocio = activeRolSocios.FirstOrDefault(urs => urs.Rol != null && urs.Rol.Codigo == AppConstants.Roles.SuperAdmin);
+                if (superAdminRolSocio != null)
+                {
+                    activeRolSocios = new List<UserRolSocio> { superAdminRolSocio };
+                }
+
                 if (activeRolSocios.Count > 1)
                 {
                     var tempToken = _tokenService.GenerateAccessToken(user);
@@ -156,7 +162,8 @@ namespace ConectaBiz.Application.Services
                         IdSocioSeleccionado = single.IdSocio,
                         CodRolSeleccionado = single.Rol.Codigo,
                         NombreSocioSeleccionado = single.Socio != null ? single.Socio.NombreComercial : "",
-                        NombreRolSeleccionado = single.Rol != null ? single.Rol.Nombre : ""
+                        NombreRolSeleccionado = single.Rol != null ? single.Rol.Nombre : "",
+                        LogoSocioSeleccionado = single.Socio != null ? single.Socio.Logo : null
                     };
                 }
             }
@@ -217,7 +224,8 @@ namespace ConectaBiz.Application.Services
                 IdSocioSeleccionado = matchingRolSocio.IdSocio,
                 CodRolSeleccionado = matchingRolSocio.Rol.Codigo,
                 NombreSocioSeleccionado = matchingRolSocio.Socio != null ? matchingRolSocio.Socio.NombreComercial : "",
-                NombreRolSeleccionado = matchingRolSocio.Rol != null ? matchingRolSocio.Rol.Nombre : ""
+                NombreRolSeleccionado = matchingRolSocio.Rol != null ? matchingRolSocio.Rol.Nombre : "",
+                LogoSocioSeleccionado = matchingRolSocio.Socio != null ? matchingRolSocio.Socio.Logo : null
             };
         }
 

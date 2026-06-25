@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,7 @@ namespace ConectaBiz.Domain.Entities
         public string? Telefono1 { get; set; }
         public string? Telefono2 { get; set; }
         public string? Email { get; set; }
+        public string? Logo { get; set; }
         public bool Activo { get; set; } = true;
         public DateTime FechaRegistro { get; set; } = DateTime.Now;
         public DateTime? FechaModificacion { get; set; }

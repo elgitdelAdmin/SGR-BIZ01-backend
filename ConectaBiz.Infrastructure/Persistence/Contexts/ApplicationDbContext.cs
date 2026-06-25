@@ -52,6 +52,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Telefono1).HasMaxLength(20);
                 entity.Property(e => e.Telefono2).HasMaxLength(20);
                 entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.Logo).HasColumnType("text");
                 entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
                 entity.Property(e => e.FechaRegistro).HasColumnType("timestamp").HasDefaultValueSql("now()");
                 entity.Property(e => e.FechaModificacion).HasColumnType("timestamp");

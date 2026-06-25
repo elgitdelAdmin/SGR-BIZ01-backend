@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Telefono1 { get; set; }
         public string Telefono2 { get; set; }
         public string? Email { get; set; }
+        public string? Logo { get; set; }
         public bool Activo { get; set; }
         public DateTime FechaRegistro { get; set; }
         public DateTime? FechaModificacion { get; set; }
@@ -38,6 +39,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Telefono1 { get; set; }
         public string? Telefono2 { get; set; }
         public string? Email { get; set; }
+        public string? Logo { get; set; }
         public string? UsuarioRegistro { get; set; }
     }
 
@@ -52,6 +54,7 @@ namespace ConectaBiz.Application.DTOs
         public string? Telefono1 { get; set; }
         public string? Telefono2 { get; set; }
         public string? Email { get; set; }
+        public string? Logo { get; set; }
         public string? UsuarioModificacion { get; set; }
     }
 }

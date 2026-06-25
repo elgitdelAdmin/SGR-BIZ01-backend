@@ -19,8 +19,6 @@ public class Ticket
     public int? IdSubTipoTicket { get; set; }
     public int IdEstadoTicket { get; set; }
     public int IdEmpresa { get; set; }
-    [NotMapped]
-    public int? IdGestor { get; set; }
     public int? IdGestorConsultoria { get; set; }    
     public int IdUsuarioResponsableCliente { get; set; }
     public int IdPrioridad { get; set; }
