@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -19,15 +19,14 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             try
             {
                 return await _context.Consultor
-                 .Include(c => c.Persona)
-                 .Include(c => c.Socio)
-                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
-                     .ThenInclude(cf => cf.Frente)
-                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
-                     .ThenInclude(cf => cf.SubFrente)
-                 .Where(c => c.Activo)
-                 .AsNoTracking()
-                 .ToListAsync();
+                  .Include(c => c.Persona)
+                  .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                      .ThenInclude(cf => cf.Frente)
+                  .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
+                      .ThenInclude(cf => cf.SubFrente)
+                  .Where(c => c.Activo)
+                  .AsNoTracking()
+                  .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -39,7 +38,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Consultor
                 .Include(c => c.Persona)
-                .Include(c => c.Socio)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                     .ThenInclude(cf => cf.Frente)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
@@ -50,7 +48,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Consultor
                 .Include(c => c.Persona)
-                .Include(c => c.Socio)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                     .ThenInclude(cf => cf.Frente)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
@@ -63,7 +60,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             {
                 return await _context.Consultor
                  .Include(c => c.Persona)
-                 .Include(c => c.Socio)
                  .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                      .ThenInclude(cf => cf.Frente)
                  .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
@@ -83,7 +79,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             {
                 return await _context.Consultor
                     .Include(c => c.Persona)
-                    .Include(c => c.Socio)
                     .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                         .ThenInclude(cf => cf.Frente)
                     .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
@@ -103,7 +98,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             return await _context.Consultor
                 .Include(c => c.Persona)
-                .Include(c => c.Socio)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                     .ThenInclude(cf => cf.Frente)
                 .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
