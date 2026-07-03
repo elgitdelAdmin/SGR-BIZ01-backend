@@ -89,7 +89,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
-                .FirstOrDefaultAsync(g => g.IdUser == iduser);
+                .FirstOrDefaultAsync(g => g.IdUser == iduser && g.Activo);
         }
         public async Task<Gestor?> GetByPersonaIdAsync(int personaId)
         {
