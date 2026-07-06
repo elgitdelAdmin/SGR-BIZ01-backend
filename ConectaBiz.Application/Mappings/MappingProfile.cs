@@ -231,7 +231,6 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore());
             CreateMap<TicketConsultorAsignacionUpdateDto, TicketConsultorAsignacion>()
                 .ForMember(dest => dest.Ticket, opt => opt.Ignore()) 
-                .ForMember(dest => dest.DetalleTareasConsultor, opt => opt.Ignore())
                 .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore());
 
 

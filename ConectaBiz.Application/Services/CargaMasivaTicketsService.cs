@@ -846,7 +846,6 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
 
         // 🔹 Obtener el último Id de ticket ya existente
         int ultimoId = (await _ticketRepository.GetAllAsync()).DefaultIfEmpty().Max(t => t?.Id ?? 0);
-
         // 🔹 Generar tickets con código incremental y mapear propiedades
         var tickets = insertDtos.Select((insertDto, index) =>
         {
@@ -860,7 +859,6 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                 Titulo = insertDto.Titulo,
                 FechaSolicitud = DateTime.SpecifyKind(insertDto.FechaSolicitud, DateTimeKind.Local),
                 IdTipoTicket = insertDto.IdTipoTicket,
-                IdEstadoTicket = insertDto.IdEstadoTicket,
                 IdEmpresa = insertDto.IdEmpresa,
                 IdUsuarioResponsableCliente = insertDto.IdUsuarioResponsableCliente ?? 0,
                 IdPrioridad = insertDto.IdPrioridad,
@@ -929,6 +927,7 @@ public class CargaMasivaTicketsService : ICargaMasivaTicketsService
                     }
                 }
             }
+            ticket.InicializarEstado(insertDto.IdEstadoTicket, "CargaMasivaExcel");
 
             return ticket;
         }).ToList();

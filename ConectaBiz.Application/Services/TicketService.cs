@@ -309,7 +309,8 @@ namespace ConectaBiz.Application.Services
 
                 // 2. Crear ticket
                 var ticket = _mapper.Map<Ticket>(insertDto);
-                ticket.IdEstadoTicket = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ATENCION).Id;
+                int idEstadoInicial = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ATENCION).Id;
+                ticket.InicializarEstado(idEstadoInicial, insertDto.UsuarioCreacion);
                 ticket.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
                 ticket.FechaSolicitud = DateTime.SpecifyKind(ticket.FechaSolicitud, DateTimeKind.Local);
                 ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
@@ -323,53 +324,7 @@ namespace ConectaBiz.Application.Services
                 log.AppendLine($"DB Create Ticket ms={sw.ElapsedMilliseconds - t0}");
                 log.AppendLine($"Ticket creado Id={createdTicket.Id}, CodTicket={ticket.CodTicket}");
 
-                // 3. Procesar archivo ZIP
-                if (insertDto.ZipFile != null && insertDto.ZipFile.Length > 0)
-                {
-                    try
-                    {
-                        var uploadsFolder = Path.Combine(
-                            Directory.GetCurrentDirectory(),
-                            _rutaBaseArchivos,
-                            "Empresa",
-                            insertDto.IdEmpresa.ToString(),
-                            createdTicket.Id.ToString()
-                        );
-                        Directory.CreateDirectory(uploadsFolder);
 
-                        var fileName = $"{Path.GetFileName(insertDto.ZipFile.FileName)}";
-                        var filePath = Path.Combine(uploadsFolder, fileName);
-                        t0 = sw.ElapsedMilliseconds;
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await insertDto.ZipFile.CopyToAsync(stream);
-                            log.AppendLine($"ZIP guardado en {filePath} (ms={sw.ElapsedMilliseconds - t0})");
-                        }
-
-                        var zipFileDto = new TicketZipFileDto
-                        {
-                            Orden = 1,
-                            Url = Path.Combine(_rutaBaseArchivos, "Empresa", insertDto.IdEmpresa.ToString(), createdTicket.Id.ToString(), fileName).Replace("\\", "/"),
-                            FechaInsert = DateTime.Now
-                        };
-
-                        var zipFilesList = new List<TicketZipFileDto> { zipFileDto };
-                        createdTicket.UrlArchivos = JsonSerializer.Serialize(zipFilesList);
-
-                        t0 = sw.ElapsedMilliseconds;
-                        await _ticketRepository.UpdateAsync(createdTicket);
-                        log.AppendLine($"DB Update UrlArchivos ms={sw.ElapsedMilliseconds - t0}");
-                    }
-                    catch (Exception exZip)
-                    {
-                        log.AppendLine("❌ Error guardando ZIP: " + exZip.Message);
-                    }
-                }
-                else
-                {
-                    log.AppendLine("ℹ️ No se recibió archivo ZIP.");
-                }
 
                 log.AppendLine("========== FIN EXITOSO ==========");
 
@@ -535,60 +490,7 @@ namespace ConectaBiz.Application.Services
         //    if (ticketsAActualizar.Any())
         //    {
         //        await _ticketRepository.UpdateRangeAsync(ticketsAActualizar);
-        //    }
-        //}
 
-        private async Task<int> LogicaActualizarEstadosAutomatico(Ticket ticketActual,TicketUpdateDto updateDto)
-        {
-            string codigoEstadoActual = ticketActual.IdEstadoTicket > 0
-                ? _listaEstados.First(x => x.Id == ticketActual.IdEstadoTicket).Codigo
-                : _listaEstados.First(x => x.Id == updateDto.IdEstadoTicket).Codigo;
-
-            var idNuevoEstado = updateDto.IdEstadoTicket;
-
-            bool huboCambiosFrentes = false;
-            bool huboCambiosAsignaciones = false;
-
-            if (updateDto.FrenteSubFrentes.Any())
-            {
-                var (modificados, agregados) =await GetConsulFrenteSubFrentesfAsync(ticketActual.Id,updateDto.FrenteSubFrentes);
-                huboCambiosFrentes = modificados.Any() || agregados.Any();
-            }
-
-            if (updateDto.ConsultorAsignaciones.Any())
-            {
-                var (asigMod, asigAg, _, _) =await GetConsultorAsignacionesDiffAsync(ticketActual.Id,updateDto.ConsultorAsignaciones);
-                huboCambiosAsignaciones = asigMod.Any() || asigAg.Any();
-            }
-
-            bool tienePlanificacion = (updateDto.FrenteSubFrentes != null && updateDto.FrenteSubFrentes.Any(fsf => fsf.DetallePlanificacionConsultor != null && fsf.DetallePlanificacionConsultor.Any(dp => dp.Activo)))
-                || (ticketActual.FrenteSubFrentes != null && ticketActual.FrenteSubFrentes.Any(fsf => fsf.DetallePlanificacionConsultor != null && fsf.DetallePlanificacionConsultor.Any(dp => dp.Activo)));
-
-            switch (codigoEstadoActual)
-            {
-                case AppConstants.Estados.ATENDIDO:
-                    if (tienePlanificacion)
-                    {
-                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ASIGNACION).Id;
-                    }
-                    break;
-
-                case AppConstants.Estados.PENDIENTE_ASIGNACION:
-                    if (huboCambiosAsignaciones)
-                    {
-                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ASIGNADO).Id;
-                    }
-                    break;
-
-                case AppConstants.Estados.PENDIENTE_ATENCION:
-                    if (huboCambiosFrentes)
-                    {
-                        idNuevoEstado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ATENDIDO).Id;
-                    }
-                    break;
-            }
-            return idNuevoEstado;
-        }
 
 
         public async Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto)
@@ -599,274 +501,83 @@ namespace ConectaBiz.Application.Services
 
                 var lstNotificaciones = new List<CrearNotificacionDto>();
 
-                var jsonOptions = new JsonSerializerOptions{NumberHandling = JsonNumberHandling.AllowReadingFromString};
-                var consultores = JsonSerializer.Deserialize<List<TicketConsultorAsignacionUpdateDto>>(updateDto.consultorAsignaciones, jsonOptions);
-                updateDto.ConsultorAsignaciones = consultores;
-
-                if (consultores != null)
-                {
-                    foreach (var c in consultores)
-                    {
-                        if (c.IdConsultor == 0)
-                        {
-                            c.IdConsultor = null;
-                        }
-                    }
-                }
-
-                var frentesSubfrentes = JsonSerializer.Deserialize<List<TicketFrenteSubFrenteUpdateDto>>(updateDto.frenteSubFrentes, jsonOptions);
-                updateDto.FrenteSubFrentes = frentesSubfrentes;
-
                 var existingTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
                 if (existingTicket == null)
                 {
                     throw new KeyNotFoundException($"No se encontró el ticket con ID: {id}");
                 }
 
-                // Guardar estado anterior para historial
-                int? estadoAnterior = existingTicket.IdEstadoTicket;
-
-                //// Actualizando el Estado según Logica
-                updateDto.IdEstadoTicket = await LogicaActualizarEstadosAutomatico(existingTicket, updateDto);
-
                 // Actualizar los campos del ticket principal
                 UpdateTicketFields(existingTicket, updateDto);
 
-                // Si cambió el estado, crear registro en historial
-                if (updateDto.IdEstadoTicket != estadoAnterior)
+                // Forzar el cambio de estado si viene en el DTO (y es distinto)
+                if (updateDto.IdEstadoTicket > 0)
                 {
-                    await CreateHistorialCambioEstadoAsync(id, estadoAnterior, updateDto);
+                    existingTicket.CambiarEstado(updateDto.IdEstadoTicket, updateDto.UsuarioActualizacion);
                 }
 
-                // 1️⃣ Validar y actualizar frentes y subfrentes primero (para tener sus IDs de base de datos)
-                var (frenteSubFrentesmodificados, frenteSubFrentesagregados) = await GetConsulFrenteSubFrentesfAsync(id, updateDto.FrenteSubFrentes);
-                var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
+                bool huboCambiosFrentes = false;
 
-                var listaFrentesModificados = new List<TicketFrenteSubFrente>();
-                var listaFrentesAgregados = new List<TicketFrenteSubFrente>();
-
-                if (frenteSubFrentesmodificados.Count > 0)
-                {
-                    lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha modificado una asignación al ticket {existingTicket.CodTicket}"));
-                    listaFrentesModificados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesmodificados).Select(x => { x.IdTicket = id; x.UsuarioModificacion = updateDto.UsuarioActualizacion; x.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); return x; }).ToList();
-                    await _frenteSubFrenteRepository.UpdateRangeAsync(listaFrentesModificados);
-                }
-                if (frenteSubFrentesagregados.Count > 0)
-                {
-                    lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha agregado una asignación al ticket {existingTicket.CodTicket}"));
-                    listaFrentesAgregados = _mapper.Map<List<TicketFrenteSubFrente>>(frenteSubFrentesagregados).Select(x => { x.IdTicket = id; x.UsuarioCreacion = updateDto.UsuarioActualizacion; x.Id = 0; x.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local); x.FechaModificacion = null; return x; }).ToList();
-                    await _frenteSubFrenteRepository.CreateRangeAsync(listaFrentesAgregados);
-                }
-
-                // 2️⃣ Obtener un mapa actualizado de todos los frentes activos de este ticket para resolver IdTicketFrenteSubFrente
-                var todosFrentesActivos = await _frenteSubFrenteRepository.GetActivosByTicketIdAsync(id);
-                // Usar ToLookup en vez de ToDictionary para soportar múltiples frenteSubFrentes con el mismo IdSubFrente
-                var frenteIdLookup = todosFrentesActivos.ToLookup(f => f.IdSubFrente, f => f.Id);
-                // Mapa directo por Id de TicketFrenteSubFrente para resolución exacta
-                var frenteByIdMap = todosFrentesActivos.ToDictionary(f => f.Id, f => f);
-
-                // Validar y actualizar asignaciones de consultores solo si hay cambios
-                var asignacionesList = updateDto.ConsultorAsignaciones ?? new List<TicketConsultorAsignacionUpdateDto>();
-
-                var nuevasPlanificacionesAInsertar = new List<DetallePlanificacionConsultor>();
-                var planificacionesAModificar = new List<DetallePlanificacionConsultor>();
-                var planIdsProcesados = new HashSet<int>();
-
+                // 1️⃣ Validar y actualizar frentes y subfrentes usando EF Change Tracking
                 if (updateDto.FrenteSubFrentes != null)
                 {
-                    foreach (var frenteDto in updateDto.FrenteSubFrentes)
-                    {
-                        if (!frenteDto.Activo) continue;
-
-                        int resolvedFrenteSubFrenteId = 0;
-                        if (frenteDto.Id > 0 && frenteByIdMap.ContainsKey(frenteDto.Id))
-                        {
-                            resolvedFrenteSubFrenteId = frenteDto.Id;
-                        }
-                        else if (frenteDto.IdSubFrente.HasValue)
-                        {
-                            resolvedFrenteSubFrenteId = frenteIdLookup[frenteDto.IdSubFrente.Value].FirstOrDefault();
-                        }
-
-                        if (resolvedFrenteSubFrenteId == 0) continue;
-
-                        if (frenteDto.DetallePlanificacionConsultor != null)
-                        {
-                            foreach (var planDto in frenteDto.DetallePlanificacionConsultor)
-                            {
-                                if (planDto.Id > 0 && !planIdsProcesados.Add(planDto.Id))
-                                {
-                                    continue;
-                                }
-
-                                planDto.FechaInicio = DateTime.SpecifyKind(planDto.FechaInicio, DateTimeKind.Local);
-                                planDto.FechaFin = DateTime.SpecifyKind(planDto.FechaFin, DateTimeKind.Local);
-                                var planEntity = _mapper.Map<DetallePlanificacionConsultor>(planDto);
-                                planEntity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId;
-
-                                if (planDto.Id == 0)
-                                {
-                                    planEntity.Id = 0;
-                                    nuevasPlanificacionesAInsertar.Add(planEntity);
-                                }
-                                else
-                                {
-                                    planificacionesAModificar.Add(planEntity);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                var nuevasTareasAInsertar = new List<DetalleTareasConsultor>();
-                var tareasAModificar = new List<DetalleTareasConsultor>();
-
-                var tareaIdsProcesados = new HashSet<int>();
-
-                var asignacionesAModificar = new List<TicketConsultorAsignacion>();
-                var nuevasAsignacionesAInsertar = new List<TicketConsultorAsignacion>();
-
-                var mapaNuevasAsignaciones = new List<(TicketConsultorAsignacionUpdateDto Dto, TicketConsultorAsignacion Entity)>();
-                
-                // Trackear qué IDs de TicketFrenteSubFrente ya se asignaron (para duplicados)
-                var usedFrenteSubFrenteIds = new HashSet<int>();
-
-                foreach (var asigDto in asignacionesList)
-                {
-                    asigDto.FechaAsignacion = DateTime.SpecifyKind(asigDto.FechaAsignacion, DateTimeKind.Local);
-                    asigDto.FechaDesasignacion = DateTime.SpecifyKind(asigDto.FechaDesasignacion, DateTimeKind.Local);
-
-                    bool esPlaceholder = asigDto.IdConsultor == null || asigDto.IdConsultor == 0;
+                    var frentesNuevos = _mapper.Map<List<TicketFrenteSubFrente>>(updateDto.FrenteSubFrentes);
+                    var (agregados, modificados) = existingTicket.ActualizarFrentes(frentesNuevos, updateDto.UsuarioActualizacion);
+                    huboCambiosFrentes = agregados > 0 || modificados > 0;
                     
-                    // Resolver IdTicketFrenteSubFrente: primero usar el que envía el frontend, luego buscar por IdSubFrente
-                    int resolvedFrenteSubFrenteId = 0;
-                    if (asigDto.IdTicketFrenteSubFrente.HasValue && asigDto.IdTicketFrenteSubFrente.Value > 0
-                        && frenteByIdMap.ContainsKey(asigDto.IdTicketFrenteSubFrente.Value))
+                    if (huboCambiosFrentes)
                     {
-                        resolvedFrenteSubFrenteId = asigDto.IdTicketFrenteSubFrente.Value;
-                        usedFrenteSubFrenteIds.Add(resolvedFrenteSubFrenteId);
-                    }
-                    else if (asigDto.IdSubFrente.HasValue)
-                    {
-                        // Buscar el primer ID de TicketFrenteSubFrente disponible para este subfrente
-                        var candidatos = frenteIdLookup[asigDto.IdSubFrente.Value];
-                        foreach (var candidatoId in candidatos)
+                        var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
+                        
+                        if (agregados > 0)
                         {
-                            if (!usedFrenteSubFrenteIds.Contains(candidatoId))
+                            for (int i = 0; i < agregados; i++)
                             {
-                                resolvedFrenteSubFrenteId = candidatoId;
-                                usedFrenteSubFrenteIds.Add(candidatoId);
-                                break;
+                                lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha agregado una asignación al ticket {existingTicket.CodTicket}"));
                             }
                         }
-                        // Si todos estaban usados, usar el primero disponible
-                        if (resolvedFrenteSubFrenteId == 0 && candidatos.Any())
+                        if (modificados > 0)
                         {
-                            resolvedFrenteSubFrenteId = candidatos.First();
-                        }
-                    }
-
-                    if (asigDto.Id == 0)
-                    {
-                        if (!esPlaceholder)
-                        {
-                            var entity = _mapper.Map<TicketConsultorAsignacion>(asigDto);
-                            entity.IdTicket = id;
-                            entity.Id = 0;
-                            entity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId > 0 ? resolvedFrenteSubFrenteId : (int?)null;
-                            nuevasAsignacionesAInsertar.Add(entity);
-                            mapaNuevasAsignaciones.Add((asigDto, entity));
-                        }
-                    }
-                    else
-                    {
-                        if (!esPlaceholder)
-                        {
-                            var entity = _mapper.Map<TicketConsultorAsignacion>(asigDto);
-                            entity.IdTicket = id;
-                            entity.IdTicketFrenteSubFrente = resolvedFrenteSubFrenteId > 0 ? resolvedFrenteSubFrenteId : (int?)null;
-                            asignacionesAModificar.Add(entity);
-
-                            foreach (var tareaDto in asigDto.DetalleTareasConsultor)
+                            for (int i = 0; i < modificados; i++)
                             {
-                                if (tareaDto.Id > 0 && !tareaIdsProcesados.Add(tareaDto.Id))
-                                {
-                                    continue;
-                                }
-
-                                tareaDto.FechaInicio = DateTime.SpecifyKind(tareaDto.FechaInicio, DateTimeKind.Local);
-                                tareaDto.FechaFin = DateTime.SpecifyKind(tareaDto.FechaFin, DateTimeKind.Local);
-                                var tareaEntity = _mapper.Map<DetalleTareasConsultor>(tareaDto);
-                                tareaEntity.IdTicketConsultorAsignacion = asigDto.Id;
-
-                                if (tareaDto.Id == 0)
-                                {
-                                    tareaEntity.Id = 0;
-                                    nuevasTareasAInsertar.Add(tareaEntity);
-                                }
-                                else
-                                {
-                                    tareasAModificar.Add(tareaEntity);
-                                }
+                                lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha modificado una asignación al ticket {existingTicket.CodTicket}"));
                             }
                         }
                     }
                 }
 
-                if (asignacionesAModificar.Count > 0)
+                // 2️⃣ Validar y actualizar asignaciones de consultores
+                var asignacionesNuevas = _mapper.Map<List<TicketConsultorAsignacion>>(updateDto.ConsultorAsignaciones ?? new());
+                var nuevosIdsConsultores = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
+
+
+
+                // 3️⃣ Evaluar Transiciones Automáticas usando lógica de Dominio
+                bool huboCambiosAsignaciones = nuevosIdsConsultores.Any();
+                int idEstadoAtendido = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ATENDIDO).Id;
+                int idEstadoPendienteAsig = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ASIGNACION).Id;
+                int idEstadoAsignado = _listaEstados.First(x => x.Codigo == AppConstants.Estados.ASIGNADO).Id;
+                int idEstadoPendienteAtencion = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ATENCION).Id;
+
+                existingTicket.EvaluarTransicionesAutomaticas(
+                    huboCambiosAsignaciones, 
+                    huboCambiosFrentes,
+                    idEstadoAtendido, 
+                    idEstadoPendienteAsig, 
+                    idEstadoAsignado, 
+                    idEstadoPendienteAtencion,
+                    updateDto.UsuarioActualizacion
+                );
+
+                existingTicket.ActualizarRepositorios(updateDto.Repositorios);
+
+                // Guardar cambios del ticket principal
+                await _ticketRepository.UpdateAsync(existingTicket);
+
+                // 4️⃣ Enviar/Guardar notificaciones SOLO SI el ticket se guardó correctamente
+                if (nuevosIdsConsultores.Any())
                 {
-                    await _consultorAsignacionRepository.UpdateRangeAsync(asignacionesAModificar);
-                }
-
-                if (nuevasAsignacionesAInsertar.Count > 0)
-                {
-                    await _consultorAsignacionRepository.CreateRangeAsync(nuevasAsignacionesAInsertar);
-
-                    var empresa = await _empresaRepository.GetByIdAsync(existingTicket.IdEmpresa);
-                    int[] idsConsultoresNuevos = nuevasAsignacionesAInsertar
-                        .Select(c => c.IdConsultor)
-                        .Where(idConsultor => idConsultor.HasValue && idConsultor.Value > 0)
-                        .Select(idConsultor => idConsultor.Value)
-                        .ToArray();
-                    await CrearNotificacionesAsignacionTicket(id, existingTicket.CodTicket, (int)empresa.IdUser, (int)empresa.IdGestor, (int)updateDto.IdGestorConsultoria, idsConsultoresNuevos);
-
-                    foreach (var item in mapaNuevasAsignaciones)
-                    {
-                        int newAsignacionId = item.Entity.Id;
-
-                        foreach (var tareaDto in item.Dto.DetalleTareasConsultor)
-                        {
-                            if (tareaDto.Id > 0 && !tareaIdsProcesados.Add(tareaDto.Id))
-                            {
-                                continue;
-                            }
-
-                            tareaDto.FechaInicio = DateTime.SpecifyKind(tareaDto.FechaInicio, DateTimeKind.Local);
-                            tareaDto.FechaFin = DateTime.SpecifyKind(tareaDto.FechaFin, DateTimeKind.Local);
-                            var tareaEntity = _mapper.Map<DetalleTareasConsultor>(tareaDto);
-                            tareaEntity.Id = 0;
-                            tareaEntity.IdTicketConsultorAsignacion = newAsignacionId;
-                            nuevasTareasAInsertar.Add(tareaEntity);
-                        }
-                    }
-                }
-
-                if (tareasAModificar.Count > 0)
-                {
-                    await _consultorAsignacionRepository.UpdateTareasRangeAsync(tareasAModificar);
-                }
-                if (nuevasTareasAInsertar.Count > 0)
-                {
-                    await _consultorAsignacionRepository.CreateTareasRangeAsync(nuevasTareasAInsertar);
-                }
-
-                if (planificacionesAModificar.Count > 0)
-                {
-                    await _consultorAsignacionRepository.UpdatePlanificacionRangeAsync(planificacionesAModificar);
-                }
-                if (nuevasPlanificacionesAInsertar.Count > 0)
-                {
-                    await _consultorAsignacionRepository.CreatePlanificacionRangeAsync(nuevasPlanificacionesAInsertar);
+                    await CrearNotificacionesAsignacionTicket(id, existingTicket.CodTicket, (int)existingTicket.Empresa.IdUser, (int)existingTicket.Empresa.IdGestor, (int)updateDto.IdGestorConsultoria, nuevosIdsConsultores.ToArray());
                 }
 
                 if (lstNotificaciones.Any())
@@ -874,54 +585,8 @@ namespace ConectaBiz.Application.Services
                     await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
                 }
 
-
-                // 📌 Manejo del ZIP adicional
-                if (updateDto.ZipFile != null && updateDto.ZipFile.Length > 0)
-                {
-                    // 1. Leer lista existente de archivos desde JSON
-                    var listaZips = string.IsNullOrEmpty(existingTicket.UrlArchivos)
-                        ? new List<TicketZipFileDto>()
-                        : System.Text.Json.JsonSerializer.Deserialize<List<TicketZipFileDto>>(existingTicket.UrlArchivos);
-
-                    // 2. Guardar el nuevo ZIP
-                    var uploadsFolder = Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        _rutaBaseArchivos,
-                        "Empresa",
-                        existingTicket.IdEmpresa.ToString(),
-                        id.ToString()
-                    );
-                    Directory.CreateDirectory(uploadsFolder);
-
-                    var fileName = $"{Path.GetFileName(updateDto.ZipFile.FileName)}";
-                    var filePath = Path.Combine(uploadsFolder, fileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await updateDto.ZipFile.CopyToAsync(stream);
-                    }
-
-                    // 3. Agregar a la lista con el siguiente orden
-                    var nuevoZip = new TicketZipFileDto
-                    {
-                        Orden = listaZips.Count + 1,
-                        Url = Path.Combine(_rutaBaseArchivos, "Empresa", existingTicket.IdEmpresa.ToString(), id.ToString(), fileName).Replace("\\", "/"),
-                        FechaInsert = DateTime.Now
-                    };
-
-                    listaZips.Add(nuevoZip);
-
-                    // 4. Serializar de nuevo
-                    existingTicket.UrlArchivos = JsonSerializer.Serialize(listaZips);
-                }
-                AplicarRepositorios(existingTicket, updateDto);
-
-                // Guardar cambios del ticket principal
-                await _ticketRepository.UpdateAsync(existingTicket);
-
-                // Obtener el ticket actualizado con relaciones
-                var updatedTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
-                var resultDto = _mapper.Map<TicketDto>(updatedTicket);
+                // Retornar el objeto mapeado directamente desde la memoria (Ahorro de consulta SQL)
+                var resultDto = _mapper.Map<TicketDto>(existingTicket);
                 await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { resultDto });
                 return resultDto;
             }
@@ -932,167 +597,6 @@ namespace ConectaBiz.Application.Services
             }
         }
 
-        private void AplicarRepositorios(Ticket existingTicket, TicketUpdateDto updateDto)
-        {
-            // Si el front no envía nada, no tocamos lo existente
-            if (string.IsNullOrWhiteSpace(updateDto.Repositorios))
-                return;
-
-            // 1️⃣ Repositorios existentes (con Orden y FechaInsert)
-            var existentes = string.IsNullOrWhiteSpace(existingTicket.Repositorios)
-                ? new List<RepositoriosDto>()
-                : JsonSerializer.Deserialize<List<RepositoriosDto>>(existingTicket.Repositorios)
-                  ?? new List<RepositoriosDto>();
-
-            // 2️⃣ Repositorios que vienen del frontend (sin FechaInsert)
-            var incoming = JsonSerializer.Deserialize<List<JsonElement>>(updateDto.Repositorios)
-                           ?? new List<JsonElement>();
-
-            var ahora = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-
-            // 3️⃣ Determinar el último orden existente
-            int ultimoOrden = existentes.Any()
-                ? existentes.Max(x => x.Orden)
-                : 0;
-
-            var resultado = new List<RepositoriosDto>();
-
-            foreach (var item in incoming)
-            {
-                var url = item.TryGetProperty("Url", out var urlProp)
-                    ? urlProp.GetString()
-                    : item.TryGetProperty("Link", out var linkProp)
-                        ? linkProp.GetString()
-                        : null;
-
-                url = (url ?? string.Empty).Trim();
-                if (string.IsNullOrWhiteSpace(url))
-                    continue;
-
-                // 🔎 Buscar si ya existe
-                var existente = existentes.FirstOrDefault(e =>
-                    string.Equals(e.Url?.Trim(), url, StringComparison.OrdinalIgnoreCase));
-
-                if (existente != null)
-                {
-                    // ✔ Ya existía → conserva Orden y FechaInsert
-                    resultado.Add(new RepositoriosDto
-                    {
-                        Orden = existente.Orden,
-                        Url = existente.Url,
-                        FechaInsert = existente.FechaInsert
-                    });
-                }
-                else
-                {
-                    // 🆕 Nuevo → Orden = max + 1, Fecha nueva
-                    ultimoOrden++;
-
-                    resultado.Add(new RepositoriosDto
-                    {
-                        Orden = ultimoOrden,
-                        Url = url,
-                        FechaInsert = ahora
-                    });
-                }
-            }
-
-            // 4️⃣ Guardar JSON actualizado
-            existingTicket.Repositorios = JsonSerializer.Serialize(resultado);
-        }
-
-        private async Task<(List<TicketFrenteSubFrenteUpdateDto> modificados  , List<TicketFrenteSubFrenteUpdateDto> agregados)>
-        GetConsulFrenteSubFrentesfAsync(int idTicket, List<TicketFrenteSubFrenteUpdateDto> newFrenteSubfrente)
-        {
-            var modificados = new List<TicketFrenteSubFrenteUpdateDto>();
-            var agregados = new List<TicketFrenteSubFrenteUpdateDto>();
-       
-            // 🔹 Procesar asignaciones basándose únicamente en Id y Activo
-            foreach (var frenteSubFrente in newFrenteSubfrente)
-            {
-                // Ajustar fechas a hora local
-                frenteSubFrente.FechaInicio = DateTime.SpecifyKind(frenteSubFrente.FechaInicio, DateTimeKind.Local);
-                frenteSubFrente.FechaFin = DateTime.SpecifyKind(frenteSubFrente.FechaFin, DateTimeKind.Local);
-
-                if (frenteSubFrente.Id == 0)
-                {
-                    // ✅ Nueva asignación (Id = 0)
-                    agregados.Add(frenteSubFrente);
-                }
-                else
-                {
-                    // ✅ Asignación existente (Id > 0) - puede ser modificación o eliminación lógica
-                    // Si Activo = false, es eliminación lógica
-                    // Si Activo = true, es modificación/actualización
-                    modificados.Add(frenteSubFrente);
-                }
-            }
-            return (modificados, agregados);
-        }
-        // Método para validar cambios en ConsultorAsignaciones
-        private async Task<(
-            List<TicketConsultorAsignacionUpdateDto> modificados, 
-            List<TicketConsultorAsignacionUpdateDto> agregados, 
-            List<DetalleTareasConsultorUpdateDto> tareasModificadas, 
-            List<DetalleTareasConsultorUpdateDto> tareasAgregadas
-            )>
-          GetConsultorAsignacionesDiffAsync(int idTicket, List<TicketConsultorAsignacionUpdateDto> newAsignaciones)
-        {
-            var modificados = new List<TicketConsultorAsignacionUpdateDto>();
-            var agregados = new List<TicketConsultorAsignacionUpdateDto>();
-            var tareasModificadas = new List<DetalleTareasConsultorUpdateDto>();
-            var tareasAgregadas = new List<DetalleTareasConsultorUpdateDto>();
-
-            // 🔹 Procesar asignaciones basándose únicamente en Id y Activo
-            foreach (var asignacion in newAsignaciones)
-            {
-                // Ajustar fechas a hora local
-                asignacion.FechaAsignacion = DateTime.SpecifyKind(asignacion.FechaAsignacion, DateTimeKind.Local);
-                asignacion.FechaDesasignacion = DateTime.SpecifyKind(asignacion.FechaDesasignacion, DateTimeKind.Local); 
-
-                if (asignacion.Id == 0)
-                {
-                    // ✅ Nueva asignación (Id = 0) - solo si tiene consultor asignado
-                    if (asignacion.IdConsultor.HasValue && asignacion.IdConsultor.Value > 0)
-                    {
-                        agregados.Add(asignacion);
-                    }
-                }
-                else
-                {
-                    // ✅ Asignación existente (Id > 0) - solo si tiene consultor asignado
-                    if (asignacion.IdConsultor.HasValue && asignacion.IdConsultor.Value > 0)
-                    {
-                        modificados.Add(asignacion);
-                    }
-                }
-            }
-
-            // 🔹 Procesar tareas basándose únicamente en Id y Activo
-            foreach (var asignacion in newAsignaciones)
-            {
-                foreach (var tarea in asignacion.DetalleTareasConsultor)
-                {
-                    // Ajustar fechas a hora local
-                    tarea.FechaInicio = DateTime.SpecifyKind(tarea.FechaInicio, DateTimeKind.Local);
-                    tarea.FechaFin = DateTime.SpecifyKind(tarea.FechaFin, DateTimeKind.Local);
-
-                    if (tarea.Id == 0)
-                    {
-                        // ✅ Nueva tarea (Id = 0)
-                        tareasAgregadas.Add(tarea);
-                    }
-                    else
-                    {
-                        // ✅ Tarea existente (Id > 0) - puede ser modificación o eliminación lógica
-                        // Si Activo = false, es eliminación lógica
-                        // Si Activo = true, es modificación/actualización
-                        tareasModificadas.Add(tarea);
-                    }
-                }
-            }
-            return (modificados, agregados, tareasModificadas, tareasAgregadas);
-        }
 
         public async Task<bool> DeleteAsync(int id)
         {
@@ -1146,7 +650,6 @@ namespace ConectaBiz.Application.Services
             if (updateDto.FechaSolicitud != DateTime.MinValue) existingTicket.FechaSolicitud = DateTime.SpecifyKind(updateDto.FechaSolicitud, DateTimeKind.Local);
             if (updateDto.IdTipoTicket > 0) existingTicket.IdTipoTicket = updateDto.IdTipoTicket;
             if (updateDto.IdSubTipoTicket.HasValue && updateDto.IdSubTipoTicket > 0) existingTicket.IdSubTipoTicket = updateDto.IdSubTipoTicket;
-            if (updateDto.IdEstadoTicket > 0) existingTicket.IdEstadoTicket = updateDto.IdEstadoTicket;
             if (updateDto.IdEmpresa > 0) existingTicket.IdEmpresa = updateDto.IdEmpresa;
             if (updateDto.IdUsuarioResponsableCliente > 0) existingTicket.IdUsuarioResponsableCliente = updateDto.IdUsuarioResponsableCliente;
             if (updateDto.IdPrioridad > 0) existingTicket.IdPrioridad = updateDto.IdPrioridad;
@@ -1154,18 +657,7 @@ namespace ConectaBiz.Application.Services
             if (!string.IsNullOrEmpty(updateDto.Descripcion)) existingTicket.Descripcion = updateDto.Descripcion;
             if (!string.IsNullOrEmpty(updateDto.UsuarioActualizacion)) existingTicket.UsuarioActualizacion = updateDto.UsuarioActualizacion;
         }
-        private async Task CreateHistorialCambioEstadoAsync(int ticketId, int? estadoAnterior, TicketUpdateDto updateDto)
-        {
-            var historial = new TicketHistorialEstado
-            {
-                IdTicket = ticketId,
-                IdEstadoAnterior = estadoAnterior,
-                IdEstadoNuevo = updateDto.IdEstadoTicket,
-                FechaCambio = DateTime.Now,
-                UsuarioCambio = updateDto.UsuarioActualizacion ?? "SYSTEM"
-            };
-            await _historialRepository.CreateAsync(historial);
-        }
+
 
         public async Task<FileStreamResult> DescargarArchivoAsync(int idTicket, int orden)
         {

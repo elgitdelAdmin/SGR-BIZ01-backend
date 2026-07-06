@@ -158,7 +158,7 @@ public class TicketInsertDto
     public int? IdGestorConsultoria { get; set; }
 
     // Nuevo campo para el .zip
-    public IFormFile? ZipFile { get; set; }
+
     public bool? EsCargaMasiva { get; set; }
 
     // Colecciones relacionadas que siempre vienen en el request
@@ -183,12 +183,10 @@ public class TicketUpdateDto
     public string? UrlArchivos { get; set; }
     public string? Repositorios { get; set; }
     public int? IdGestorConsultoria { get; set; }
-    // Nuevo campo para el .zip
-    public IFormFile? ZipFile { get; set; }
     public string UsuarioActualizacion { get; set; }
-    public string consultorAsignaciones { get; set; }
+
     public List<TicketConsultorAsignacionUpdateDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionUpdateDto>();
-    public string frenteSubFrentes { get; set; }
+
     public List<TicketFrenteSubFrenteUpdateDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteUpdateDto>();
 }
 

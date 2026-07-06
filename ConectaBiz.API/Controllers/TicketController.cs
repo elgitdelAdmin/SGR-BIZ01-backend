@@ -223,7 +223,7 @@ namespace ConectaBiz.API.Controllers
         /// </summary>
         [HttpPost]
         [RequestTimeout(120000)] // 2 minutos
-        public async Task<ActionResult<TicketDto>> Create([FromForm] TicketInsertDto insertDto)
+        public async Task<ActionResult<TicketDto>> Create([FromBody] TicketInsertDto insertDto)
         {
             try
             {
@@ -245,7 +245,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
         [HttpPut("{id}")]
-        public async Task<ActionResult<TicketDto>> Update(int id, [FromForm] TicketUpdateDto updateDto)
+        public async Task<ActionResult<TicketDto>> Update(int id, [FromBody] TicketUpdateDto updateDto)
         {
             try
             {
