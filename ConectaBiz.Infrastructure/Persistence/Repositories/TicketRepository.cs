@@ -217,7 +217,20 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             }
             catch (DbUpdateException ex)
             {
-                await File.AppendAllTextAsync(_rutaLog, ex.InnerException?.Message);
+                try
+                {
+                    var dir = Path.GetDirectoryName(_rutaLog);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    await File.AppendAllTextAsync(_rutaLog, (ex.InnerException?.Message ?? ex.Message) + Environment.NewLine);
+                }
+                catch
+                {
+                    var fallbackPath = Path.Combine(AppContext.BaseDirectory, "conectabiz-error.log");
+                    await File.AppendAllTextAsync(fallbackPath, (ex.InnerException?.Message ?? ex.Message) + Environment.NewLine);
+                }
                 throw;
             }
         }
@@ -274,7 +287,20 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             }
             catch (DbUpdateException ex)
             {
-                await File.AppendAllTextAsync(_rutaLog, ex.InnerException?.Message);
+                try
+                {
+                    var dir = Path.GetDirectoryName(_rutaLog);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    await File.AppendAllTextAsync(_rutaLog, (ex.InnerException?.Message ?? ex.Message) + Environment.NewLine);
+                }
+                catch
+                {
+                    var fallbackPath = Path.Combine(AppContext.BaseDirectory, "conectabiz-error.log");
+                    await File.AppendAllTextAsync(fallbackPath, (ex.InnerException?.Message ?? ex.Message) + Environment.NewLine);
+                }
                 throw;
             }
         }

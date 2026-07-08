@@ -388,11 +388,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
                 entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
                 entity.Property(e => e.IdTicketFrenteSubFrente).IsRequired();
+                entity.Property(e => e.IdTicketConsultorAsignacion).IsRequired(false);
 
                 entity.HasOne(d => d.TicketFrenteSubFrente)
                     .WithMany(p => p.DetallePlanificacionConsultor)
                     .HasForeignKey(d => d.IdTicketFrenteSubFrente)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(d => d.TicketConsultorAsignacion)
+                    .WithMany(p => p.DetallePlanificacionConsultor)
+                    .HasForeignKey(d => d.IdTicketConsultorAsignacion)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
             
             // Configuración de TicketFrenteSubFrente

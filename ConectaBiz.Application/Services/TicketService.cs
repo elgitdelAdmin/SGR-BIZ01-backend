@@ -550,7 +550,8 @@ namespace ConectaBiz.Application.Services
                 var asignacionesNuevas = _mapper.Map<List<TicketConsultorAsignacion>>(updateDto.ConsultorAsignaciones ?? new());
                 var nuevosIdsConsultores = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
 
-
+                // Vincular planificaciones con sus respectivas asignaciones de consultores
+                existingTicket.VincularPlanificacionesConAsignaciones();
 
                 // 3️⃣ Evaluar Transiciones Automáticas usando lógica de Dominio
                 bool huboCambiosAsignaciones = nuevosIdsConsultores.Any();

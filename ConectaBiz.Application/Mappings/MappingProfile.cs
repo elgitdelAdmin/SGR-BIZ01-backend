@@ -250,11 +250,13 @@ namespace ConectaBiz.Application.Mappings
             // DetallePlanificacionConsultor <-> DTO
             CreateMap<DetallePlanificacionConsultor, DetallePlanificacionConsultorDto>();
             CreateMap<DetallePlanificacionConsultorDto, DetallePlanificacionConsultor>()
-                .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore());
+                .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore())
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
 
             // Para updates específicamente
             CreateMap<DetallePlanificacionConsultorUpdateDto, DetallePlanificacionConsultor>()
-                .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore());
+                .ForMember(dest => dest.TicketFrenteSubFrente, opt => opt.Ignore())
+                .ForMember(dest => dest.TicketConsultorAsignacion, opt => opt.Ignore());
             CreateMap<DetallePlanificacionConsultor, DetallePlanificacionConsultorUpdateDto>();
 
             // Mapeos de TicketFrenteSubFrente

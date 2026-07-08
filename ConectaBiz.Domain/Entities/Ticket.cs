@@ -208,6 +208,10 @@ public class Ticket
                                     planExistente.Horas = planNuevo.Horas;
                                     planExistente.Descripcion = planNuevo.Descripcion;
                                     planExistente.Activo = planNuevo.Activo;
+                                    if (planNuevo.IdTicketConsultorAsignacion > 0)
+                                    {
+                                        planExistente.IdTicketConsultorAsignacion = planNuevo.IdTicketConsultorAsignacion;
+                                    }
                                 }
                             }
                         }
@@ -335,6 +339,52 @@ public class Ticket
         }
         return nuevosIdsConsultores;
     }
+    public void VincularPlanificacionesConAsignaciones()
+    {
+        foreach (var frente in this.FrenteSubFrentes.Where(f => f.Activo))
+        {
+            if (frente.DetallePlanificacionConsultor == null) continue;
+
+            var asignacionesFrente = this.ConsultorAsignaciones
+                .Where(a => a.Activo && (a.IdTicketFrenteSubFrente == frente.Id || a.TicketFrenteSubFrente == frente))
+                .ToList();
+
+            if (!asignacionesFrente.Any())
+            {
+                // Si no hay asignaciones para este frente, la planificación queda huérfana de asignación (IdTicketConsultorAsignacion = null)
+                foreach (var plan in frente.DetallePlanificacionConsultor.Where(p => p.Activo))
+                {
+                    plan.IdTicketConsultorAsignacion = null;
+                    plan.TicketConsultorAsignacion = null;
+                }
+                continue;
+            }
+
+            foreach (var plan in frente.DetallePlanificacionConsultor.Where(p => p.Activo))
+            {
+                if (plan.IdTicketConsultorAsignacion.HasValue && plan.IdTicketConsultorAsignacion.Value > 0)
+                {
+                    var matchingAsig = asignacionesFrente.FirstOrDefault(a => a.Id == plan.IdTicketConsultorAsignacion.Value);
+                    if (matchingAsig != null)
+                    {
+                        plan.TicketConsultorAsignacion = matchingAsig;
+                    }
+                }
+                else
+                {
+                    var defaultAsig = asignacionesFrente.First();
+                    if (defaultAsig.Id > 0)
+                    {
+                        plan.IdTicketConsultorAsignacion = defaultAsig.Id;
+                    }
+                    else
+                    {
+                        plan.TicketConsultorAsignacion = defaultAsig;
+                    }
+                }
+            }
+        }
+    }
 }
 
 public class TicketConsultorAsignacion
@@ -353,6 +403,7 @@ public class TicketConsultorAsignacion
     [ForeignKey(nameof(IdConsultor))]
     public virtual Consultor Consultor { get; set; } = null!;
     public ICollection<DetalleTareasConsultor> DetalleTareasConsultor { get; set; } = new List<DetalleTareasConsultor>();
+    public virtual ICollection<DetallePlanificacionConsultor> DetallePlanificacionConsultor { get; set; } = new List<DetallePlanificacionConsultor>();
     [ForeignKey(nameof(IdTicketFrenteSubFrente))]
     public virtual TicketFrenteSubFrente? TicketFrenteSubFrente { get; set; }
 }
@@ -372,6 +423,7 @@ public class DetallePlanificacionConsultor
 {
     public int Id { get; set; }
     public int IdTicketFrenteSubFrente { get; set; }
+    public int? IdTicketConsultorAsignacion { get; set; }
     public int IdTipoActividad { get; set; }
     public DateTime FechaInicio { get; set; }
     public DateTime FechaFin { get; set; }
@@ -379,6 +431,8 @@ public class DetallePlanificacionConsultor
     public string Descripcion { get; set; }
     public bool Activo { get; set; } = true;
     public TicketFrenteSubFrente? TicketFrenteSubFrente { get; set; }
+    [ForeignKey(nameof(IdTicketConsultorAsignacion))]
+    public TicketConsultorAsignacion? TicketConsultorAsignacion { get; set; }
 }
 public class TicketFrenteSubFrente
 {
