@@ -205,7 +205,8 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.MapFrom(src => src.ConsultorAsignaciones))
                 .ForMember(dest => dest.FrenteSubFrentes, opt => opt.MapFrom(src => src.FrenteSubFrentes))
                 .ForMember(dest => dest.Historial, opt => opt.MapFrom(src => src.TicketHistorialEstado))
-                .ForMember(dest => dest.Empresa, opt => opt.MapFrom(src => src.Empresa));
+                .ForMember(dest => dest.Empresa, opt => opt.MapFrom(src => src.Empresa))
+                .ForMember(dest => dest.IdGestoresSecundarios, opt => opt.MapFrom(src => src.GestorAsignaciones != null ? src.GestorAsignaciones.Where(ga => ga.Activo).Select(ga => ga.IdGestor).ToList() : new List<int>()));
 
             CreateMap<TicketDto, Ticket>()
                 .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.Ignore())

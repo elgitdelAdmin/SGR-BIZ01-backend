@@ -319,6 +319,23 @@ namespace ConectaBiz.Application.Services
                 ticket.Repositorios = insertDto.Repositorios;
                 ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
 
+                if (insertDto.IdGestoresSecundarios != null && insertDto.IdGestoresSecundarios.Any() && empresa.IdGestor.HasValue)
+                {
+                    foreach (var idGestor in insertDto.IdGestoresSecundarios)
+                    {
+                        if (idGestor == empresa.IdGestor.Value) continue;
+                        ticket.GestorAsignaciones.Add(new TicketGestorAsignacion
+                        {
+                            IdGestor = idGestor,
+                            IdGestorAsigno = empresa.IdGestor.Value,
+                            Activo = true,
+                            FechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                            FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                            UsuarioCreacion = insertDto.UsuarioCreacion
+                        });
+                    }
+                }
+
                 t0 = sw.ElapsedMilliseconds;
                 var createdTicket = await _ticketRepository.CreateAsync(ticket);
                 log.AppendLine($"DB Create Ticket ms={sw.ElapsedMilliseconds - t0}");
@@ -571,6 +588,16 @@ namespace ConectaBiz.Application.Services
                 );
 
                 existingTicket.ActualizarRepositorios(updateDto.Repositorios);
+
+                // 3.5️⃣ Sincronizar Gestores Secundarios
+                if (updateDto.IdGestoresSecundarios != null && existingTicket.Empresa.IdGestor.HasValue)
+                {
+                    existingTicket.ActualizarGestoresSecundarios(
+                        updateDto.IdGestoresSecundarios,
+                        existingTicket.Empresa.IdGestor.Value, // El Gestor Principal es quien ejecuta la acción
+                        updateDto.UsuarioActualizacion
+                    );
+                }
 
                 // Guardar cambios del ticket principal
                 await _ticketRepository.UpdateAsync(existingTicket);

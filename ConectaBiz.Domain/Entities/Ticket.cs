@@ -41,6 +41,7 @@ public class Ticket
     public virtual ICollection<TicketConsultorAsignacion> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacion>();
     public virtual ICollection<TicketFrenteSubFrente> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrente>();
     public virtual ICollection<TicketHistorialEstado> TicketHistorialEstado { get; set; } = new List<TicketHistorialEstado>();
+    public virtual ICollection<TicketGestorAsignacion> GestorAsignaciones { get; set; } = new List<TicketGestorAsignacion>();
 
     public void InicializarEstado(int idEstadoInicial, string usuario)
     {
@@ -385,6 +386,46 @@ public class Ticket
             }
         }
     }
+
+    public void ActualizarGestoresSecundarios(List<int> idsGestoresSecundarios, int idGestorAccion, string usuarioAccion)
+    {
+        if (idsGestoresSecundarios == null) return;
+
+        // Desactivar los que ya no están en la lista (que no sean el gestor principal)
+        foreach (var asig in this.GestorAsignaciones.Where(a => a.Activo))
+        {
+            if (!idsGestoresSecundarios.Contains(asig.IdGestor) && asig.IdGestor != this.Empresa.IdGestor)
+            {
+                asig.Activo = false;
+                asig.FechaDesasignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                asig.IdGestorDesasigno = idGestorAccion;
+                asig.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                asig.UsuarioModificacion = usuarioAccion;
+            }
+        }
+
+        // Agregar los nuevos
+        foreach (var idGestor in idsGestoresSecundarios)
+        {
+            // Ignorar al gestor principal si viene en la lista
+            if (this.Empresa != null && this.Empresa.IdGestor == idGestor) continue;
+
+            var existente = this.GestorAsignaciones.FirstOrDefault(a => a.IdGestor == idGestor && a.Activo);
+            if (existente == null)
+            {
+                this.GestorAsignaciones.Add(new TicketGestorAsignacion
+                {
+                    IdTicket = this.Id,
+                    IdGestor = idGestor,
+                    IdGestorAsigno = idGestorAccion,
+                    Activo = true,
+                    FechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                    FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                    UsuarioCreacion = usuarioAccion
+                });
+            }
+        }
+    }
 }
 
 public class TicketConsultorAsignacion
@@ -462,4 +503,32 @@ public class TicketHistorialEstado
     public DateTime FechaCambio { get; set; }
     public string? UsuarioCambio { get; set; }
     public virtual Ticket Ticket { get; set; } = null!;
+}
+
+public class TicketGestorAsignacion
+{
+    public int Id { get; set; }
+    public int IdTicket { get; set; }
+    public int IdGestor { get; set; }
+    public int IdGestorAsigno { get; set; }
+    public int? IdGestorDesasigno { get; set; }
+    public DateTime FechaAsignacion { get; set; } = DateTime.Now;
+    public DateTime? FechaDesasignacion { get; set; }
+    public bool Activo { get; set; } = true;
+    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime? FechaModificacion { get; set; }
+    public string? UsuarioCreacion { get; set; }
+    public string? UsuarioModificacion { get; set; }
+
+    [ForeignKey(nameof(IdTicket))]
+    public virtual Ticket Ticket { get; set; } = null!;
+    
+    [ForeignKey(nameof(IdGestor))]
+    public virtual Gestor Gestor { get; set; } = null!;
+    
+    [ForeignKey(nameof(IdGestorAsigno))]
+    public virtual Gestor GestorAsigno { get; set; } = null!;
+    
+    [ForeignKey(nameof(IdGestorDesasigno))]
+    public virtual Gestor? GestorDesasigno { get; set; }
 }

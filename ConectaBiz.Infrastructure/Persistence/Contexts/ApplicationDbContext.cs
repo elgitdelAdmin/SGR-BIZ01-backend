@@ -22,6 +22,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Parametro> Parametros { get; set; }
         public DbSet<Ticket> Ticket { get; set; }
         public DbSet<TicketConsultorAsignacion> TicketConsultorAsignacion { get; set; }
+        public DbSet<TicketGestorAsignacion> TicketGestorAsignacion { get; set; }
         public DbSet<DetalleTareasConsultor> DetalleTareasConsultor { get; set; }
         public DbSet<DetallePlanificacionConsultor> DetallePlanificacionConsultor { get; set; }
         public DbSet<TicketFrenteSubFrente> TicketFrenteSubFrente { get; set; }
@@ -687,6 +688,50 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
 
                 entity.HasIndex(e => new { e.IdUser, e.IdSocio }).HasDatabaseName("IX_URS_User_Socio");
                 entity.HasIndex(e => new { e.IdSocio, e.IdRol }).HasDatabaseName("IX_URS_Socio_Rol");
+            });
+
+            // Configuración de TicketGestorAsignacion
+            modelBuilder.Entity<TicketGestorAsignacion>(entity =>
+            {
+                entity.ToTable("TicketGestorAsignacion", "conectabiz");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.FechaAsignacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.FechaDesasignacion).HasColumnType("timestamp without time zone");
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.FechaModificacion).HasColumnType("timestamp without time zone");
+                
+                entity.Property(e => e.UsuarioCreacion).HasMaxLength(50);
+                entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
+                entity.Property(e => e.Activo).HasDefaultValue(true).IsRequired();
+
+                entity.HasOne(e => e.Ticket)
+                    .WithMany(t => t.GestorAsignaciones)
+                    .HasForeignKey(e => e.IdTicket)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_TGA_Ticket");
+
+                entity.HasOne(e => e.Gestor)
+                    .WithMany(g => g.TicketsAsignadosSecundarios)
+                    .HasForeignKey(e => e.IdGestor)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_TGA_Gestor");
+
+                entity.HasOne(e => e.GestorAsigno)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdGestorAsigno)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TGA_GestorAsigno");
+
+                entity.HasOne(e => e.GestorDesasigno)
+                    .WithMany()
+                    .HasForeignKey(e => e.IdGestorDesasigno)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_TGA_GestorDesasigno");
+
+                entity.HasIndex(e => new { e.IdTicket, e.IdGestor }).HasDatabaseName("UX_TGA_IdTicket_IdGestor_Activo").IsUnique().HasFilter("\"Activo\" = true");
+                entity.HasIndex(e => e.IdTicket).HasDatabaseName("IX_TGA_IdTicket");
+                entity.HasIndex(e => e.IdGestor).HasDatabaseName("IX_TGA_IdGestor");
             });
         }
     }

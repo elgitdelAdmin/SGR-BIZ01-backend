@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,5 +25,6 @@ namespace ConectaBiz.Domain.Entities
         public virtual Socio Socio { get; set; }
         public virtual ICollection<Empresa> Empresas { get; set; } = new List<Empresa>();
         public virtual ICollection<GestorFrenteSubFrente> GestorFrenteSubFrente { get; set; } = new List<GestorFrenteSubFrente>();
+        public virtual ICollection<TicketGestorAsignacion> TicketsAsignadosSecundarios { get; set; } = new List<TicketGestorAsignacion>();
     }
 }

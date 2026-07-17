@@ -74,6 +74,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .Include(t => t.TicketHistorialEstado)
                 .Include(t => t.Empresa)
+                .Include(t => t.GestorAsignaciones)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -150,7 +151,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor, int? idSocio = null)
         {
             var query = _context.Ticket
-                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor);
+                .Where(t => (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor) || 
+                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
 
             if (idSocio.HasValue && idSocio.Value > 0)
             {
@@ -375,7 +377,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public IQueryable<Ticket> GetQueryableByGestor(int idGestor, int? idSocio = null)
         {
             var query = _context.Ticket
-                .Where(t => t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor);
+                .Where(t => (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor) || 
+                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
 
             if (idSocio.HasValue && idSocio.Value > 0)
             {

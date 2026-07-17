@@ -40,6 +40,7 @@ public class TicketDto
     public virtual List<TicketConsultorAsignacionDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionDto>();
     public virtual List<TicketFrenteSubFrenteDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteDto>();
     public virtual List<TicketHistorialEstadoDto> Historial { get; set; } = new List<TicketHistorialEstadoDto>();
+    public List<int> IdGestoresSecundarios { get; set; } = new List<int>();
 }
 public class TicketConsultorAsignacionDto
 {
@@ -166,6 +167,7 @@ public class TicketInsertDto
     //public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
     //public string frenteSubFrentes { get; set; }
     //public List<TicketFrenteSubFrenteInsertDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteInsertDto>();
+    public List<int>? IdGestoresSecundarios { get; set; }
 }
 
 public class TicketUpdateDto
@@ -188,6 +190,7 @@ public class TicketUpdateDto
     public List<TicketConsultorAsignacionUpdateDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionUpdateDto>();
 
     public List<TicketFrenteSubFrenteUpdateDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteUpdateDto>();
+    public List<int>? IdGestoresSecundarios { get; set; }
 }
 
 // ===== TICKET FRENTE SUB FRENTE DTOs =====
