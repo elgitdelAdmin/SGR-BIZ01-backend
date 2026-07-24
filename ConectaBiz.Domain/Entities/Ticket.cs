@@ -391,10 +391,19 @@ public class Ticket
     {
         if (idsGestoresSecundarios == null) return;
 
-        // Desactivar los que ya no están en la lista (que no sean el gestor principal)
+        var gestoresEmpresaIds = this.Empresa != null && this.Empresa.EmpresaGestores != null
+            ? this.Empresa.EmpresaGestores.Where(eg => eg.Activo).Select(eg => eg.IdGestor).ToList()
+            : new List<int>();
+
+        if (this.Empresa?.IdGestor != null && !gestoresEmpresaIds.Contains(this.Empresa.IdGestor.Value))
+        {
+            gestoresEmpresaIds.Add(this.Empresa.IdGestor.Value);
+        }
+
+        // Desactivar los que ya no están en la lista (que no pertenezcan a la empresa)
         foreach (var asig in this.GestorAsignaciones.Where(a => a.Activo))
         {
-            if (!idsGestoresSecundarios.Contains(asig.IdGestor) && asig.IdGestor != this.Empresa.IdGestor)
+            if (!idsGestoresSecundarios.Contains(asig.IdGestor) && !gestoresEmpresaIds.Contains(asig.IdGestor))
             {
                 asig.Activo = false;
                 asig.FechaDesasignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
@@ -404,11 +413,11 @@ public class Ticket
             }
         }
 
-        // Agregar los nuevos
+        // Agregar los nuevos (excluyendo a los que ya pertenecen a la empresa)
         foreach (var idGestor in idsGestoresSecundarios)
         {
-            // Ignorar al gestor principal si viene en la lista
-            if (this.Empresa != null && this.Empresa.IdGestor == idGestor) continue;
+            // Ignorar al gestor si ya pertenece a la empresa
+            if (gestoresEmpresaIds.Contains(idGestor)) continue;
 
             var existente = this.GestorAsignaciones.FirstOrDefault(a => a.IdGestor == idGestor && a.Activo);
             if (existente == null)

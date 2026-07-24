@@ -48,6 +48,7 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<ITicketFrenteSubFrenteRepository, TicketFrenteSubFrenteRepository>();
             services.AddScoped<ITicketHistorialRepository, TicketHistorialRepository>();
             services.AddScoped<IEmpresaRepository, EmpresaRepository>();
+            services.AddScoped<IEmpresaGestorRepository, EmpresaGestorRepository>();
             services.AddScoped<IPaisRepository, PaisRepository>();
             services.AddScoped<IGestorRepository, GestorRepository>();
             services.AddScoped<IGestorFrenteSubFrenteRepository, GestorFrenteSubFrenteRepository>();

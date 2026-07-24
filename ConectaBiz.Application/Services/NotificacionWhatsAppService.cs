@@ -141,14 +141,34 @@ namespace ConectaBiz.Application.Services
         {
             _logger.LogInformation("Iniciando FASE 1: Notificar a cada Gestor de Cuenta...");
 
-            // Agrupar los tickets por el gestor de la empresa
-            var ticketsAgrupadosPorGestor = ticketsPendientes
-                .Where(t => t.Empresa != null && t.Empresa.IdGestor.HasValue && t.Empresa.Gestor != null)
-                .GroupBy(t => t.Empresa.IdGestor.Value);
+            // Mapear cada ticket a sus gestores activos (vía EmpresaGestores o fallback a Gestor directo)
+            var ticketsPorGestor = new Dictionary<ConectaBiz.Domain.Entities.Gestor, List<ConectaBiz.Domain.Entities.Ticket>>();
 
-            foreach (var grupo in ticketsAgrupadosPorGestor)
+            foreach (var ticket in ticketsPendientes)
             {
-                var gestor = grupo.First().Empresa.Gestor;
+                if (ticket.Empresa == null) continue;
+
+                var gestoresActivos = ticket.Empresa.EmpresaGestores != null && ticket.Empresa.EmpresaGestores.Any(eg => eg.Activo)
+                    ? ticket.Empresa.EmpresaGestores.Where(eg => eg.Activo && eg.Gestor != null).Select(eg => eg.Gestor).ToList()
+                    : (ticket.Empresa.Gestor != null ? new List<ConectaBiz.Domain.Entities.Gestor> { ticket.Empresa.Gestor } : new List<ConectaBiz.Domain.Entities.Gestor>());
+
+                foreach (var gestor in gestoresActivos)
+                {
+                    if (!ticketsPorGestor.ContainsKey(gestor))
+                    {
+                        ticketsPorGestor[gestor] = new List<ConectaBiz.Domain.Entities.Ticket>();
+                    }
+                    if (!ticketsPorGestor[gestor].Contains(ticket))
+                    {
+                        ticketsPorGestor[gestor].Add(ticket);
+                    }
+                }
+            }
+
+            foreach (var kvp in ticketsPorGestor)
+            {
+                var gestor = kvp.Key;
+                var grupo = kvp.Value;
                 var persona = gestor.Persona;
 
                 var nombreGestor = persona != null

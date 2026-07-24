@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -26,6 +26,9 @@ namespace ConectaBiz.Application.DTOs
         public string? NombrePais { get; set; }
         public int? IdGestor { get; set; }
         public string? NombreGestor { get; set; }
+        public int? IdGestorPrincipal { get; set; }
+        public string? NombreGestorPrincipal { get; set; }
+        public List<EmpresaGestorDto> Gestores { get; set; } = new List<EmpresaGestorDto>();
         public int IdSocio { get; set; }
         public string? NombreSocio { get; set; }
         public int IdPersonaResponsable { get; set; }
@@ -49,6 +52,8 @@ namespace ConectaBiz.Application.DTOs
         public string? UsuarioRegistro { get; set; }
         public int? IdPais { get; set; }
         public int? IdGestor { get; set; }
+        public int? IdGestorPrincipal { get; set; }
+        public List<int>? IdsGestores { get; set; }
         public int IdSocio { get; set; }
         public int? IdUser { get; set; }
         public CreatePersonaDto? Persona { get; set; }
@@ -67,6 +72,8 @@ namespace ConectaBiz.Application.DTOs
         public string? UsuarioModificacion { get; set; }
         public int? IdPais { get; set; }
         public int? IdGestor { get; set; }
+        public int? IdGestorPrincipal { get; set; }
+        public List<int>? IdsGestores { get; set; }
         public int IdSocio { get; set; }
         public int? IdUser { get; set; }
         public string? CargoResponsable { get; set; }

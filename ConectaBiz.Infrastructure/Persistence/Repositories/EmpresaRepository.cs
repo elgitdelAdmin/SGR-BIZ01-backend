@@ -28,6 +28,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable) 
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -39,17 +42,23 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
         public async Task<IEnumerable<Empresa>> GetByIdGestorCuenta(int idGestorCuenta, int IdSocio)
         {
             return await _context.Empresas
-                .Where(e => e.Activo && e.IdGestor == idGestorCuenta && e.IdSocio == IdSocio)
+                .Where(e => e.Activo && e.IdSocio == IdSocio && (e.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestorCuenta) || e.IdGestor == idGestorCuenta))
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -61,6 +70,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -76,6 +88,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                         .Include(e => e.Gestor)
                         .Include(e => e.PersonaResponsable)
                         .Include(e => e.Socio)
+                        .Include(e => e.EmpresaGestores)
+                            .ThenInclude(eg => eg.Gestor)
+                                .ThenInclude(g => g.Persona)
                         .FirstOrDefaultAsync(e => e.Id == id);
                 }
                 catch (Exception) when (retry < 2)
@@ -97,7 +112,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.IdUser == iduser);
         }
         public async Task<Empresa?> GetByNumDocContribuyenteAsync(string numDocContribuyente, string numDocSocio)
@@ -108,6 +125,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.NumDocContribuyente == numDocContribuyente
                                           && e.Socio != null
                                           && e.Socio.NumDocContribuyente == numDocSocio);
@@ -121,6 +141,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.NumDocContribuyente == numDocContribuyente);
         }
 
@@ -130,7 +153,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.Codigo == codigo);
         }
 
@@ -141,7 +166,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }
@@ -149,11 +176,13 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Empresa>> GetByGestorAsync(int idGestor)
         {
             return await _context.Empresas
-                .Where(e => e.IdGestor == idGestor)
+                .Where(e => e.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor) || e.IdGestor == idGestor)
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                //.Include(e => e.Socio)
+                .Include(e => e.EmpresaGestores)
+                    .ThenInclude(eg => eg.Gestor)
+                        .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
         }

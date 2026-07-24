@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -36,6 +36,7 @@ namespace ConectaBiz.Domain.Entities
         public virtual Gestor? Gestor { get; set; }
         public virtual Socio? Socio { get; set; }
         public virtual Persona? PersonaResponsable { get; set; }
+        public virtual ICollection<EmpresaGestor> EmpresaGestores { get; set; } = new List<EmpresaGestor>();
     }
 
 }

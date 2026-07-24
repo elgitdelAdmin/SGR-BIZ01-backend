@@ -36,6 +36,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Socio> Socios { get; set; }
         public DbSet<NotificacionTicket> NotificacionTickets { get; set; }
         public DbSet<UserRolSocio> UserRolSocios { get; set; }
+        public DbSet<EmpresaGestor> EmpresaGestores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -518,6 +519,45 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                    .HasPrincipalKey(p => p.Id)
                    .OnDelete(DeleteBehavior.Restrict)
                    .HasConstraintName("FK_Empresa_PersonaResponsable");
+            });
+
+            // Configuración de la entidad EmpresaGestor
+            modelBuilder.Entity<EmpresaGestor>(entity =>
+            {
+                entity.ToTable("EmpresaGestor", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.IdEmpresa).IsRequired().HasColumnName("IdEmpresa");
+                entity.Property(e => e.IdGestor).IsRequired().HasColumnName("IdGestor");
+                entity.Property(e => e.EsPrincipal).IsRequired().HasColumnName("EsPrincipal").HasDefaultValue(false);
+                entity.Property(e => e.Activo).IsRequired().HasColumnName("Activo").HasDefaultValue(true);
+                entity.Property(e => e.FechaAsignacion).IsRequired().HasColumnName("FechaAsignacion").HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
+                entity.Property(e => e.FechaDesasignacion).HasColumnName("FechaDesasignacion").HasColumnType("timestamp without time zone");
+                entity.Property(e => e.FechaCreacion).IsRequired().HasColumnName("FechaCreacion").HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
+                entity.Property(e => e.FechaModificacion).HasColumnName("FechaModificacion").HasColumnType("timestamp without time zone");
+                entity.Property(e => e.UsuarioCreacion).HasMaxLength(50).HasColumnName("UsuarioCreacion");
+                entity.Property(e => e.UsuarioModificacion).HasMaxLength(50).HasColumnName("UsuarioModificacion");
+
+                entity.HasOne(eg => eg.Empresa)
+                    .WithMany(e => e.EmpresaGestores)
+                    .HasForeignKey(eg => eg.IdEmpresa)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_EG_Empresa");
+
+                entity.HasOne(eg => eg.Gestor)
+                    .WithMany(g => g.EmpresaGestores)
+                    .HasForeignKey(eg => eg.IdGestor)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_EG_Gestor");
+
+                entity.HasIndex(eg => new { eg.IdEmpresa, eg.IdGestor })
+                    .HasDatabaseName("UX_EG_IdEmpresa_IdGestor_Activo")
+                    .IsUnique()
+                    .HasFilter("\"Activo\" = true");
+
+                entity.HasIndex(eg => eg.IdEmpresa)
+                    .HasDatabaseName("UX_EG_IdEmpresa_Principal_Activo")
+                    .IsUnique()
+                    .HasFilter("\"Activo\" = true AND \"EsPrincipal\" = true");
             });
 
             // Configuración de la entidad Gestor

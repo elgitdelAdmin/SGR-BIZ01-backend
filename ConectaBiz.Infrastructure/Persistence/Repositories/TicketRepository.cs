@@ -151,7 +151,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Ticket>> GetByGestorAsync(int idGestor, int? idSocio = null)
         {
             var query = _context.Ticket
-                .Where(t => (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor) || 
+                .Where(t => (t.Empresa != null && (t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor) || (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor))) || 
                             t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
 
             if (idSocio.HasValue && idSocio.Value > 0)
@@ -161,6 +161,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
             return await query
                 .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
@@ -377,7 +378,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         public IQueryable<Ticket> GetQueryableByGestor(int idGestor, int? idSocio = null)
         {
             var query = _context.Ticket
-                .Where(t => (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor) || 
+                .Where(t => (t.Empresa != null && (t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor) || (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor))) || 
                             t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
 
             if (idSocio.HasValue && idSocio.Value > 0)
@@ -389,6 +390,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }

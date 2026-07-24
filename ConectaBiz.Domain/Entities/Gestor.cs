@@ -26,5 +26,6 @@ namespace ConectaBiz.Domain.Entities
         public virtual ICollection<Empresa> Empresas { get; set; } = new List<Empresa>();
         public virtual ICollection<GestorFrenteSubFrente> GestorFrenteSubFrente { get; set; } = new List<GestorFrenteSubFrente>();
         public virtual ICollection<TicketGestorAsignacion> TicketsAsignadosSecundarios { get; set; } = new List<TicketGestorAsignacion>();
+        public virtual ICollection<EmpresaGestor> EmpresaGestores { get; set; } = new List<EmpresaGestor>();
     }
 }

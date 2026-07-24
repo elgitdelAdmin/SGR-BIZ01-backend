@@ -288,17 +288,27 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<UpdatePaisDto, Pais>()
                 .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => DateTime.Now));
 
+            CreateMap<EmpresaGestor, EmpresaGestorDto>()
+                .ForMember(dest => dest.NombreGestor, opt => opt.MapFrom(src => src.Gestor != null && src.Gestor.Persona != null
+                    ? $"{src.Gestor.Persona.Nombres} {src.Gestor.Persona.ApellidoPaterno} {src.Gestor.Persona.ApellidoMaterno}".Trim()
+                    : null));
+
             // Mapeo de Empresa
             CreateMap<Empresa, EmpresaDto>()
                 .ForMember(dest => dest.NombrePais, opt => opt.MapFrom(src => src.Pais != null ? src.Pais.Nombre : null))
                 .ForMember(dest => dest.NombreGestor, opt => opt.MapFrom(src => src.Gestor != null && src.Gestor.Persona != null
                     ? $"{src.Gestor.Persona.Nombres} {src.Gestor.Persona.ApellidoPaterno} {src.Gestor.Persona.ApellidoMaterno}".Trim()
                     : null))
-              .ForMember(dest => dest.NombrePersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable != null
+                .ForMember(dest => dest.NombrePersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable != null
                     ? $"{src.PersonaResponsable.Nombres} {src.PersonaResponsable.ApellidoPaterno} {src.PersonaResponsable.ApellidoMaterno}".Trim()
                     : null))
-                 .ForMember(dest => dest.PersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable))
-                 .ForMember(dest => dest.NombreSocio, opt => opt.MapFrom(src => src.Socio != null ? src.Socio.NombreComercial : null));
+                .ForMember(dest => dest.PersonaResponsable, opt => opt.MapFrom(src => src.PersonaResponsable))
+                .ForMember(dest => dest.NombreSocio, opt => opt.MapFrom(src => src.Socio != null ? src.Socio.NombreComercial : null))
+                .ForMember(dest => dest.Gestores, opt => opt.MapFrom(src => src.EmpresaGestores))
+                .ForMember(dest => dest.IdGestorPrincipal, opt => opt.MapFrom(src => src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal) != null ? src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.IdGestor : src.IdGestor))
+                .ForMember(dest => dest.NombreGestorPrincipal, opt => opt.MapFrom(src => src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal) != null && src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.Gestor != null && src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.Gestor.Persona != null
+                    ? $"{src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.Gestor.Persona.Nombres} {src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.Gestor.Persona.ApellidoPaterno} {src.EmpresaGestores.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)!.Gestor.Persona.ApellidoMaterno}".Trim()
+                    : null));
 
 
             CreateMap<CreateEmpresaDto, Empresa>()

@@ -19,6 +19,7 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly IGestorService _gestorService;
         private readonly IAuthService _userService;
+        private readonly IEmpresaGestorRepository _empresaGestorRepository;
         private readonly IMapper _mapper;
 
         public EmpresaService(
@@ -27,6 +28,7 @@ namespace ConectaBiz.Application.Services
             IPersonaService personaService,
             IGestorService gestorService,
             IAuthService userService,
+            IEmpresaGestorRepository empresaGestorRepository,
             IMapper mapper)
         {
             _empresaRepository = empresaRepository;
@@ -34,6 +36,7 @@ namespace ConectaBiz.Application.Services
             _personaService = personaService;
             _gestorService = gestorService;
             _userService = userService;
+            _empresaGestorRepository = empresaGestorRepository;
             _mapper = mapper;
         }
 
@@ -194,6 +197,14 @@ namespace ConectaBiz.Application.Services
             // Crear la empresa
             var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
 
+            // Sincronizar gestores asociados
+            var idsGestores = createDto.IdsGestores ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? new List<int> { createDto.IdGestor.Value } : new List<int>());
+            var idPrincipal = createDto.IdGestorPrincipal ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? createDto.IdGestor : null);
+            if (idsGestores.Any() || idPrincipal.HasValue)
+            {
+                await _empresaGestorRepository.SincronizarGestoresEmpresaAsync(createdEmpresa.Id, idsGestores, idPrincipal, createDto.UsuarioRegistro ?? "Sistema");
+            }
+
             // Obtener la empresa creada con las relaciones
             var empresaWithRelations = await _empresaRepository.GetByIdAsync(createdEmpresa.Id);
             return _mapper.Map<EmpresaDto>(empresaWithRelations);
@@ -260,6 +271,14 @@ namespace ConectaBiz.Application.Services
 
             // Actualizar la empresa
             var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);
+
+            // Sincronizar gestores asociados
+            var idsGestores = updateDto.IdsGestores ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? new List<int> { updateDto.IdGestor.Value } : new List<int>());
+            var idPrincipal = updateDto.IdGestorPrincipal ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? updateDto.IdGestor : null);
+            if (updateDto.IdsGestores != null || updateDto.IdGestorPrincipal != null || updateDto.IdGestor != null)
+            {
+                await _empresaGestorRepository.SincronizarGestoresEmpresaAsync(updatedEmpresa.Id, idsGestores, idPrincipal, updateDto.UsuarioModificacion ?? "Sistema");
+            }
 
             // Obtener la empresa actualizada con las relaciones
             var empresaWithRelations = await _empresaRepository.GetByIdAsync(updatedEmpresa.Id);

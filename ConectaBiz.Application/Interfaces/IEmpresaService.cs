@@ -26,6 +26,5 @@ namespace ConectaBiz.Application.Interfaces
         Task<EmpresaDto> UpdateAsync(int id, UpdateEmpresaDto updateDto);
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null);
-
     }
 }

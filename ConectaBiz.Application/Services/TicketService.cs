@@ -319,15 +319,28 @@ namespace ConectaBiz.Application.Services
                 ticket.Repositorios = insertDto.Repositorios;
                 ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
 
-                if (insertDto.IdGestoresSecundarios != null && insertDto.IdGestoresSecundarios.Any() && empresa.IdGestor.HasValue)
+                var gestoresEmpresaActivos = empresa.EmpresaGestores != null
+                    ? empresa.EmpresaGestores.Where(eg => eg.Activo).Select(eg => eg.IdGestor).ToList()
+                    : new List<int>();
+
+                if (empresa.IdGestor.HasValue && !gestoresEmpresaActivos.Contains(empresa.IdGestor.Value))
+                {
+                    gestoresEmpresaActivos.Add(empresa.IdGestor.Value);
+                }
+
+                int idGestorPrincipalEmpresa = empresa.EmpresaGestores?.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)?.IdGestor 
+                                            ?? empresa.IdGestor 
+                                            ?? 0;
+
+                if (insertDto.IdGestoresSecundarios != null && insertDto.IdGestoresSecundarios.Any())
                 {
                     foreach (var idGestor in insertDto.IdGestoresSecundarios)
                     {
-                        if (idGestor == empresa.IdGestor.Value) continue;
+                        if (gestoresEmpresaActivos.Contains(idGestor)) continue;
                         ticket.GestorAsignaciones.Add(new TicketGestorAsignacion
                         {
                             IdGestor = idGestor,
-                            IdGestorAsigno = empresa.IdGestor.Value,
+                            IdGestorAsigno = idGestorPrincipalEmpresa,
                             Activo = true,
                             FechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
                             FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
@@ -590,11 +603,29 @@ namespace ConectaBiz.Application.Services
                 existingTicket.ActualizarRepositorios(updateDto.Repositorios);
 
                 // 3.5️⃣ Sincronizar Gestores Secundarios
-                if (updateDto.IdGestoresSecundarios != null && existingTicket.Empresa.IdGestor.HasValue)
+                if (updateDto.IdGestoresSecundarios != null && existingTicket.Empresa != null)
                 {
+                    int idGestorPrincipalAccion = existingTicket.Empresa.EmpresaGestores?.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)?.IdGestor 
+                                                ?? existingTicket.Empresa.IdGestor 
+                                                ?? 0;
+
+                    var gestoresEmpresaActivos = existingTicket.Empresa.EmpresaGestores != null
+                        ? existingTicket.Empresa.EmpresaGestores.Where(eg => eg.Activo).Select(eg => eg.IdGestor).ToList()
+                        : new List<int>();
+
+                    if (existingTicket.Empresa.IdGestor.HasValue && !gestoresEmpresaActivos.Contains(existingTicket.Empresa.IdGestor.Value))
+                    {
+                        gestoresEmpresaActivos.Add(existingTicket.Empresa.IdGestor.Value);
+                    }
+
+                    // Filtrar gestores secundarios que no pertenezcan ya a la empresa
+                    var gestoresPuntualesPermitidos = updateDto.IdGestoresSecundarios
+                        .Where(idG => !gestoresEmpresaActivos.Contains(idG))
+                        .ToList();
+
                     existingTicket.ActualizarGestoresSecundarios(
-                        updateDto.IdGestoresSecundarios,
-                        existingTicket.Empresa.IdGestor.Value, // El Gestor Principal es quien ejecuta la acción
+                        gestoresPuntualesPermitidos,
+                        idGestorPrincipalAccion,
                         updateDto.UsuarioActualizacion
                     );
                 }
