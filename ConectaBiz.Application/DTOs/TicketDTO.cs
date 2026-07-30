@@ -13,8 +13,8 @@ namespace ConectaBiz.Application.DTOs;
 public class TicketDto
 {
     public int Id { get; set; }
-    public int? HorasTrabajadas { get; set; }
-    public int? HorasPlanificadas { get; set; }
+    public decimal? HorasTrabajadas { get; set; }
+    public decimal? HorasPlanificadas { get; set; }
     public string CodTicket { get; set; } = string.Empty;
     public string CodTicketInterno { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;

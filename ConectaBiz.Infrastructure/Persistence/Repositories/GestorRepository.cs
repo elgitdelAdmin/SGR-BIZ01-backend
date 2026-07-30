@@ -37,7 +37,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
-                .Where(g => g.Activo && g.IdSocio == idSocio)
+                .Where(g => g.Activo && (g.IdSocio == idSocio || g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio))))
                 .OrderBy(g => g.Persona.Nombres)
                 .ThenBy(g => g.Persona.ApellidoPaterno)
                 .ToListAsync();
@@ -70,7 +70,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                  .Where(g =>
                     g.Activo &&
-                    g.IdSocio == idSocio &&
+                    (g.IdSocio == idSocio || g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio))) &&
                     g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdRol == idRol && urs.IdSocio == idSocio))
                 )
                 .ToListAsync();

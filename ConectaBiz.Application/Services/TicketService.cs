@@ -159,10 +159,10 @@ namespace ConectaBiz.Application.Services
                 {
                     t.HorasTrabajadas = t.ConsultorAsignaciones
                         .SelectMany(ca => ca.DetalleTareasConsultor)
-                        .Sum(dt => (int?)dt.Horas) ?? 0;
-                    t.HorasPlanificadas = t.ConsultorAsignaciones
-                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                      .Sum(dt => (int?)dt.Horas) ?? 0;
+                        .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
+                    t.HorasPlanificadas = t.FrenteSubFrentes
+                      .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                      .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                     return t;
                 })
                 .ToList();
@@ -180,10 +180,10 @@ namespace ConectaBiz.Application.Services
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
-                       .Sum(dt => (int?)dt.Horas) ?? 0;
-                   t.HorasPlanificadas = t.ConsultorAsignaciones
-                     .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                     .Sum(dt => (int?)dt.Horas) ?? 0;
+                       .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
+                   t.HorasPlanificadas = t.FrenteSubFrentes
+                     .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                     .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                    return t;
                })
                .ToList();
@@ -201,12 +201,12 @@ namespace ConectaBiz.Application.Services
                       t.HorasTrabajadas = t.ConsultorAsignaciones
                           .Where(ca => ca.IdConsultor == consultorDto.Id)
                           .SelectMany(ca => ca.DetalleTareasConsultor)
-                          .Sum(dt => (int?)dt.Horas ?? 0);
+                          .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
 
-                      t.HorasPlanificadas = t.ConsultorAsignaciones
-                        .Where(ca => ca.IdConsultor == consultorDto.Id)
-                        .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                        .Sum(dt => (int?)dt.Horas ?? 0);
+                      t.HorasPlanificadas = t.FrenteSubFrentes
+                        .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                        // Aqui idealmente deberiamos filtrar por consultor, pero DetallePlanificacion no tiene IdConsultor en el DTO sin pasar por la asignación. Como el UI actual asocia la planificacíon al frente entero:
+                        .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                       return t;
                   })
                   .ToList();
@@ -222,10 +222,10 @@ namespace ConectaBiz.Application.Services
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
-                       .Sum(dt => (int?)dt.Horas) ?? 0;
-                   t.HorasPlanificadas = t.ConsultorAsignaciones
-                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                      .Sum(dt => (int?)dt.Horas) ?? 0;
+                       .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
+                   t.HorasPlanificadas = t.FrenteSubFrentes
+                      .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                      .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                    return t;
                })
                .ToList();
@@ -241,10 +241,10 @@ namespace ConectaBiz.Application.Services
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
-                       .Sum(dt => (int?)dt.Horas) ?? 0;
-                   t.HorasPlanificadas = t.ConsultorAsignaciones
-                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                      .Sum(dt => (int?)dt.Horas) ?? 0;
+                       .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
+                   t.HorasPlanificadas = t.FrenteSubFrentes
+                      .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                      .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                    return t;
                })
                .ToList();
@@ -259,10 +259,10 @@ namespace ConectaBiz.Application.Services
                {
                    t.HorasTrabajadas = t.ConsultorAsignaciones
                        .SelectMany(ca => ca.DetalleTareasConsultor)
-                       .Sum(dt => (int?)dt.Horas) ?? 0;
-                   t.HorasPlanificadas = t.ConsultorAsignaciones
-                      .SelectMany(ca => ca.DetallePlanificacionConsultor)
-                      .Sum(dt => (int?)dt.Horas) ?? 0;
+                       .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
+                   t.HorasPlanificadas = t.FrenteSubFrentes
+                      .SelectMany(fsf => fsf.DetallePlanificacionConsultor)
+                      .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
                    return t;
                })
                .ToList();
@@ -987,7 +987,7 @@ namespace ConectaBiz.Application.Services
             var planHorasByTicket = planningEntities
                 .Where(p => p.Activo && frenteToTicketMap.ContainsKey(p.IdTicketFrenteSubFrente))
                 .GroupBy(p => frenteToTicketMap[p.IdTicketFrenteSubFrente])
-                .ToDictionary(g => g.Key, g => g.Sum(p => (int)p.Horas));
+                .ToDictionary(g => g.Key, g => g.Sum(p => Math.Round(p.Horas * 60m)) / 60m);
 
             // 8) Mapear a DTO ligero
             var items = tickets.Select(t =>
@@ -995,9 +995,9 @@ namespace ConectaBiz.Application.Services
                 var horasTrabajadas = t.ConsultorAsignaciones
                     .Where(ca => ca.Activo)
                     .SelectMany(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
-                    .Sum(dt => (int?)dt.Horas) ?? 0;
+                    .Sum(dt => Math.Round(dt.Horas * 60m)) / 60m;
 
-                var horasPlanificadas = planHorasByTicket.TryGetValue(t.Id, out int hPlan) ? hPlan : 0;
+                var horasPlanificadas = planHorasByTicket.TryGetValue(t.Id, out decimal hPlan) ? hPlan : 0m;
 
                 return new TicketListItemDto
                 {

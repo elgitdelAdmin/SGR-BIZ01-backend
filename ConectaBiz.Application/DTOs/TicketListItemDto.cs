@@ -21,7 +21,7 @@ public class TicketListItemDto
     /// Nombres completos de los consultores asignados al ticket (separados por coma).
     /// </summary>
     public string? NombreConsultores { get; set; }
-    public int HorasTrabajadas { get; set; }
-    public int HorasPlanificadas { get; set; }
+    public decimal HorasTrabajadas { get; set; }
+    public decimal HorasPlanificadas { get; set; }
     public DateTime? FechaCreacion { get; set; }
 }

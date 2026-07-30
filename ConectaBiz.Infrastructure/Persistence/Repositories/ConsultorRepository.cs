@@ -64,7 +64,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                      .ThenInclude(cf => cf.Frente)
                  .Include(c => c.ConsultorFrenteSubFrente.Where(cf => cf.Activo))
                      .ThenInclude(cf => cf.SubFrente)
-                 .Where(c => c.Activo && c.IdSocio == idSocio)
+                 .Where(c => c.Activo && (c.IdSocio == idSocio || c.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio))))
                  .AsNoTracking()
                  .ToListAsync();
             }
