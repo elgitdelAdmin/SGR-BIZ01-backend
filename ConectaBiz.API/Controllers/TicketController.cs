@@ -149,7 +149,8 @@ namespace ConectaBiz.API.Controllers
             [FromQuery] string? gestor = null,
             [FromQuery] string? prioridad = null,
             [FromQuery] string? estado = null,
-            [FromQuery] string? nombreConsultor = null
+            [FromQuery] string? nombreConsultor = null,
+            [FromQuery] string? tipoSubtipo = null
             )
         {
             try
@@ -171,7 +172,7 @@ namespace ConectaBiz.API.Controllers
                     idUser, codRol, idSocio, page, pageSize,
                     estadoIdsList, globalFilter, sortField, sortOrder,
                     codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado,
-                    nombreConsultor);
+                    nombreConsultor, tipoSubtipo);
 
                 return Ok(result);
             }

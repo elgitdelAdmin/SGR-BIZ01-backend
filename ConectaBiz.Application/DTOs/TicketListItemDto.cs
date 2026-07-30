@@ -10,6 +10,11 @@ public class TicketListItemDto
     public string CodTicketInterno { get; set; } = string.Empty;
     public string Titulo { get; set; } = string.Empty;
     public DateTime FechaSolicitud { get; set; }
+    public int IdTipoTicket { get; set; }
+    public string? TipoTicketNombre { get; set; }
+    public int? IdSubTipoTicket { get; set; }
+    public string? SubTipoTicketNombre { get; set; }
+    public string? TipoSubtipoNombre { get; set; }
     public int IdEstadoTicket { get; set; }
     public string EstadoNombre { get; set; } = string.Empty;
     public int IdPrioridad { get; set; }

@@ -43,6 +43,7 @@ namespace ConectaBiz.Application.Interfaces
             string? gestor = null,
             string? prioridad = null,
             string? estado = null,
-            string? nombreConsultor = null);
+            string? nombreConsultor = null,
+            string? tipoSubtipo = null);
     }
 }

@@ -767,7 +767,8 @@ namespace ConectaBiz.Application.Services
             string? gestor = null,
             string? prioridad = null,
             string? estado = null,
-            string? nombreConsultor = null)
+            string? nombreConsultor = null,
+            string? tipoSubtipo = null)
         {
             Console.WriteLine($"[DEBUG] GetPagedByUserRolAsync Start - User: {idUser}, Role: {codRol}, Socio: {idSocio}, Page: {page}, PageSize: {pageSize}");
             Console.WriteLine($"[DEBUG] Params - CodTicket: '{codTicket}', CodTicketInterno: '{codTicketInterno}', GlobalFilter: '{globalFilter}'");
@@ -836,11 +837,12 @@ namespace ConectaBiz.Application.Services
             // 3) Filtro global (búsqueda de texto)
             if (!string.IsNullOrWhiteSpace(globalFilter))
             {
+                var gf = globalFilter.Trim().ToLower();
                 query = query.Where(t =>
-                    t.CodTicket.Contains(globalFilter) ||
-                    t.CodTicketInterno.Contains(globalFilter) ||
-                    t.Titulo.Contains(globalFilter) ||
-                    (t.Empresa != null && t.Empresa.RazonSocial.Contains(globalFilter))
+                    (t.CodTicket != null && t.CodTicket.ToLower().Contains(gf)) ||
+                    (t.CodTicketInterno != null && t.CodTicketInterno.ToLower().Contains(gf)) ||
+                    (t.Titulo != null && t.Titulo.ToLower().Contains(gf)) ||
+                    (t.Empresa != null && t.Empresa.RazonSocial != null && t.Empresa.RazonSocial.ToLower().Contains(gf))
                 );
                 Console.WriteLine($"[DEBUG] After globalFilter '{globalFilter}': {await query.CountAsync()}");
             }
@@ -848,24 +850,30 @@ namespace ConectaBiz.Application.Services
             // ── NUEVOS Filtros por columna ──────────────────────────────────
             if (!string.IsNullOrWhiteSpace(codTicket)) {
                 var search = codTicket.Trim().ToLower();
-                query = query.Where(t => t.CodTicket.ToLower().Contains(search));
+                query = query.Where(t => 
+                    (t.CodTicket != null && t.CodTicket.ToLower().Contains(search)) ||
+                    (t.CodTicketInterno != null && t.CodTicketInterno.ToLower().Contains(search))
+                );
                 Console.WriteLine($"[DEBUG] After codTicket filter '{search}': {await query.CountAsync()}");
             }
 
             if (!string.IsNullOrWhiteSpace(codTicketInterno)) {
                 var search = codTicketInterno.Trim().ToLower();
-                query = query.Where(t => t.CodTicketInterno.ToLower().Contains(search));
+                query = query.Where(t => t.CodTicketInterno != null && t.CodTicketInterno.ToLower().Contains(search));
                 Console.WriteLine($"[DEBUG] After codTicketInterno filter '{search}': {await query.CountAsync()}");
             }
 
             if (!string.IsNullOrWhiteSpace(titulo)) {
                 var search = titulo.Trim().ToLower();
-                query = query.Where(t => t.Titulo.ToLower().Contains(search));
+                query = query.Where(t => t.Titulo != null && t.Titulo.ToLower().Contains(search));
                 Console.WriteLine($"[DEBUG] After titulo filter '{search}': {await query.CountAsync()}");
             }
 
             if (!string.IsNullOrWhiteSpace(empresa))
-                query = query.Where(t => t.Empresa != null && t.Empresa.RazonSocial.Contains(empresa));
+            {
+                var emp = empresa.Trim().ToLower();
+                query = query.Where(t => t.Empresa != null && t.Empresa.RazonSocial != null && t.Empresa.RazonSocial.ToLower().Contains(emp));
+            }
 
             if (!string.IsNullOrWhiteSpace(gestor))
             {
@@ -874,8 +882,24 @@ namespace ConectaBiz.Application.Services
                     t.Empresa != null &&
                     t.Empresa.Gestor != null &&
                     t.Empresa.Gestor.Persona != null &&
-                    (t.Empresa.Gestor.Persona.Nombres.ToLower().Contains(g) ||
-                     t.Empresa.Gestor.Persona.ApellidoPaterno.ToLower().Contains(g)));
+                    ((t.Empresa.Gestor.Persona.Nombres != null && t.Empresa.Gestor.Persona.Nombres.ToLower().Contains(g)) ||
+                     (t.Empresa.Gestor.Persona.ApellidoPaterno != null && t.Empresa.Gestor.Persona.ApellidoPaterno.ToLower().Contains(g))));
+            }
+
+            if (!string.IsNullOrWhiteSpace(tipoSubtipo))
+            {
+                await InicializarDatosAsync();
+                var ts = tipoSubtipo.Trim().ToLower();
+                var idsTipo = _listaTipoTicket?
+                    .Where(t => t.Nombre != null && t.Nombre.ToLower().Contains(ts))
+                    .Select(t => t.Id)
+                    .ToList() ?? new List<int>();
+                var idsSubTipo = _listaSubTipoTicket?
+                    .Where(st => st.Nombre != null && st.Nombre.ToLower().Contains(ts))
+                    .Select(st => st.Id)
+                    .ToList() ?? new List<int>();
+
+                query = query.Where(t => idsTipo.Contains(t.IdTipoTicket) || (t.IdSubTipoTicket.HasValue && idsSubTipo.Contains(t.IdSubTipoTicket.Value)));
             }
 
             // Para Prioridad y Estado (input texto), buscamos IDs que coincidan con el nombre
@@ -886,8 +910,9 @@ namespace ConectaBiz.Application.Services
 
                 if (!string.IsNullOrWhiteSpace(prioridad))
                 {
+                    var prio = prioridad.Trim().ToLower();
                     var idsPrioridad = _listaPrioridades?
-                        .Where(p => p.Nombre != null && p.Nombre.Contains(prioridad))
+                        .Where(p => p.Nombre != null && p.Nombre.ToLower().Contains(prio))
                         .Select(p => p.Id)
                         .ToList();
 
@@ -899,8 +924,9 @@ namespace ConectaBiz.Application.Services
 
                 if (!string.IsNullOrWhiteSpace(estado))
                 {
+                    var est = estado.Trim().ToLower();
                     var idsEstado = _listaEstados?
-                        .Where(e => e.Nombre != null && e.Nombre.Contains(estado))
+                        .Where(e => e.Nombre != null && e.Nombre.ToLower().Contains(est))
                         .Select(e => e.Id)
                         .ToList();
 
@@ -921,9 +947,9 @@ namespace ConectaBiz.Application.Services
                         ca.Activo &&
                         ca.Consultor != null &&
                         ca.Consultor.Persona != null &&
-                        (ca.Consultor.Persona.Nombres.ToLower().Contains(nc) ||
-                         ca.Consultor.Persona.ApellidoPaterno.ToLower().Contains(nc) ||
-                         ca.Consultor.Persona.ApellidoMaterno.ToLower().Contains(nc))));
+                        ((ca.Consultor.Persona.Nombres != null && ca.Consultor.Persona.Nombres.ToLower().Contains(nc)) ||
+                         (ca.Consultor.Persona.ApellidoPaterno != null && ca.Consultor.Persona.ApellidoPaterno.ToLower().Contains(nc)) ||
+                         (ca.Consultor.Persona.ApellidoMaterno != null && ca.Consultor.Persona.ApellidoMaterno.ToLower().Contains(nc)))));
             }
             // ────────────────────────────────────────────────────────────────
 
@@ -960,10 +986,12 @@ namespace ConectaBiz.Application.Services
                 .AsNoTracking()
                 .ToListAsync();
 
-            // 7) Cargar parámetros para nombres de estado y prioridad
+            // 7) Cargar parámetros para nombres de estado, prioridad, tipo y subtipo
             await InicializarDatosAsync();
             var estados = _listaEstados?.ToList() ?? new List<Parametro>();
             var prioridades = _listaPrioridades?.ToList() ?? new List<Parametro>();
+            var tipos = _listaTipoTicket?.ToList() ?? new List<Parametro>();
+            var subtipos = _listaSubTipoTicket?.ToList() ?? new List<Parametro>();
 
             // Obtener planificaciones para calcular horas planificadas de forma agregada
             var frenteIds = tickets
@@ -999,6 +1027,14 @@ namespace ConectaBiz.Application.Services
 
                 var horasPlanificadas = planHorasByTicket.TryGetValue(t.Id, out decimal hPlan) ? hPlan : 0m;
 
+                var tipoNombre = tipos.FirstOrDefault(tp => tp.Id == t.IdTipoTicket)?.Nombre;
+                var subtipoNombre = t.IdSubTipoTicket.HasValue
+                    ? subtipos.FirstOrDefault(st => st.Id == t.IdSubTipoTicket.Value)?.Nombre
+                    : null;
+                var tipoSubtipoNombre = !string.IsNullOrEmpty(subtipoNombre)
+                    ? $"{tipoNombre} / {subtipoNombre}"
+                    : (tipoNombre ?? "");
+
                 return new TicketListItemDto
                 {
                     Id = t.Id,
@@ -1006,6 +1042,11 @@ namespace ConectaBiz.Application.Services
                     CodTicketInterno = t.CodTicketInterno,
                     Titulo = t.Titulo,
                     FechaSolicitud = t.FechaSolicitud,
+                    IdTipoTicket = t.IdTipoTicket,
+                    TipoTicketNombre = tipoNombre,
+                    IdSubTipoTicket = t.IdSubTipoTicket,
+                    SubTipoTicketNombre = subtipoNombre,
+                    TipoSubtipoNombre = tipoSubtipoNombre,
                     IdEstadoTicket = t.IdEstadoTicket,
                     EstadoNombre = estados.FirstOrDefault(e => e.Id == t.IdEstadoTicket)?.Nombre ?? "Sin estado",
                     IdPrioridad = t.IdPrioridad,
