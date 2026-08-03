@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +6,7 @@ namespace ConectaBiz.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public class IntegracionSGRCSTIController : ControllerBase
     {
         private readonly ISGRCSTIService _sgrcstiService;

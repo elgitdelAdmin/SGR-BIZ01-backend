@@ -157,6 +157,7 @@ namespace ConectaBiz.API.Controllers
             return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto loginDto)
         {
@@ -171,6 +172,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("login-step2")]
         public async Task<ActionResult<AuthResponseDto>> LoginStep2([FromBody] LoginStep2RequestDto requestDto)
         {
@@ -203,6 +205,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("refresh-token")]
         public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenRequestDto refreshTokenDto)
         {
@@ -238,6 +241,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("forgot-password")]
         public async Task<ActionResult<OperationResultDto>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
         {
@@ -253,6 +257,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("reset-password")]
         public async Task<ActionResult<OperationResultDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
         {
@@ -272,6 +277,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("send-verification-code")]
         public async Task<ActionResult<OperationResultDto>> SendVerificationCode([FromBody] VerifyEmailDto verifyEmailDto)
         {
@@ -287,6 +293,7 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("confirm-email")]
         public async Task<ActionResult<OperationResultDto>> ConfirmEmail([FromBody] ConfirmEmailDto confirmEmailDto)
         {

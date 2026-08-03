@@ -114,6 +114,30 @@ namespace ConectaBiz.Infrastructure
                     ValidAudience = configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]))
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        if (string.IsNullOrEmpty(context.Token))
+                        {
+                            var cookieToken = context.Request.Cookies["jwt"];
+                            if (!string.IsNullOrEmpty(cookieToken))
+                            {
+                                context.Token = cookieToken;
+                            }
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (context.Exception is SecurityTokenExpiredException)
+                        {
+                            context.Response.Headers["X-Token-Expired"] = "true";
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             return services;

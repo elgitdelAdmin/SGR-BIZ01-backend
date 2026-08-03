@@ -35,7 +35,7 @@ namespace ConectaBiz.Infrastructure.Authentication.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
@@ -61,7 +61,7 @@ namespace ConectaBiz.Infrastructure.Authentication.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
