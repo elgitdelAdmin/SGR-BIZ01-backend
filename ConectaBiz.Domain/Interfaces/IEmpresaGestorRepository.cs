@@ -12,6 +12,5 @@ namespace ConectaBiz.Domain.Interfaces
         Task<EmpresaGestor> AsociarGestorAsync(int idEmpresa, int idGestor, bool esPrincipal, string usuario);
         Task<bool> DesasociarGestorAsync(int idEmpresa, int idGestor, string usuario);
         Task<bool> EstablecerPrincipalAsync(int idEmpresa, int idGestor, string usuario);
-        Task SincronizarGestoresEmpresaAsync(int idEmpresa, List<int> idsGestores, int? idGestorPrincipal, string usuario);
     }
 }

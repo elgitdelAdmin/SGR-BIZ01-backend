@@ -62,9 +62,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
                 foreach (var p in principalesActuales)
                 {
-                    p.EsPrincipal = false;
-                    p.FechaModificacion = now;
-                    p.UsuarioModificacion = usuario;
+                    p.CambiarPrincipal(false, usuario, now);
                 }
             }
 
@@ -73,27 +71,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
             if (existente != null)
             {
-                existente.Activo = true;
-                existente.EsPrincipal = esPrincipal;
-                existente.FechaAsignacion = now;
-                existente.FechaDesasignacion = null;
-                existente.FechaModificacion = now;
-                existente.UsuarioModificacion = usuario;
-
+                existente.Reactivar(esPrincipal, usuario, now);
                 await _context.SaveChangesAsync();
                 return existente;
             }
 
-            var nuevo = new EmpresaGestor
-            {
-                IdEmpresa = idEmpresa,
-                IdGestor = idGestor,
-                EsPrincipal = esPrincipal,
-                Activo = true,
-                FechaAsignacion = now,
-                FechaCreacion = now,
-                UsuarioCreacion = usuario
-            };
+            var nuevo = EmpresaGestor.Crear(idEmpresa, idGestor, esPrincipal, usuario, now);
 
             _context.EmpresaGestores.Add(nuevo);
             await _context.SaveChangesAsync();
@@ -108,11 +91,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             if (existente == null) return false;
 
             var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-            existente.Activo = false;
-            existente.EsPrincipal = false;
-            existente.FechaDesasignacion = now;
-            existente.FechaModificacion = now;
-            existente.UsuarioModificacion = usuario;
+            existente.Desasignar(usuario, now);
 
             await _context.SaveChangesAsync();
             return true;
@@ -138,9 +117,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 bool debeSerPrincipal = (item.IdGestor == idGestor);
                 if (item.EsPrincipal != debeSerPrincipal)
                 {
-                    item.EsPrincipal = debeSerPrincipal;
-                    item.FechaModificacion = now;
-                    item.UsuarioModificacion = usuario;
+                    item.CambiarPrincipal(debeSerPrincipal, usuario, now);
                 }
             }
 
@@ -148,67 +125,5 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return true;
         }
 
-        public async Task SincronizarGestoresEmpresaAsync(int idEmpresa, List<int> idsGestores, int? idGestorPrincipal, string usuario)
-        {
-            idsGestores ??= new List<int>();
-
-            if (idGestorPrincipal.HasValue && idGestorPrincipal.Value > 0 && !idsGestores.Contains(idGestorPrincipal.Value))
-            {
-                idsGestores.Add(idGestorPrincipal.Value);
-            }
-
-            var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-            var existentes = await _context.EmpresaGestores
-                .Where(eg => eg.IdEmpresa == idEmpresa)
-                .ToListAsync();
-
-            // Desactivar los que ya no vienen en la lista
-            foreach (var ext in existentes.Where(e => e.Activo))
-            {
-                if (!idsGestores.Contains(ext.IdGestor))
-                {
-                    ext.Activo = false;
-                    ext.EsPrincipal = false;
-                    ext.FechaDesasignacion = now;
-                    ext.FechaModificacion = now;
-                    ext.UsuarioModificacion = usuario;
-                }
-            }
-
-            // Agregar / actualizar los de la lista
-            foreach (var idG in idsGestores)
-            {
-                bool esPrincipal = idGestorPrincipal.HasValue && idGestorPrincipal.Value == idG;
-                var ext = existentes.FirstOrDefault(e => e.IdGestor == idG);
-
-                if (ext != null)
-                {
-                    ext.Activo = true;
-                    ext.EsPrincipal = esPrincipal;
-                    if (ext.FechaDesasignacion.HasValue)
-                    {
-                        ext.FechaAsignacion = now;
-                        ext.FechaDesasignacion = null;
-                    }
-                    ext.FechaModificacion = now;
-                    ext.UsuarioModificacion = usuario;
-                }
-                else
-                {
-                    _context.EmpresaGestores.Add(new EmpresaGestor
-                    {
-                        IdEmpresa = idEmpresa,
-                        IdGestor = idG,
-                        EsPrincipal = esPrincipal,
-                        Activo = true,
-                        FechaAsignacion = now,
-                        FechaCreacion = now,
-                        UsuarioCreacion = usuario
-                    });
-                }
-            }
-
-            await _context.SaveChangesAsync();
-        }
     }
 }

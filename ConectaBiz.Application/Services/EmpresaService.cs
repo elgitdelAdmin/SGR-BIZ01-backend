@@ -19,7 +19,6 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly IGestorService _gestorService;
         private readonly IAuthService _userService;
-        private readonly IEmpresaGestorRepository _empresaGestorRepository;
         private readonly IMapper _mapper;
 
         public EmpresaService(
@@ -28,7 +27,6 @@ namespace ConectaBiz.Application.Services
             IPersonaService personaService,
             IGestorService gestorService,
             IAuthService userService,
-            IEmpresaGestorRepository empresaGestorRepository,
             IMapper mapper)
         {
             _empresaRepository = empresaRepository;
@@ -36,7 +34,6 @@ namespace ConectaBiz.Application.Services
             _personaService = personaService;
             _gestorService = gestorService;
             _userService = userService;
-            _empresaGestorRepository = empresaGestorRepository;
             _mapper = mapper;
         }
 
@@ -123,34 +120,15 @@ namespace ConectaBiz.Application.Services
 
             if (persona == null)
             {
-                return null; // 👈 no lanzamos excepción, devolvemos null
+                return null;
             }
 
             return _mapper.Map<PersonaConUsuariosEmpresaDto>(persona);
         }
 
-
-        public async Task<EmpresaDto?> GetByCodigoAsync(string codigo)
-        {
-            var empresa = await _empresaRepository.GetByCodigoAsync(codigo);
-            return empresa != null ? _mapper.Map<EmpresaDto>(empresa) : null;
-        }
-
-        public async Task<IEnumerable<EmpresaDto>> GetBySocioAsync(int idSocio)
-        {
-            var empresas = await _empresaRepository.GetBySocioAsync(idSocio);
-            return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
-        }
-
-        public async Task<IEnumerable<EmpresaDto>> GetByGestorAsync(int idGestor)
-        {
-            var empresas = await _empresaRepository.GetByGestorAsync(idGestor);
-            return _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
-        }
-
         public async Task<EmpresaDto> CreateAsync(CreateEmpresaDto createDto)
         {
-            // 🔹 Validar que no exista una empresa con el mismo SOCIO + PAIS + RUC
+            // Validar que no exista una empresa con el mismo SOCIO + PAIS + RUC
             var yaExiste = await _empresaRepository.ExistsByNumDocYPaisAsync(createDto.NumDocContribuyente, createDto.IdPais, createDto.IdSocio);
             if (yaExiste)
             {
@@ -158,14 +136,12 @@ namespace ConectaBiz.Application.Services
             }
 
             var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(createDto.Persona.TipoDocumento, createDto.Persona.NumeroDocumento);
-
             if (personaExistente == null)
             {
                 throw new InvalidOperationException("No se encontró una persona con el número de documento proporcionado");
             }
 
             PersonaDto persona = new PersonaDto();
-            // Actualizar datos de la persona si se incluyen
             if (createDto.Persona != null)
             {
                 var personaDto = new UpdatePersonaDto
@@ -184,28 +160,29 @@ namespace ConectaBiz.Application.Services
                 };
                 persona = await _personaService.ValidateUpdateAsync(personaDto);
             }
-            RolDto rol = await _userService.GetRolByCodigoAsync(AppConstants.Roles.Empresa);
-            //UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(createDto.IdSocio, rol.Id, persona.Id);
 
-            // Mapear el DTO a la entidad Empresa
-            var empresa = _mapper.Map<Empresa>(createDto);
-            empresa.FechaRegistro = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            // Uso del Factory Method
+            var empresa = Empresa.Crear(
+                createDto.RazonSocial,
+                createDto.NombreComercial,
+                createDto.NumDocContribuyente,
+                createDto.IdSocio,
+                createDto.IdPais,
+                persona.Id,
+                createDto.IdUser,
+                createDto.CargoResponsable,
+                createDto.UsuarioRegistro,
+                createDto.CodSgrCsti);
 
-            // Asignar el ID de la persona responsable (asumiendo que tu entidad Empresa tiene esta propiedad)
-            empresa.IdPersonaResponsable = persona.Id;
-            empresa.IdUser = createDto.IdUser;
-            // Crear la empresa
-            var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
-
-            // Sincronizar gestores asociados
+            // Sincronizar gestores en la entidad
             var idsGestores = createDto.IdsGestores ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? new List<int> { createDto.IdGestor.Value } : new List<int>());
             var idPrincipal = createDto.IdGestorPrincipal ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? createDto.IdGestor : null);
-            if (idsGestores.Any() || idPrincipal.HasValue)
-            {
-                await _empresaGestorRepository.SincronizarGestoresEmpresaAsync(createdEmpresa.Id, idsGestores, idPrincipal, createDto.UsuarioRegistro ?? "Sistema");
-            }
+            empresa.SincronizarGestores(idsGestores, idPrincipal, createDto.UsuarioRegistro ?? "Sistema");
 
-            // Obtener la empresa creada con las relaciones
+            // Crear la empresa en BD (guarda la empresa y los gestores trackeados)
+            var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
+
+            // Obtener nuevamente para asegurar que vengan las relaciones (por si EF no lo hizo)
             var empresaWithRelations = await _empresaRepository.GetByIdAsync(createdEmpresa.Id);
             return _mapper.Map<EmpresaDto>(empresaWithRelations);
         }
@@ -218,21 +195,13 @@ namespace ConectaBiz.Application.Services
                 throw new KeyNotFoundException($"No se encontró la empresa con ID {id}");
             }
 
-            // Mantener valores originales que no deben cambiar
-            var fechaRegistroOriginal = existingEmpresa.FechaRegistro;
-            var usuarioRegistroOriginal = existingEmpresa.UsuarioRegistro;
-
-            // Variable para almacenar el ID de la persona responsable
-            int personaId = existingEmpresa.IdPersonaResponsable; // Mantener el ID actual por defecto
-
             var personaExistente = await _personaRepository.GetByTipoNumDocumentoAsync(updateDto.Persona.TipoDocumento, updateDto.Persona.NumeroDocumento);
             if (personaExistente == null)
             {
                 throw new InvalidOperationException("No se encontró una persona con el número de documento proporcionado");
             }
 
-            PersonaDto persona = new PersonaDto();
-            // Actualizar datos de la persona si se incluyen
+            int personaId = existingEmpresa.IdPersonaResponsable;
             if (updateDto.Persona != null)
             {
                 var personaDto = new UpdatePersonaDto
@@ -249,60 +218,53 @@ namespace ConectaBiz.Application.Services
                     FechaNacimiento = DateTime.SpecifyKind((DateTime)updateDto.Persona.FechaNacimiento, DateTimeKind.Local),
                     UsuarioActualizacion = updateDto.UsuarioModificacion
                 };
-                persona = await _personaService.ValidateUpdateAsync(personaDto);
+                var persona = await _personaService.ValidateUpdateAsync(personaDto);
                 personaId = persona.Id;
             }
-            RolDto rol = await _userService.GetRolByCodigoAsync(AppConstants.Roles.Empresa);
-            UserDto usuario = await _userService.GetByIdSocioIdRolIdAsync(updateDto.IdSocio, rol.Id, persona.Id);
 
-            // Mapear el DTO a la entidad existente
-            _mapper.Map(updateDto, existingEmpresa);
+            // Uso del método Actualizar del dominio
+            existingEmpresa.Actualizar(
+                updateDto.RazonSocial,
+                updateDto.NombreComercial,
+                updateDto.NumDocContribuyente,
+                updateDto.Direccion,
+                updateDto.Telefono,
+                updateDto.Email,
+                updateDto.CargoResponsable,
+                updateDto.Activo,
+                updateDto.IdPais,
+                personaId,
+                updateDto.IdUser,
+                updateDto.UsuarioModificacion);
 
-            // Restaurar valores que no deben cambiar
-            existingEmpresa.FechaRegistro = DateTime.SpecifyKind(fechaRegistroOriginal, DateTimeKind.Local) ;
-            existingEmpresa.UsuarioRegistro = usuarioRegistroOriginal;
-
-            existingEmpresa.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-            existingEmpresa.UsuarioModificacion = updateDto.UsuarioModificacion;
-
-            // Asignar el ID de la persona responsable (puede ser el mismo o uno nuevo)
-            existingEmpresa.IdPersonaResponsable = personaId;
-            existingEmpresa.IdUser = updateDto.IdUser;
-
-            // Actualizar la empresa
-            var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);
-
-            // Sincronizar gestores asociados
+            // Sincronizar gestores en la entidad
             var idsGestores = updateDto.IdsGestores ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? new List<int> { updateDto.IdGestor.Value } : new List<int>());
             var idPrincipal = updateDto.IdGestorPrincipal ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? updateDto.IdGestor : null);
-            if (updateDto.IdsGestores != null || updateDto.IdGestorPrincipal != null || updateDto.IdGestor != null)
-            {
-                await _empresaGestorRepository.SincronizarGestoresEmpresaAsync(updatedEmpresa.Id, idsGestores, idPrincipal, updateDto.UsuarioModificacion ?? "Sistema");
-            }
+            existingEmpresa.SincronizarGestores(idsGestores, idPrincipal, updateDto.UsuarioModificacion ?? "Sistema");
 
-            // Obtener la empresa actualizada con las relaciones
-            var empresaWithRelations = await _empresaRepository.GetByIdAsync(updatedEmpresa.Id);
-            return _mapper.Map<EmpresaDto>(empresaWithRelations);
+            // EF detectará los cambios
+            var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);
+
+            return _mapper.Map<EmpresaDto>(updatedEmpresa);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            // Validar que el gestor exista
             var empresa = await _empresaRepository.GetByIdAsync(id);
-            if (empresa?.IdUser != null)
-            {
-                await _userService.DeleteUserAsync(empresa.IdUser.Value); // <-- AWAIT AQUÍ
-            }
-            else
+            if (empresa == null)
             {
                 throw new InvalidOperationException($"No se encontró la empresa con ID {id}");
             }
-            return await _empresaRepository.DeleteAsync(id);
-        }
 
-        public async Task<bool> ExistsByNumDocYPaisAsync(string numDocContribuyente, int? idPais, int? idSocio = null)
-        {
-            return await _empresaRepository.ExistsByNumDocYPaisAsync(numDocContribuyente, idPais, idSocio);
+            if (empresa.IdUser != null)
+            {
+                await _userService.DeleteUserAsync(empresa.IdUser.Value);
+            }
+
+            // Uso del método Desactivar del dominio
+            empresa.Desactivar("Sistema");
+
+            return await _empresaRepository.UpdateAsync(empresa) != null;
         }
     }
 }

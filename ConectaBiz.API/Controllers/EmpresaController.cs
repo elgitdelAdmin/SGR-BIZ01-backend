@@ -1,6 +1,8 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Common;
+using ConectaBiz.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
@@ -122,56 +124,6 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
-
-        //// GET: api/empresas/codigo/EMP001
-        //[HttpGet("codigo/{codigo}")]
-        //public async Task<ActionResult<EmpresaDto>> GetByCodigo(string codigo)
-        //{
-        //    try
-        //    {
-        //        var empresa = await _empresaService.GetByCodigoAsync(codigo);
-
-        //        if (empresa == null)
-        //            return NotFound(new { message = $"No se encontró la empresa con código {codigo}" });
-
-        //        return Ok(empresa);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        //    }
-        //}
-
-        //// GET: api/empresas/socio/5
-        //[HttpGet("socio/{idSocio}")]
-        //public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetBySocio(int idSocio)
-        //{
-        //    try
-        //    {
-        //        var empresas = await _empresaService.GetBySocioAsync(idSocio);
-        //        return Ok(empresas);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        //    }
-        //}
-
-        // GET: api/empresas/gestor/5
-        //[HttpGet("gestor/{idGestor}")]
-        //public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByGestor(int idGestor)
-        //{
-        //    try
-        //    {
-        //        var empresas = await _empresaService.GetByGestorAsync(idGestor);
-        //        return Ok(empresas);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-        //    }
-        //}
-
         // POST: api/empresas
         [HttpPost]
         public async Task<ActionResult> Create([FromBody] CreateEmpresaDto createDto)
@@ -221,6 +173,7 @@ namespace ConectaBiz.API.Controllers
         }
 
         // DELETE: api/empresas/5
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
