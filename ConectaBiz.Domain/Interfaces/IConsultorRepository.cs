@@ -20,6 +20,5 @@ namespace ConectaBiz.Domain.Interfaces
         Task<bool> DeleteAsync(int id);
         Task<bool> ExistsAsync(int id);
         Task<bool> ExistsByPersonaIdAsync(int personaId);
-        Task<bool> ExistsByNumeroDocumentoAsync(string numeroDocumento);
     }
 }

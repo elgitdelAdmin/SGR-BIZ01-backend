@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Entities;
@@ -81,61 +81,6 @@ namespace ConectaBiz.Application.Services
             return _mapper.Map<IEnumerable<ConsultorDto>>(consultor);
         }
 
-        public async Task<ConsultorDto> CreateAsync(ConsultorDto consultorDto)
-        {
-            try
-            {
-                // Validar y actalizar/crear persona
-                var personaDto = new CreatePersonaDto
-                {
-                    Nombres = consultorDto.Persona.Nombres,
-                    ApellidoPaterno = consultorDto.Persona.ApellidoPaterno,
-                    ApellidoMaterno = consultorDto.Persona.ApellidoMaterno,
-                    NumeroDocumento = consultorDto.Persona.NumeroDocumento,
-                    TipoDocumento = consultorDto.Persona.TipoDocumento,
-                    Telefono = consultorDto.Persona.Telefono,
-                    Telefono2 = consultorDto.Persona.Telefono2,
-                    Correo = consultorDto.Persona.Correo,
-                    Direccion = consultorDto.Persona.Direccion,
-                    FechaNacimiento = DateTime.SpecifyKind((DateTime)consultorDto.Persona.FechaNacimiento, DateTimeKind.Local),
-                };
-                PersonaDto persona = await _personaService.ValidateCreateUpdate(personaDto);
-      
-                // Validar que la persona no esté asignada como gestor
-                if (await _consultorRepository.ExistsByPersonaIdAsync(persona.Id))
-                {
-                    throw new InvalidOperationException("La persona ya está asignada como gestor");
-                }
-
-                // Mapear el DTO a la entidad
-                var consultor = _mapper.Map<Consultor>(consultorDto);
-                consultor.PersonaId = persona.Id;
-                consultor.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                consultor.FechaActualizacion = consultor.FechaActualizacion.HasValue == true
-                    ? DateTime.SpecifyKind(consultor.FechaActualizacion.Value, DateTimeKind.Local)
-                    : null;
-                consultor.Activo = true;
-
-                // Crear el consultor
-                var consultorCreado = await _consultorRepository.CreateAsync(consultor);
-
-                // Procesar especializaciones si existen
-                if (consultorDto.Especializaciones != null && consultorDto.Especializaciones.Any())
-                {
-                    await ProcesarEspecializacionesAsync(consultorCreado.Id, consultorDto.Especializaciones);
-                }
-
-                // Obtener el consultor completo con sus relaciones
-                var consultorCompleto = await _consultorRepository.GetByIdAsync(consultorCreado.Id);
-
-                return _mapper.Map<ConsultorDto>(consultorCompleto);
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
         public async Task<ConsultorDto> UpdateAsync(int id, ConsultorDto consultorDto)
         {
             // Verificar que el consultor existe
@@ -146,12 +91,16 @@ namespace ConectaBiz.Application.Services
 
             // Obtener el consultor existente
             var consultorExistente = await _consultorRepository.GetByIdAsync(id);
-            // Actualizar el consultor
-            var consultor = _mapper.Map<Consultor>(consultorDto);
-            consultor.FechaCreacion = DateTime.SpecifyKind(consultorExistente.FechaCreacion, DateTimeKind.Local);
-            consultor.FechaActualizacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-            consultor.UsuarioActualizacion = consultorDto.UsuarioActualizacion;
-            var consultorActualizado = await _consultorRepository.UpdateAsync(consultor);
+            
+            // Actualizar delegando a la entidad (Rich Domain Model)
+            consultorExistente.ActualizarDatosBasicos(
+                consultorDto.IdNivelExperiencia,
+                consultorDto.IdModalidadLaboral,
+                consultorDto.IdSocio,
+                consultorDto.UsuarioActualizacion
+            );
+
+            var consultorActualizado = await _consultorRepository.UpdateAsync(consultorExistente);
 
             // Actualizar datos de la persona si se incluyen
             if (consultorDto.Persona != null && consultorExistente.Persona != null)
@@ -173,8 +122,8 @@ namespace ConectaBiz.Application.Services
                 await _personaService.ValidateUpdateAsync(personaDto);
             }
 
-            // Procesar especializaciones
-            await ActualizarEspecializacionesAsync(id, consultorDto.Especializaciones ?? new List<ConsultorFrenteSubFrenteDto>());
+            // Procesar especializaciones delegando validación al Dominio
+            await ActualizarEspecializacionesAsync(consultorExistente, consultorDto.Especializaciones ?? new List<ConsultorFrenteSubFrenteDto>());
 
             // Obtener el consultor completo con sus relaciones
             var consultorCompleto = await _consultorRepository.GetByIdAsync(consultorActualizado.Id);
@@ -200,106 +149,60 @@ namespace ConectaBiz.Application.Services
 
         #region Métodos privados para manejo de especializaciones
 
-        //private async Task ValidarEspecializacionesAsync(IEnumerable<ConsultorFrenteSubFrenteDto> especializaciones)
-        //{
-        //    foreach (var especializacion in especializaciones)
-        //    {
-        //        // Validar que el frente existe
-        //        if (!await _frenteRepository.ExistsAsync(especializacion.IdFrente))
-        //            throw new InvalidOperationException($"El frente con ID {especializacion.IdFrente} no existe");
-
-        //        // Validar que el subfrente existe
-        //        if (!await _subFrenteRepository.ExistsAsync(especializacion.IdSubFrente))
-        //            throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no existe");
-
-        //        // Validar que el subfrente pertenece al frente
-        //        //if (!await _subFrenteRepository.BelongsToFrenteAsync(especializacion.IdSubFrente, especializacion.IdFrente))
-        //        //    throw new InvalidOperationException($"El subfrente con ID {especializacion.IdSubFrente} no pertenece al frente con ID {especializacion.IdFrente}");
-        //    }
-
-        //    // Validar que no hay duplicados en la lista
-        //    var duplicados = especializaciones
-        //        .GroupBy(e => new { e.IdFrente, e.IdSubFrente })
-        //        .Where(g => g.Count() > 1)
-        //        .Select(g => g.Key);
-
-        //    if (duplicados.Any())
-        //    {
-        //        var duplicadosStr = string.Join(", ", duplicados.Select(d => $"Frente:{d.IdFrente}-SubFrente:{d.IdSubFrente}"));
-        //        throw new InvalidOperationException($"Se encontraron especializaciones duplicadas: {duplicadosStr}");
-        //    }
-        //}
-
-        private async Task ProcesarEspecializacionesAsync(int consultorId, IEnumerable<ConsultorFrenteSubFrenteDto> especializaciones)
+        private async Task ProcesarEspecializacionesAsync(Consultor consultor, IEnumerable<ConsultorFrenteSubFrenteDto> especializacionesDto)
         {
-            foreach (var especializacionDto in especializaciones)
+            var nuevasEspecializaciones = especializacionesDto.Select(dto => new ConsultorFrenteSubFrente
             {
-                // Verificar que no exista ya esta combinación
-                if (await _consultorFrenteSubFrenteRepository.ExistsAsync(consultorId, 
-                    especializacionDto.IdFrente, 
-                    especializacionDto.IdSubFrente, 
-                    especializacionDto.IdNivelExperiencia,
-                    especializacionDto.EsCertificado))
-                    continue; // Saltar si ya existe
+                ConsultorId = consultor.Id,
+                IdFrente = dto.IdFrente,
+                IdSubFrente = dto.IdSubFrente,
+                IdNivelExperiencia = dto.IdNivelExperiencia,
+                EsCertificado = dto.EsCertificado
+            }).ToList();
 
-                var especializacion = new ConsultorFrenteSubFrente
-                {
-                    ConsultorId = consultorId,
-                    IdFrente = especializacionDto.IdFrente,
-                    IdSubFrente = especializacionDto.IdSubFrente,
-                    IdNivelExperiencia = especializacionDto.IdNivelExperiencia,
-                    EsCertificado = especializacionDto.EsCertificado,
-                    FechaCreacion = DateTime.Now,
-                    Activo = true
-                };
+            // 1. Delegar validación de reglas de negocio a la entidad de Dominio
+            consultor.ValidarEspecializacionesNuevas(nuevasEspecializaciones);
 
+            // 2. Persistir
+            foreach (var especializacion in nuevasEspecializaciones)
+            {
                 await _consultorFrenteSubFrenteRepository.CreateAsync(especializacion);
             }
         }
 
-        private async Task ActualizarEspecializacionesAsync(int consultorId, IEnumerable<ConsultorFrenteSubFrenteDto> nuevasEspecializaciones)
+        private async Task ActualizarEspecializacionesAsync(Consultor consultor, IEnumerable<ConsultorFrenteSubFrenteDto> nuevasEspecializacionesDto)
         {
-            // Obtener especializaciones actuales
-            var especializacionesActuales = await _consultorFrenteSubFrenteRepository.GetByConsultorIdAsync(consultorId);
+            // Obtener especializaciones actuales para el agregado
+            var especializacionesActuales = await _consultorFrenteSubFrenteRepository.GetByConsultorIdAsync(consultor.Id);
+            consultor.ConsultorFrenteSubFrente = especializacionesActuales.ToList();
 
-            // Verificar si hay diferencias
-            if (HayDiferencias(especializacionesActuales, nuevasEspecializaciones))
+            var nuevasEspecializaciones = nuevasEspecializacionesDto.Select(dto => new ConsultorFrenteSubFrente
+            {
+                ConsultorId = consultor.Id,
+                IdFrente = dto.IdFrente,
+                IdSubFrente = dto.IdSubFrente,
+                IdNivelExperiencia = dto.IdNivelExperiencia,
+                EsCertificado = dto.EsCertificado
+            }).ToList();
+
+            // 1. Delegar validación de reglas de negocio a la entidad de Dominio
+            consultor.ValidarEspecializacionesNuevas(nuevasEspecializaciones);
+
+            // 2. Verificar si hay diferencias utilizando la lógica encapsulada en el Dominio
+            if (consultor.EspecializacionesSonDiferentes(nuevasEspecializaciones))
             {
                 // Desactivar todas las especializaciones actuales del consultor
-                await _consultorFrenteSubFrenteRepository.DeleteByConsultorIdAsync(consultorId);
+                await _consultorFrenteSubFrenteRepository.DeleteByConsultorIdAsync(consultor.Id);
 
                 // Registrar las nuevas especializaciones
                 if (nuevasEspecializaciones.Any())
                 {
-                    await ProcesarEspecializacionesAsync(consultorId, nuevasEspecializaciones);
+                    foreach (var especializacion in nuevasEspecializaciones)
+                    {
+                        await _consultorFrenteSubFrenteRepository.CreateAsync(especializacion);
+                    }
                 }
             }
-        }
-        private bool HayDiferencias(IEnumerable<ConsultorFrenteSubFrente> actuales, IEnumerable<ConsultorFrenteSubFrenteDto> nuevas)
-        {
-            // Convertir a listas para facilitar comparación
-            var actualesList = actuales.ToList();
-            var nuevasList = nuevas.ToList();
-
-            // Si tienen diferente cantidad, hay diferencias
-            if (actualesList.Count != nuevasList.Count)
-                return true;
-
-            // Comparar cada especialización actual con las nuevas
-            foreach (var actual in actualesList)
-            {
-                var existe = nuevasList.Any(nueva =>
-                    nueva.IdFrente == actual.IdFrente &&
-                    nueva.IdSubFrente == actual.IdSubFrente &&
-                    nueva.IdNivelExperiencia == actual.IdNivelExperiencia &&
-                    nueva.EsCertificado == actual.EsCertificado);
-
-                if (!existe)
-                    return true;
-            }
-
-            // Si llegamos aquí, no hay diferencias
-            return false;
         }
         #endregion
     }

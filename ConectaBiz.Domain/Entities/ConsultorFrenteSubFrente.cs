@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +8,12 @@ namespace ConectaBiz.Domain.Entities
 {
     public class ConsultorFrenteSubFrente
     {
+        public ConsultorFrenteSubFrente()
+        {
+            Activo = true;
+            FechaCreacion = DateTime.Now;
+        }
+
         public int Id { get; set; }
         public int ConsultorId { get; set; }
         public int IdFrente { get; set; }

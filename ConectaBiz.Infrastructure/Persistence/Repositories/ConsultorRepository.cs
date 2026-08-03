@@ -155,15 +155,5 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             return await _context.Consultor
                 .AnyAsync(c => c.PersonaId == personaId && c.Activo);
         }
-        public async Task<bool> ExistsByNumeroDocumentoAsync(string numeroDocumento)
-        {
-            // Esta consulta busca si existe un consultor activo asociado a una persona
-            // con el número de documento proporcionado
-            return await _context.Consultor
-                .Include(c => c.Persona)
-                .AnyAsync(c => c.Persona.NumeroDocumento == numeroDocumento &&
-                               c.Activo &&
-                               c.Persona.Activo);
-        }
     }
 }
