@@ -56,12 +56,9 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IModuloRepository, ModuloRepository>();
             services.AddScoped<ISocioRepository, SocioRepository>();
             services.AddScoped<INotificacionTicketRepository, NotificacionTicketRepository>();
-            services.AddScoped<ICargaMasivaTicketsRepository, CargaMasivaTicketsRepository>();
             services.AddScoped<IReportesRepository, ReportesRepository>();
-
-            // Servicios que implementan interfaces de Application pero dependen de Infraestructura (Excel)
             services.AddScoped<IReportesService, ReportesService>();
-            services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+            services.AddScoped<IExcelService, ExcelService>();
 
             // Integraciones con APIs Externas
             services.AddHttpClient<IWhatsAppService, WhatsAppService>();

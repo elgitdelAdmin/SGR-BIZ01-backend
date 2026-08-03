@@ -7,5 +7,6 @@ namespace ConectaBiz.Application.Interfaces
     {
         byte[] GenerateExcel<T>(IEnumerable<T> data, string sheetName = "Sheet1");
         List<T> ReadExcel<T>(Stream stream, string tipoCarga);
+        List<Dictionary<string, string>> LeerFilasComoDict(Stream stream, HashSet<string> columnasObligatorias);
     }
 }

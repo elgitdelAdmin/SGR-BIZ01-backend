@@ -30,6 +30,13 @@ namespace ConectaBiz.Application
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<INotificacionWhatsAppService, NotificacionWhatsAppService>();
             services.AddScoped<ISGRCSTIService, SGRCSTIService>();
+            services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+
+            services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.ICargaMasivaEmpresaStrategy, ConectaBiz.Domain.Strategies.CargaMasiva.RansaCargaMasivaStrategy>();
+            services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.ICargaMasivaEmpresaStrategy, ConectaBiz.Domain.Strategies.CargaMasiva.ExceliaCargaMasivaStrategy>();
+            services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.ICargaMasivaEmpresaStrategy, ConectaBiz.Domain.Strategies.CargaMasiva.IasaCargaMasivaStrategy>();
+            services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.ICargaMasivaEmpresaStrategy, ConectaBiz.Domain.Strategies.CargaMasiva.AlicorpCargaMasivaStrategy>();
+            services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.CargaMasivaStrategyResolver>();
 
             // Registrar Lazy para dependencias circulares (si aplican)
             services.AddScoped(provider =>

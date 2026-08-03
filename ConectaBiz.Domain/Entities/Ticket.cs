@@ -43,6 +43,71 @@ public class Ticket
     public virtual ICollection<TicketHistorialEstado> TicketHistorialEstado { get; set; } = new List<TicketHistorialEstado>();
     public virtual ICollection<TicketGestorAsignacion> GestorAsignaciones { get; set; } = new List<TicketGestorAsignacion>();
 
+    public static Ticket CrearDesdeCargaMasiva(
+        string codTicket,
+        string codTicketInterno,
+        string titulo,
+        DateTime fechaSolicitud,
+        int idTipoTicket,
+        int? idSubTipoTicket,
+        int idEstadoTicket,
+        int idEmpresa,
+        int idUsuarioResponsableCliente,
+        int idPrioridad,
+        string? descripcion,
+        int? idGestorConsultoria,
+        string? datosCargaMasiva,
+        List<TicketConsultorAsignacion>? asignaciones,
+        List<TicketFrenteSubFrente>? frentesSubFrentes)
+    {
+        var ticket = new Ticket
+        {
+            CodTicket = codTicket,
+            CodTicketInterno = codTicketInterno,
+            Titulo = titulo,
+            FechaSolicitud = DateTime.SpecifyKind(fechaSolicitud, DateTimeKind.Local),
+            IdTipoTicket = idTipoTicket,
+            IdSubTipoTicket = idSubTipoTicket,
+            IdEmpresa = idEmpresa,
+            IdUsuarioResponsableCliente = idUsuarioResponsableCliente,
+            IdPrioridad = idPrioridad,
+            Descripcion = descripcion,
+            UsuarioCreacion = "CargaMasivaExcel",
+            Activo = true,
+            FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+            EsCargaMasiva = true,
+            IdGestorConsultoria = idGestorConsultoria,
+            DatosCargaMasiva = datosCargaMasiva
+        };
+
+        if (frentesSubFrentes != null)
+        {
+            foreach (var fsf in frentesSubFrentes)
+                ticket.FrenteSubFrentes.Add(fsf);
+        }
+
+        if (asignaciones != null)
+        {
+            foreach (var asig in asignaciones)
+                ticket.ConsultorAsignaciones.Add(asig);
+        }
+
+        foreach (var ca in ticket.ConsultorAsignaciones)
+        {
+            if (ca.IdSubFrente.HasValue)
+            {
+                var matchingFsf = ticket.FrenteSubFrentes
+                    .FirstOrDefault(fsf => fsf.IdSubFrente == ca.IdSubFrente.Value);
+                if (matchingFsf != null)
+                    ca.TicketFrenteSubFrente = matchingFsf;
+            }
+        }
+
+        ticket.InicializarEstado(idEstadoTicket, "CargaMasivaExcel");
+
+        return ticket;
+    }
+
     public void InicializarEstado(int idEstadoInicial, string usuario)
     {
         IdEstadoTicket = idEstadoInicial;
