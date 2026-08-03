@@ -1,8 +1,7 @@
 using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
-using ConectaBiz.Application.Services;
-using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -99,6 +98,7 @@ namespace ConectaBiz.API.Controllers
             return Ok(userDto);
         }
 
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpDelete("DeleteUser/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

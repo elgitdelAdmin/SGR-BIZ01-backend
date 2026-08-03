@@ -20,7 +20,7 @@ namespace ConectaBiz.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CargaMasiva([FromForm] string tipoCarga, [FromForm(Name = "excel")] IFormFile excel)
+        public async Task<IActionResult> CargaMasiva([FromForm] string tipoCarga, IFormFile excel)
         {
             if (excel == null || excel.Length == 0)
                 return BadRequest("Debe subir un archivo Excel válido.");

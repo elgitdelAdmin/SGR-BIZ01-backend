@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +13,7 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Consultor> GetByIdAsync(int id);
         Task<Consultor> GetByIdPersonaAsync(int idPersona);
         Task<IEnumerable<Consultor>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente);
+        Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio);
         Task<Consultor> GetByIdUserAsync(int iduser);
         Task<Consultor> CreateAsync(Consultor consultor);
         Task<Consultor> UpdateAsync(Consultor consultor);

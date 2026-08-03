@@ -1,5 +1,7 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
@@ -108,6 +110,7 @@ namespace ConectaBiz.API.Controllers
             return Ok(new { message = "Frente desactivado exitosamente" });
         }
 
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpGet("{id}/consultores-asociados")]
         [ProducesResponseType(typeof(IEnumerable<ConsultorAsociadoDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

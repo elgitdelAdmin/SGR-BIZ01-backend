@@ -42,6 +42,20 @@ namespace ConectaBiz.API.Controllers
         }
 
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
+        [HttpGet("byIdSocio/{idSocio}")]
+        [ProducesResponseType(typeof(IEnumerable<ConsultorListDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetByIdSocio(int idSocio)
+        {
+            _logger.LogInformation("Obteniendo consultores del socio con ID: {IdSocio}", idSocio);
+            var consultoresDto = await _consultorService.GetByIdSocioAsync(idSocio);
+            var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
+            return Ok(consultoresListDto);
+        }
+
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ConsultorDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
