@@ -2,6 +2,8 @@
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
+using ConectaBiz.Domain.Constants;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConectaBiz.API.Controllers
@@ -25,9 +27,8 @@ namespace ConectaBiz.API.Controllers
             _mapper = mapper;
         }
 
-
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetAll()
         {
             try
@@ -38,10 +39,6 @@ namespace ConectaBiz.API.Controllers
                 var consultoresDto = await _consultorService.GetAllAsync();
                 var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
 
-                // O si cambias tu servicio para devolver entidades Consultor, usa esto:
-                // var consultores = await _consultorService.GetAllEntitiesAsync();
-                // var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultores);
-
                 return Ok(consultoresListDto);
             }
             catch (Exception ex)
@@ -50,10 +47,8 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
-
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ConsultorDetailDto>> GetById(int id)
         {
             try
@@ -77,37 +72,8 @@ namespace ConectaBiz.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
             }
         }
-
-        [HttpGet("byIdSocio/{idSocio}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetByIdSocio(int idSocio)
-        {
-            try
-            {
-                _logger.LogInformation("Obteniendo consultor con idSocio: {idSocio}", idSocio);
-
-                var consultoresDto = await _consultorService.GetByIdSocioAsync(idSocio);
-
-                if (consultoresDto == null)
-                {
-                    _logger.LogWarning("Consultor no encontrado con ID: {Id}", idSocio);
-                    return NotFound($"Consultor con ID {idSocio} no encontrado");
-                }
-                var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
-                return Ok(consultoresListDto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener consultor con ID: {Id}", idSocio);
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-            }
-        }
-
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ConsultorDto>> Update(int id, [FromBody] UpdateConsultorDto updateConsultorDto)
         {
             try
@@ -139,9 +105,8 @@ namespace ConectaBiz.API.Controllers
             }
         }
 
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(int id)
         {
             try
