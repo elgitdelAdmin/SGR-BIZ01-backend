@@ -18,120 +18,78 @@ namespace ConectaBiz.API.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// Obtiene todos los tickets
-        /// </summary>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TicketDto>>> GetAll()
         {
-            try
-            {
-                var tickets = await _ticketService.GetAllAsync();
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener todos los tickets");
-                return StatusCode(500, "Error interno del servidor");
-            }
+            var tickets = await _ticketService.GetAllAsync();
+            return Ok(tickets);
         }
 
-        /// <summary>
-        /// Obtiene un ticket por ID
-        /// </summary>
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TicketDto>> GetById(int id)
         {
-            try
-            {
-                var ticket = await _ticketService.GetByIdAsync(id);
-                if (ticket == null)
-                    return NotFound($"No se encontró el ticket con ID: {id}");
+            var ticket = await _ticketService.GetByIdAsync(id);
+            if (ticket == null)
+                throw new KeyNotFoundException($"No se encontró el ticket con ID: {id}");
 
-                return Ok(ticket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener el ticket con ID: {Id}", id);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            return Ok(ticket);
         }
 
-        /// <summary>
-        /// Obtiene un ticket por código
-        /// </summary>
         [HttpGet("codigo/{codTicket}")]
+        [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TicketDto>> GetByCodTicket(string codTicket)
         {
-            try
-            {
-                var ticket = await _ticketService.GetByCodTicketAsync(codTicket);
-                if (ticket == null)
-                    return NotFound($"No se encontró el ticket con código: {codTicket}");
+            var ticket = await _ticketService.GetByCodTicketAsync(codTicket);
+            if (ticket == null)
+                throw new KeyNotFoundException($"No se encontró el ticket con código: {codTicket}");
 
-                return Ok(ticket);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener el ticket con código: {CodTicket}", codTicket);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            return Ok(ticket);
         }
 
-        /// <summary>
-        /// Obtiene tickets por empresa
-        /// </summary>
         [HttpGet("empresa/{idEmpresa}")]
+        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TicketDto>>> GetByEmpresa(int idEmpresa)
         {
-            try
-            {
-                var tickets = await _ticketService.GetByEmpresaAsync(idEmpresa);
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener tickets por empresa: {IdEmpresa}", idEmpresa);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            var tickets = await _ticketService.GetByEmpresaAsync(idEmpresa);
+            return Ok(tickets);
         }
 
-        /// <summary>
-        /// Obtiene tickets por estado
-        /// </summary>
         [HttpGet("estado/{idEstado}")]
+        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TicketDto>>> GetByEstado(int idEstado)
         {
-            try
-            {
-                var tickets = await _ticketService.GetByEstadoAsync(idEstado);
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener tickets por estado: {IdEstado}", idEstado);
-                return StatusCode(500, "Error interno del servidor");
-            }
-        }
-        [HttpGet("user/{idUser}/rol/{codRol}")]
-        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserIdRolAsync(int idUser, string codRol, [FromQuery] int? idSocio = null)
-        {
-            try
-            {
-                var tickets = await _ticketService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error al obtener tickets por estado: {IdEstado}", idEstado);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            var tickets = await _ticketService.GetByEstadoAsync(idEstado);
+            return Ok(tickets);
         }
 
-        /// <summary>
-        /// Obtiene tickets paginados por usuario y rol
-        /// </summary>
+        [HttpGet("user/{idUser}/rol/{codRol}")]
+        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<TicketDto>>> GetByIdUserIdRolAsync(int idUser, string codRol, [FromQuery] int? idSocio = null)
+        {
+            var tickets = await _ticketService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
+            return Ok(tickets);
+        }
+
         [HttpGet("user/{idUser}/rol/{codRol}/paged")]
+        [ProducesResponseType(typeof(PagedResultDto<TicketListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<PagedResultDto<TicketListItemDto>>> GetPagedByUserRolAsync(
             int idUser, string codRol,
             [FromQuery] int? idSocio = null,
@@ -141,7 +99,6 @@ namespace ConectaBiz.API.Controllers
             [FromQuery] string? globalFilter = null,
             [FromQuery] string? sortField = null,
             [FromQuery] string? sortOrder = null,
-            // Nuevos filtros
             [FromQuery] string? codTicket = null,
             [FromQuery] string? codTicketInterno = null,
             [FromQuery] string? titulo = null,
@@ -153,180 +110,110 @@ namespace ConectaBiz.API.Controllers
             [FromQuery] string? tipoSubtipo = null
             )
         {
-            try
+            List<int>? estadoIdsList = null;
+            if (!string.IsNullOrWhiteSpace(estadoIds))
             {
-                List<int>? estadoIdsList = null;
-                if (!string.IsNullOrWhiteSpace(estadoIds))
-                {
-                    estadoIdsList = estadoIds.Split(',')
-                        .Where(s => int.TryParse(s, out _))
-                        .Select(int.Parse)
-                        .ToList();
-                }
-
-                Console.WriteLine($"[DEBUG-CONTROLLER] nombreConsultor received: '{nombreConsultor}'");
-                Console.WriteLine($"[DEBUG-CONTROLLER] gestor received: '{gestor}'");
-                Console.WriteLine($"[DEBUG-CONTROLLER] empresa received: '{empresa}'");
-                Console.WriteLine($"[DEBUG-CONTROLLER] estado received: '{estado}'");
-                var result = await _ticketService.GetPagedByUserRolAsync(
-                    idUser, codRol, idSocio, page, pageSize,
-                    estadoIdsList, globalFilter, sortField, sortOrder,
-                    codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado,
-                    nombreConsultor, tipoSubtipo);
-
-                return Ok(result);
+                estadoIdsList = estadoIds.Split(',')
+                    .Where(s => int.TryParse(s, out _))
+                    .Select(int.Parse)
+                    .ToList();
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener tickets paginados");
-                return StatusCode(500, "Error interno del servidor");
-            }
+
+            var result = await _ticketService.GetPagedByUserRolAsync(
+                idUser, codRol, idSocio, page, pageSize,
+                estadoIdsList, globalFilter, sortField, sortOrder,
+                codTicket, codTicketInterno, titulo, empresa, gestor, prioridad, estado,
+                nombreConsultor, tipoSubtipo);
+
+            return Ok(result);
         }
         
-        /// <summary>
-        /// Obtiene tickets con filtros opcionales
-        /// </summary>
         [HttpGet("filtros")]
+        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TicketDto>>> GetWithFilters([FromQuery] int? idEmpresa = null,[FromQuery] int? idEstado = null,[FromQuery] bool? urgente = null)
         {
-            try
-            {
-                var tickets = await _ticketService.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
-                return Ok(tickets);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener tickets con filtros");
-                return StatusCode(500, "Error interno del servidor");
-            }
+            var tickets = await _ticketService.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
+            return Ok(tickets);
         }
 
-        /// <summary>
-        /// Obtiene el historial de un ticket
-        /// </summary>
         [HttpGet("{id}/historial")]
+        [ProducesResponseType(typeof(IEnumerable<TicketHistorialEstadoDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<TicketHistorialEstadoDto>>> GetHistorial(int id)
         {
-            try
-            {
-                var historial = await _ticketService.GetHistorialByTicketIdAsync(id);
-                return Ok(historial);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener historial del ticket: {Id}", id);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            var historial = await _ticketService.GetHistorialByTicketIdAsync(id);
+            return Ok(historial);
         }
 
-        /// <summary>
-        /// Crea un nuevo ticket
-        /// </summary>
         [HttpPost]
-        [RequestTimeout(120000)] // 2 minutos
+        [RequestTimeout(120000)]
+        [ProducesResponseType(typeof(TicketDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TicketDto>> Create([FromBody] TicketInsertDto insertDto)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                var ticket = await _ticketService.CreateAsync(insertDto);
-                return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogWarning(ex, "Error de validación al crear ticket");
-                return BadRequest(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al crear el ticket");
-                return StatusCode(500, ex.Message);
-            }
+            var ticket = await _ticketService.CreateAsync(insertDto);
+            return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
         }
+
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<TicketDto>> Update(int id, [FromBody] TicketUpdateDto updateDto)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-      
-                var ticket = await _ticketService.UpdateAsync(id, updateDto);
-                return Ok(ticket);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogWarning(ex, "Ticket no encontrado para actualizar: {Id}", id);
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al actualizar el ticket: {Id}", id);
-                return StatusCode(500, ex.Message);
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+    
+            var ticket = await _ticketService.UpdateAsync(id, updateDto);
+            return Ok(ticket);
         }
 
-        /// <summary>
-        /// Elimina un ticket
-        /// </summary>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Delete(int id)
         {
-            try
-            {
-                var deleted = await _ticketService.DeleteAsync(id);
-                if (!deleted)
-                    return NotFound($"No se encontró el ticket con ID: {id}");
+            var deleted = await _ticketService.DeleteAsync(id);
+            if (!deleted)
+                throw new KeyNotFoundException($"No se encontró el ticket con ID: {id}");
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al eliminar el ticket: {Id}", id);
-                return StatusCode(500, "Error interno del servidor");
-            }
+            return NoContent();
         }
 
         [HttpGet("{idTicket}/desgarcarArchivo/{orden}")]
+        [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DescargarArchivoTicket(int idTicket, int orden)
         {
-            try
-            {
-                var fileResult = await _ticketService.DescargarArchivoAsync(idTicket, orden);
-                return fileResult;
-            }
-            catch (FileNotFoundException)
-            {
-                return NotFound("Archivo no encontrado.");
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
+            var fileResult = await _ticketService.DescargarArchivoAsync(idTicket, orden);
+            return fileResult;
         }
 
-        /// <summary>
-        /// Migra un ticket por su código de requerimiento SGR
-        /// </summary>
         [HttpPost("migrarsgr/{codTicketInterno}")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> MigrarTicket([FromServices] ISGRCSTIService sgrcstiService, string codTicketInterno)
         {
-            try
-            {
-                var resultados = await sgrcstiService.MigracionRequerimientoPorCodAsync(codTicketInterno);
-                return Ok(new { 
-                    mensaje = "Proceso finalizado.", 
-                    migrados = resultados 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al migrar el ticket {CodTicketInterno}", codTicketInterno);
-                return StatusCode(500, new { mensaje = "Error interno durante la migración.", detalle = ex.Message });
-            }
+            var resultados = await sgrcstiService.MigracionRequerimientoPorCodAsync(codTicketInterno);
+            return Ok(new { 
+                mensaje = "Proceso finalizado.", 
+                migrados = resultados 
+            });
         }
-
     }
 }

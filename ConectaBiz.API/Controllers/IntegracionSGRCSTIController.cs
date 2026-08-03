@@ -6,7 +6,6 @@ namespace ConectaBiz.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public class IntegracionSGRCSTIController : ControllerBase
     {
         private readonly ISGRCSTIService _sgrcstiService;
@@ -14,32 +13,25 @@ namespace ConectaBiz.API.Controllers
         {
             _sgrcstiService = sGRCSTIService;
         }
+
         [HttpGet("MigracionEmpresa")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> MigracionEmpresa()
         {
-            try
-            {
-                await _sgrcstiService.MigracionEmpresa();
-                return Ok(new { message = "Migración de empresas completada exitosamente." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            await _sgrcstiService.MigracionEmpresa();
+            return Ok(new { message = "Migración de empresas completada exitosamente." });
         }
 
         [HttpGet("MigracionRequerimientos")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> MigracionRequerimientos()
         {
-            try
-            {
-                var resultado = await _sgrcstiService.MigracionRequerimientos();
-                return Ok(resultado);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            var resultado = await _sgrcstiService.MigracionRequerimientos();
+            return Ok(resultado);
         }
     }
 }

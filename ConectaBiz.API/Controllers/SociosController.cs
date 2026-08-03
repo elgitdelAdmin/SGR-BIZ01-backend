@@ -1,31 +1,40 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 
-[ApiController]
-[Route("api/[controller]")]
-public class SociosController : ControllerBase
+namespace ConectaBiz.API.Controllers
 {
-    private readonly ISocioService _socioService;
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SociosController : ControllerBase
+    {
+        private readonly ISocioService _socioService;
 
-    public SociosController(ISocioService socioService)
-    {
-        _socioService = socioService;
-    }
+        public SociosController(ISocioService socioService)
+        {
+            _socioService = socioService;
+        }
 
-    [HttpGet]
-    public async Task<ActionResult<List<SocioDto>>> ListarTodos()
-    {
-        var socios = await _socioService.ListarTodosAsync();
-        return Ok(socios);
-    }
-    /// <summary>
-    /// Obtiene un socio por su ID
-    /// </summary>
-    [HttpGet("{id}")]
-    public async Task<ActionResult<SocioDto>> ObtenerPorId(int id)
-    {
-        try
+        [HttpGet]
+        [ProducesResponseType(typeof(List<SocioDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<List<SocioDto>>> ListarTodos()
+        {
+            var socios = await _socioService.ListarTodosAsync();
+            return Ok(socios);
+        }
+
+        /// <summary>
+        /// Obtiene un socio por su ID
+        /// </summary>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(SocioDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<SocioDto>> ObtenerPorId(int id)
         {
             if (id <= 0)
             {
@@ -35,21 +44,19 @@ public class SociosController : ControllerBase
             var socio = await _socioService.ObtenerPorIdAsync(id);
             if (socio == null)
             {
-                return NotFound($"No se encontró el socio con ID: {id}");
+                throw new KeyNotFoundException($"No se encontró el socio con ID: {id}");
             }
 
             return Ok(socio);
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
-        }
-    }
 
-    [HttpPost]
-    public async Task<ActionResult<SocioDto>> Crear([FromBody] SocioCreateDto socioCreateDto)
-    {
-        try
+        [HttpPost]
+        [ProducesResponseType(typeof(SocioDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<SocioDto>> Crear([FromBody] SocioCreateDto socioCreateDto)
         {
             if (!ModelState.IsValid)
             {
@@ -59,24 +66,18 @@ public class SociosController : ControllerBase
             var socioCreado = await _socioService.CrearAsync(socioCreateDto);
             return CreatedAtAction(nameof(ObtenerPorId), new { id = socioCreado.Id }, socioCreado);
         }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
-        }
-    }
 
-    /// <summary>
-    /// Actualiza un socio existente
-    /// NOTA: El NumDocContribuyente NO se puede modificar
-    /// </summary>
-    [HttpPut("{id}")]
-    public async Task<ActionResult<SocioDto>> Actualizar(int id, [FromBody] SocioUpdateDto socioUpdateDto)
-    {
-        try
+        /// <summary>
+        /// Actualiza un socio existente
+        /// NOTA: El NumDocContribuyente NO se puede modificar
+        /// </summary>
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(SocioDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<SocioDto>> Actualizar(int id, [FromBody] SocioUpdateDto socioUpdateDto)
         {
             if (id <= 0)
             {
@@ -91,24 +92,14 @@ public class SociosController : ControllerBase
             var socioActualizado = await _socioService.ActualizarAsync(id, socioUpdateDto);
             return Ok(socioActualizado);
         }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
-        }
-    }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> Eliminar(int id)
-    {
-        try
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult> Eliminar(int id)
         {
             if (id <= 0)
             {
@@ -118,18 +109,10 @@ public class SociosController : ControllerBase
             var eliminado = await _socioService.EliminarAsync(id);
             if (!eliminado)
             {
-                return NotFound($"No se encontró el socio con ID: {id}");
+                throw new KeyNotFoundException($"No se encontró el socio con ID: {id}");
             }
 
             return NoContent();
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.Message);
         }
     }
 }

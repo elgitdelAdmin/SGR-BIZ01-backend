@@ -18,184 +18,121 @@ namespace ConectaBiz.API.Controllers
             _empresaService = empresaService;
         }
 
-        // GET: api/empresas
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<EmpresaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetAll([FromQuery] bool soloActivos = false)
         {
-            try
-            {
-                var empresas = soloActivos
-                    ? await _empresaService.GetAllActiveAsync()
-                    : await _empresaService.GetAllAsync();
+            var empresas = soloActivos
+                ? await _empresaService.GetAllActiveAsync()
+                : await _empresaService.GetAllAsync();
 
-                return Ok(empresas);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            return Ok(empresas);
         }
+
         [HttpGet("byIdSocio/{idSocio}")]
+        [ProducesResponseType(typeof(IEnumerable<EmpresaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdSocio(int idSocio)
         {
-            try
-            {
-                var empresas = await _empresaService.GetByIdSocio(idSocio);
-
-                return Ok(empresas);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            var empresas = await _empresaService.GetByIdSocio(idSocio);
+            return Ok(empresas);
         }
+
         [HttpGet("user/{idUser}/rol/{codRol}")]
+        [ProducesResponseType(typeof(IEnumerable<EmpresaDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<EmpresaDto>>> GetByIdUserIdRolAsync(int idUser, string codRol, [FromQuery] int? idSocio = null)
         {
-            try
-            {
-                var empresas = await _empresaService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
-                return Ok(empresas);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            var empresas = await _empresaService.GetByIdUserIdRolAsync(idUser, codRol, idSocio);
+            return Ok(empresas);
         }
-        // GET: api/empresas/5
+
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(EmpresaDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<EmpresaDto>> GetById(int id)
         {
-            try
-            {
-                var empresa = await _empresaService.GetByIdAsync(id);
+            var empresa = await _empresaService.GetByIdAsync(id);
 
-                if (empresa == null)
-                    return NotFound(new { message = $"No se encontró la empresa con ID {id}" });
+            if (empresa == null)
+                throw new KeyNotFoundException($"No se encontró la empresa con ID {id}");
 
-                return Ok(empresa);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            return Ok(empresa);
         }
+
         [HttpGet("UsuarioResponsable/tipoDocumento/{idTipoDocumento}/numeroDocumento/{numeroDocumento}")]
+        [ProducesResponseType(StatusCodes.Status200OK)] // Devuelve data anonima
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetPersonaResponsableByTipoNumDoc(int idTipoDocumento, string numeroDocumento)
         {
-            try
-            {
-                var persona = await _empresaService.GetPersonaResponsableByTipoNumDoc(idTipoDocumento, numeroDocumento);
+            var persona = await _empresaService.GetPersonaResponsableByTipoNumDoc(idTipoDocumento, numeroDocumento);
 
-                if (persona == null)
-                {
-                    return Ok(new
-                    {
-                        success = false,
-                        message = $"No se encontró una persona con el número de documento {numeroDocumento}."
-                    });
-                }
+            if (persona == null)
+            {
+                throw new KeyNotFoundException($"No se encontró una persona con el número de documento {numeroDocumento}.");
+            }
 
-                return Ok(new
-                {
-                    success = true,
-                    message = "Persona encontrada correctamente.",
-                    data = persona
-                });
-            }
-            catch (InvalidOperationException ex)
+            return Ok(new
             {
-                // Si el número de documento es inválido, devolvemos 200 pero con mensaje claro
-                return Ok(new
-                {
-                    success = false,
-                    message = ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                // Solo errores realmente inesperados se devuelven como 500
-                return StatusCode(500, new
-                {
-                    success = false,
-                    message = "Error interno del servidor",
-                    details = ex.Message
-                });
-            }
+                success = true,
+                message = "Persona encontrada correctamente.",
+                data = persona
+            });
         }
 
-        // POST: api/empresas
         [HttpPost]
+        [ProducesResponseType(typeof(EmpresaDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Create([FromBody] CreateEmpresaDto createDto)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return Ok(ApiResponse<object>.Fail("Datos inválidos. Revise los campos enviados."));
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                var empresa = await _empresaService.CreateAsync(createDto);
-                return Ok(ApiResponse<EmpresaDto>.Ok(empresa, "Empresa creada correctamente."));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Ok(ApiResponse<object>.Fail(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                return Ok(ApiResponse<object>.Fail(ex.InnerException?.Message ?? ex.Message));
-            }
+            var empresa = await _empresaService.CreateAsync(createDto);
+            return CreatedAtAction(nameof(GetById), new { id = empresa.Id }, empresa);
         }
 
-        // PUT: api/empresas/5
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(EmpresaDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<EmpresaDto>> Update(int id, [FromBody] UpdateEmpresaDto updateDto)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-                var empresa = await _empresaService.UpdateAsync(id, updateDto);
-                return Ok(empresa);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            var empresa = await _empresaService.UpdateAsync(id, updateDto);
+            return Ok(empresa);
         }
 
-        // DELETE: api/empresas/5
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var result = await _empresaService.DeleteAsync(id);
+            var result = await _empresaService.DeleteAsync(id);
 
-                if (!result)
-                    return NotFound(new { message = $"No se encontró la empresa con ID {id}" });
+            if (!result)
+                throw new KeyNotFoundException($"No se encontró la empresa con ID {id}");
 
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", details = ex.Message });
-            }
+            return NoContent();
         }
-
-
     }
 }

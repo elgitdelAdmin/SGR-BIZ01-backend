@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
@@ -29,105 +29,85 @@ namespace ConectaBiz.API.Controllers
 
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ConsultorListDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<ConsultorListDto>>> GetAll()
         {
-            try
-            {
-                _logger.LogInformation("Obteniendo todos los consultores");
-
-                // Si tu servicio devuelve List<ConsultorDto>, usa esto:
-                var consultoresDto = await _consultorService.GetAllAsync();
-                var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
-
-                return Ok(consultoresListDto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener todos los consultores");
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-            }
+            _logger.LogInformation("Obteniendo todos los consultores");
+            var consultoresDto = await _consultorService.GetAllAsync();
+            var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
+            return Ok(consultoresListDto);
         }
+
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(ConsultorDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ConsultorDetailDto>> GetById(int id)
         {
-            try
+            _logger.LogInformation("Obteniendo consultor con ID: {Id}", id);
+            var consultor = await _consultorService.GetByIdAsync(id);
+
+            if (consultor == null)
             {
-                _logger.LogInformation("Obteniendo consultor con ID: {Id}", id);
-
-                var consultor = await _consultorService.GetByIdAsync(id);
-
-                if (consultor == null)
-                {
-                    _logger.LogWarning("Consultor no encontrado con ID: {Id}", id);
-                    return NotFound($"Consultor con ID {id} no encontrado");
-                }
-
-                var consultorDetailDto = _mapper.Map<ConsultorDetailDto>(consultor);
-                return Ok(consultorDetailDto);
+                _logger.LogWarning("Consultor no encontrado con ID: {Id}", id);
+                throw new KeyNotFoundException($"Consultor con ID {id} no encontrado");
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al obtener consultor con ID: {Id}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-            }
+
+            var consultorDetailDto = _mapper.Map<ConsultorDetailDto>(consultor);
+            return Ok(consultorDetailDto);
         }
+
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ConsultorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<ConsultorDto>> Update(int id, [FromBody] UpdateConsultorDto updateConsultorDto)
         {
-            try
-            {
-                _logger.LogInformation("Actualizando consultor con ID: {Id}", id);
+            _logger.LogInformation("Actualizando consultor con ID: {Id}", id);
 
-                if (!ModelState.IsValid)
-                {
-                    _logger.LogWarning("Modelo inválido para actualizar consultor con ID: {Id}", id);
-                    return BadRequest(ModelState);
-                }
-                // Mapear el DTO de creación al DTO completo
-                var consultorDto = _mapper.Map<ConsultorDto>(updateConsultorDto);
-
-                var updatedConsultor = await _consultorService.UpdateAsync(id, consultorDto);
-                _logger.LogInformation("Consultor con ID: {Id} actualizado correctamente", id);
-
-                return Ok(updatedConsultor);
-            }
-            catch (InvalidOperationException ex)
+            if (!ModelState.IsValid)
             {
-                _logger.LogWarning(ex, "Consultor con ID: {Id} no encontrado para actualizar", id);
-                return NotFound(ex.Message);
+                _logger.LogWarning("Modelo inválido para actualizar consultor con ID: {Id}", id);
+                return BadRequest(ModelState);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al actualizar consultor con ID: {Id}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
-            }
+
+            var consultorDto = _mapper.Map<ConsultorDto>(updateConsultorDto);
+            var updatedConsultor = await _consultorService.UpdateAsync(id, consultorDto);
+            _logger.LogInformation("Consultor con ID: {Id} actualizado correctamente", id);
+
+            return Ok(updatedConsultor);
         }
 
         [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin}")]
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Delete(int id)
         {
-            try
-            {
-                _logger.LogInformation("Eliminando consultor con ID: {Id}", id);
-                var result = await _consultorService.DeleteAsync(id);
+            _logger.LogInformation("Eliminando consultor con ID: {Id}", id);
+            var result = await _consultorService.DeleteAsync(id);
 
-                if (!result)
-                {
-                    _logger.LogWarning("Consultor con ID: {Id} no encontrado para eliminar", id);
-                    return NotFound($"No se encontró el consultor con ID {id}");
-                }
-
-                _logger.LogInformation("Consultor con ID: {Id} eliminado correctamente", id);
-                return NoContent();
-            }
-            catch (Exception ex)
+            if (!result)
             {
-                _logger.LogError(ex, "Error al eliminar consultor con ID: {Id}", id);
-                return StatusCode(StatusCodes.Status500InternalServerError, "Error al procesar la solicitud");
+                _logger.LogWarning("Consultor con ID: {Id} no encontrado para eliminar", id);
+                throw new KeyNotFoundException($"No se encontró el consultor con ID {id}");
             }
+
+            _logger.LogInformation("Consultor con ID: {Id} eliminado correctamente", id);
+            return NoContent();
         }
     }
 }

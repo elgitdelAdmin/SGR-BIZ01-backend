@@ -17,6 +17,10 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpPost("ReportesPorCorreo")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Enviar3Excel([FromBody] Enviar3ReportesExcelRequest req)
         {
             if (req == null)
@@ -42,6 +46,10 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpPost("ConsultarDetalle")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ConsultarDetalle([FromBody] FiltrosReporteRequest filtros)
         {
             if (filtros == null)
@@ -52,6 +60,9 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpGet("DashboardTicketsConsultor")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DashboardTicketsConsultor(
             [FromQuery] int[]? consultores = null,
             [FromQuery] int[]? tipos = null,
@@ -63,6 +74,10 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpPost("GenerarExcel")]
+        [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GenerarExcel([FromBody] FiltrosReporteRequest filtros)
         {
             if (filtros == null)
@@ -83,6 +98,10 @@ namespace ConectaBiz.API.Controllers
         /// Solo requiere fechas e idPreporte. Borrar cuando el frontend esté listo.
         /// </summary>
         [HttpGet("GenerarExcelSimple")]
+        [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GenerarExcelSimple(
             [FromQuery] DateTime? fechaInicio,
             [FromQuery] DateTime? fechaFin,
@@ -94,7 +113,6 @@ namespace ConectaBiz.API.Controllers
             if (idPreporte <= 0)
                 return BadRequest("IdPreporte debe ser mayor a 0.");
 
-            // Construir el objeto de filtros con null en todo excepto las fechas y el id
             var filtros = new FiltrosReporteRequest
             {
                 IdTipoReporte = idPreporte,
@@ -111,8 +129,6 @@ namespace ConectaBiz.API.Controllers
             };
 
             var excelBytes = await _service.GenerarReporteExcelAsync(filtros);
-            
-            // Obtener el nombre del reporte desde la capa de lógica
             var nombreReporte = await _service.ObtenerNombreReporteAsync(idPreporte);
             var fileName = $"{nombreReporte}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             

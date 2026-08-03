@@ -10,6 +10,7 @@ using ConectaBiz.Infrastructure.Persistence.Contexts;
 using ConectaBiz.API.Jobs;
 using ConectaBiz.Application.DTOs;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,25 @@ builder.Services.Configure<WhatsAppJobSettings>(
 );
 builder.Services.AddHostedService<WhatsAppNotificationWorker>();
 
+// PATRÓN IMPLEMENTADO: Rate Limiting (Limitación de Tasa) / Security
+// 
+// Protege la API contra ataques de fuerza bruta (ej. múltiples intentos de login)
+// o ataques de denegación de servicio (DDoS) limitando la cantidad de peticiones.
+// Aquí configuramos la política "auth-strict" (usada en AuthController) que
+// rechaza las peticiones con un código 429 (Too Many Requests) si exceden
+// el límite de 5 intentos por cada ventana de 1 minuto.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddFixedWindowLimiter("auth-strict", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -109,6 +129,7 @@ app.UseSwaggerUI(c =>
 app.UseMiddleware<ErrorHandlerMiddleware>();
 
 app.UseCors("AllowFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseResponseCompression();

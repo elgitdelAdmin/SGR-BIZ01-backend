@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,137 +16,86 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<GestorDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<GestorDto>>> GetAll()
         {
-            try
-            {
-                var gestores = await _gestorService.GetAllAsync();
-                return Ok(gestores);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            var gestores = await _gestorService.GetAllAsync();
+            return Ok(gestores);
         }
+
         [HttpGet("byIdSocio/{idSocio}")]
+        [ProducesResponseType(typeof(IEnumerable<GestorDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<GestorDto>>> GetByIdSocio(int idSocio)
         {
-            try
-            {
-                var gestores = await _gestorService.GetByIdSocio(idSocio);
-                return Ok(gestores);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            var gestores = await _gestorService.GetByIdSocio(idSocio);
+            return Ok(gestores);
         }
+
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(GestorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GestorDto>> GetById(int id)
         {
-            try
+            var gestor = await _gestorService.GetByIdAsync(id);
+            if (gestor == null)
             {
-                var gestor = await _gestorService.GetByIdAsync(id);
-                if (gestor == null)
-                {
-                    return NotFound(new { message = $"No se encontró el gestor con ID {id}" });
-                }
-                return Ok(gestor);
+                throw new KeyNotFoundException($"No se encontró el gestor con ID {id}");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            return Ok(gestor);
         }
+
         [HttpGet("byIdRol/{idRol}/byIdSocio/{idSocio}")]
+        [ProducesResponseType(typeof(IEnumerable<GestorDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<GestorDto>>> GetByIdRol(int idRol, int idSocio)
         {
-            try
+            var gestor = await _gestorService.GetByIdRolAsync(idRol, idSocio);
+            if (gestor == null)
             {
-                var gestor = await _gestorService.GetByIdRolAsync(idRol, idSocio);
-                if (gestor == null)
-                {
-                    return NotFound(new { message = $"No se encontró el gestor con ID {idRol}" });
-                }
-                return Ok(gestor);
+                throw new KeyNotFoundException($"No se encontró el gestor con ID {idRol}");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            return Ok(gestor);
         }
 
-        //[HttpPost]
-        //public async Task<ActionResult<GestorDto>> Create([FromBody] CreateGestorDto createGestorDto)
-        //{
-        //    try
-        //    {
-        //        if (!ModelState.IsValid)
-        //        {
-        //            return BadRequest(ModelState);
-        //        }
-
-        //        var gestor = await _gestorService.CreateAsync(createGestorDto);
-        //        return CreatedAtAction(nameof(GetById), new { id = gestor.Id }, gestor);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-        //    }
-        //}
-
         [HttpPut("{id}")]
+        [ProducesResponseType(typeof(GestorDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<GestorDto>> Update(int id, [FromBody] UpdateGestorDto updateGestorDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                //if (id != updateGestorDto.Id)
-                //{
-                //    return BadRequest(new { message = "El ID de la URL no coincide con el ID del objeto" });
-                //}
+                return BadRequest(ModelState);
+            }
 
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ModelState);
-                }
-
-                var gestor = await _gestorService.UpdateAsync(id, updateGestorDto);
-                return Ok(gestor);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            var gestor = await _gestorService.UpdateAsync(id, updateGestorDto);
+            return Ok(gestor);
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Delete(int id)
         {
-            try
+            var result = await _gestorService.DeleteAsync(id);
+            if (!result)
             {
-                var result = await _gestorService.DeleteAsync(id);
-                if (!result)
-                {
-                    return NotFound(new { message = $"No se encontró el gestor con ID {id}" });
-                }
-                return NoContent();
+                throw new KeyNotFoundException($"No se encontró el gestor con ID {id}");
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Error interno del servidor", error = ex.Message });
-            }
+            return NoContent();
         }
     }
 }
