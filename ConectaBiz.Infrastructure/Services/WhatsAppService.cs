@@ -7,7 +7,7 @@ using ConectaBiz.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace ConectaBiz.Application.Services
+namespace ConectaBiz.Infrastructure.Services
 {
     public class WhatsAppService : IWhatsAppService
     {

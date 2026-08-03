@@ -1,6 +1,5 @@
-﻿using ConectaBiz.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
+using ConectaBiz.Domain.Entities;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -20,21 +20,21 @@ namespace ConectaBiz.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CargaMasiva([FromForm] CargaMasivaDto dto)
+        public async Task<IActionResult> CargaMasiva([FromForm] string tipoCarga, [FromForm(Name = "excel")] IFormFile excel)
         {
-            if (dto.Excel == null || dto.Excel.Length == 0)
+            if (excel == null || excel.Length == 0)
                 return BadRequest("Debe subir un archivo Excel válido.");
 
-            using var stream = dto.Excel.OpenReadStream();
+            using var stream = excel.OpenReadStream();
 
-            var datos = await _cargaMasivaTickets.ProcesarExcelAsync(stream, dto.TipoCarga);
+            var datos = await _cargaMasivaTickets.ProcesarExcelAsync(stream, tipoCarga);
 
             return Ok(new
             {
                 Mensaje = "Archivo procesado correctamente",
-                Tipo = dto.TipoCarga,
-                NombreArchivo = dto.Excel.FileName,
-                Peso = dto.Excel.Length,
+                Tipo = tipoCarga,
+                NombreArchivo = excel.FileName,
+                Peso = excel.Length,
                 FilasLeidas = datos.Count,
                 Datos = datos
             });

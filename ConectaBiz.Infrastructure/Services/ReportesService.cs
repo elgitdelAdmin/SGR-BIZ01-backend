@@ -6,7 +6,7 @@ using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Domain.Constants;
 using static ConectaBiz.Domain.Constants.AppConstants;
 
-namespace ConectaBiz.Application.Services
+namespace ConectaBiz.Infrastructure.Services
 {
     public class ReportesService : IReportesService
     {

@@ -13,7 +13,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<AuthResponseDto> LoginAsync(LoginRequestDto loginRequest);
         Task<AuthResponseDto> LoginStep2Async(LoginStep2RequestDto request);
         Task<AuthResponseDto> RegisterAsync(RegisterUserDto registerRequest);
-        Task<UserDto> UpdateUserAsync(UpdateUserDto updateUserDto);
+        Task<UserDto?> UpdateUserAsync(UpdateUserDto updateUserDto);
         Task<bool> DeleteUserAsync(int id);
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(string refreshToken);

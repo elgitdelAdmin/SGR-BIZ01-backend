@@ -4,11 +4,7 @@ using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
 using ConectaBiz.Domain.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Configuration;
-using NPOI.SS.Formula;
-using NPOI.SS.Formula.Functions;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -718,7 +714,7 @@ namespace ConectaBiz.Application.Services
         }
 
 
-        public async Task<FileStreamResult> DescargarArchivoAsync(int idTicket, int orden)
+        public async Task<FileDownloadDto> DescargarArchivoAsync(int idTicket, int orden)
         {
             var ticket = await _ticketRepository.GetByIdAsync(idTicket)
                 ?? throw new FileNotFoundException("Ticket no existe");
@@ -739,15 +735,13 @@ namespace ConectaBiz.Application.Services
             if (!File.Exists(fullPath))
                 throw new FileNotFoundException("Archivo no existe en disco");
 
-            var provider = new FileExtensionContentTypeProvider();
-            if (!provider.TryGetContentType(fullPath, out var contentType))
-                contentType = "application/octet-stream";
+            var bytes = await File.ReadAllBytesAsync(fullPath);
 
-            var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-            return new FileStreamResult(stream, contentType)
+            return new FileDownloadDto
             {
-                FileDownloadName = Path.GetFileName(fullPath)
+                Content = bytes,
+                ContentType = "application/octet-stream", // El controlador puede refinar esto
+                FileName = Path.GetFileName(fullPath)
             };
         }
 

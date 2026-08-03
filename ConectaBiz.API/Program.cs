@@ -1,13 +1,9 @@
 // ConectaBiz.API/Program.cs
 using ConectaBiz.API.Middleware;
-using ConectaBiz.Application.Interfaces;
-using ConectaBiz.Application.Mappings;
-using ConectaBiz.Application.Services;
 using ConectaBiz.Infrastructure;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using ConectaBiz.Infrastructure.Persistence.Contexts;
 using ConectaBiz.API.Jobs;
+using ConectaBiz.Application;
 using ConectaBiz.Application.DTOs;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
@@ -45,9 +41,7 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add Application Layer
-builder.Services.AddAutoMapper(typeof(MappingProfile));
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<SGRCSTIService>();
+builder.Services.AddApplicationLayer();
 
 
 

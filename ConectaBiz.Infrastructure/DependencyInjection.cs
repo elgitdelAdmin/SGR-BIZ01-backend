@@ -2,6 +2,7 @@
 using System.Text;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
+using ConectaBiz.Infrastructure.Services;
 using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Interfaces;
 using ConectaBiz.Infrastructure.Authentication.Services;
@@ -58,43 +59,22 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<ICargaMasivaTicketsRepository, CargaMasivaTicketsRepository>();
             services.AddScoped<IReportesRepository, ReportesRepository>();
 
-            // Servicios
-            services.AddScoped<ITokenService, TokenService>();
-            services.AddScoped<IConsultorService, ConsultorService>();
-            services.AddScoped<IPersonaService, PersonaService>();
-            services.AddScoped<ITicketService, TicketService>();
-            services.AddScoped<ISubFrenteService, SubFrenteService>();
-            services.AddScoped<IFrenteService, FrenteService>();
-            services.AddScoped<IParametroService, ParametroService>();
-            services.AddScoped<IEmpresaService, EmpresaService>();
-            services.AddScoped<IPaisService, PaisService>();
-            services.AddScoped<IGestorService, GestorService>();
-            services.AddScoped<IModuloService, ModuloService>();
-            services.AddScoped<ISocioService, SocioService>();
-            services.AddScoped<INotificacionTicketService, NotificacionTicketService>();
-            services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+            // Servicios que implementan interfaces de Application pero dependen de Infraestructura (Excel)
             services.AddScoped<IReportesService, ReportesService>();
+            services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
+
+            // Integraciones con APIs Externas
             services.AddHttpClient<IWhatsAppService, WhatsAppService>();
-            services.AddScoped<INotificacionWhatsAppService, NotificacionWhatsAppService>();
 
+            // Servicios de Infraestructura (Ej: Token, Hashing)
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+            
             services.AddSingleton<IParametrosCatalogo, ParametrosCatalogo>();
-
-            services.AddScoped(provider =>
-                new Lazy<INotificacionTicketService>(
-                    () => provider.GetRequiredService<INotificacionTicketService>()
-                )
-            );
-            services.AddScoped(provider =>
-                new Lazy<ITicketService>(() =>
-                    provider.GetRequiredService<ITicketService>()
-                )
-            );
 
             //Integracion
             services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();
             services.AddScoped<IConectaNuevoTicketRepository, ConectaNuevoTicketRepository>();
-            services.AddScoped<ISGRCSTIService, SGRCSTIService>();
 
             // Configuración JWT
             services.AddAuthentication(options =>

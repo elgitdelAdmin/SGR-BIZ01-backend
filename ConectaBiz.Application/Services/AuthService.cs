@@ -1,5 +1,5 @@
 using AutoMapper;
-using BCrypt.Net;
+
 using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
@@ -19,6 +19,7 @@ namespace ConectaBiz.Application.Services
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly Lazy<ITicketService> _ticketService;
         private readonly IEmailService _emailService;
+        private readonly IPasswordHasher _passwordHasher;
 
         public AuthService(
             IUserRepository userRepository, 
@@ -29,7 +30,8 @@ namespace ConectaBiz.Application.Services
             IPersonaService personaService,
             Lazy<INotificacionTicketService> notificacionTicketService,
             Lazy<ITicketService> ticketService,
-            IEmailService emailService
+            IEmailService emailService,
+            IPasswordHasher passwordHasher
         )
         {
             _userRepository = userRepository;
@@ -43,6 +45,7 @@ namespace ConectaBiz.Application.Services
             _notificacionTicketService = notificacionTicketService;
             _ticketService = ticketService;
             _emailService = emailService;
+            _passwordHasher = passwordHasher;
         }
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
@@ -92,7 +95,7 @@ namespace ConectaBiz.Application.Services
             {
                 var user = await _userRepository.GetByUsernameAsync(loginRequest.Username);
 
-                if (user == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, user.PasswordHash))
+                if (user == null || !_passwordHasher.VerifyPassword(loginRequest.Password, user.PasswordHash))
                 {
                     throw new UnauthorizedAccessException("Credenciales inválidas");
                 }
@@ -245,7 +248,7 @@ namespace ConectaBiz.Application.Services
             {
                 Username = registerRequest.Username,
                 Email = registerRequest.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerRequest.Password),
+                PasswordHash = _passwordHasher.HashPassword(registerRequest.Password),
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
                 IdSocio = registerRequest.IdSocio,
                 IdPersona = persona.Id,
@@ -521,7 +524,7 @@ namespace ConectaBiz.Application.Services
             // Actualizar contraseña si se proporciona
             if (!string.IsNullOrEmpty(updateUserDto.Password))
             {
-                existingUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserDto.Password);
+                existingUser.PasswordHash = _passwordHasher.HashPassword(updateUserDto.Password);
             }
 
             // Actualizar datos de la persona si se incluyen
@@ -612,7 +615,7 @@ namespace ConectaBiz.Application.Services
                 }
 
                 // Validar contraseña actual
-                if (!BCrypt.Net.BCrypt.Verify(changePasswordDto.CurrentPassword, user.PasswordHash))
+                if (!_passwordHasher.VerifyPassword(changePasswordDto.CurrentPassword, user.PasswordHash))
                 {
                     return new OperationResultDto
                     {
@@ -622,7 +625,7 @@ namespace ConectaBiz.Application.Services
                 }
 
                 // Validar que la nueva contraseña sea diferente
-                if (BCrypt.Net.BCrypt.Verify(changePasswordDto.NewPassword, user.PasswordHash))
+                if (_passwordHasher.VerifyPassword(changePasswordDto.NewPassword, user.PasswordHash))
                 {
                     return new OperationResultDto
                     {
@@ -632,7 +635,7 @@ namespace ConectaBiz.Application.Services
                 }
 
                 // Actualizar contraseña
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(changePasswordDto.NewPassword);
+                user.PasswordHash = _passwordHasher.HashPassword(changePasswordDto.NewPassword);
                 await _userRepository.UpdateAsync(user);
 
                 return new OperationResultDto
@@ -765,7 +768,7 @@ namespace ConectaBiz.Application.Services
 
                 // Actualizar contraseña
                 var user = resetToken.User;
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(resetPasswordDto.NewPassword);
+                user.PasswordHash = _passwordHasher.HashPassword(resetPasswordDto.NewPassword);
                 await _userRepository.UpdateAsync(user);
 
                 // Marcar token como usado

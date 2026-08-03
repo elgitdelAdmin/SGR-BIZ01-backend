@@ -200,7 +200,7 @@ namespace ConectaBiz.API.Controllers
         public async Task<IActionResult> DescargarArchivoTicket(int idTicket, int orden)
         {
             var fileResult = await _ticketService.DescargarArchivoAsync(idTicket, orden);
-            return fileResult;
+            return File(fileResult.Content, fileResult.ContentType, fileResult.FileName);
         }
 
         [HttpPost("migrarsgr/{codTicketInterno}")]

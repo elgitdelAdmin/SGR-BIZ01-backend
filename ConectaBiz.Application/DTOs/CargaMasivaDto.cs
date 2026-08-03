@@ -1,15 +1,11 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+
 
 namespace ConectaBiz.Application.DTOs
 {
     public class CargaMasivaDto
     {
         public string TipoCarga { get; set; }
-
-        // Esto le dice a Swagger que es un archivo desde el form
-        [FromForm(Name = "excel")]
-        public IFormFile Excel { get; set; }
+        public FileUploadDto Excel { get; set; } = new FileUploadDto();
     }
     public class CargaMasivaGenericoDto
     {

@@ -1,6 +1,5 @@
 using ConectaBiz.Application.DTOs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +23,7 @@ namespace ConectaBiz.Application.Interfaces
         //Task<TicketZipFileDto> UploadZipFileAsync(int ticketId, IFormFile zipFile);
         Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto);
         Task<bool> DeleteAsync(int id);
-        Task<FileStreamResult> DescargarArchivoAsync(int idTicket, int orden);
+        Task<FileDownloadDto> DescargarArchivoAsync(int idTicket, int orden);
         Task<IEnumerable<TicketHistorialEstadoDto>> GetHistorialByTicketIdAsync(int idTicket);
         Task<TicketDto?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
         //Task ActualizarEstadoDeAprobadoAEnEjecucion();
