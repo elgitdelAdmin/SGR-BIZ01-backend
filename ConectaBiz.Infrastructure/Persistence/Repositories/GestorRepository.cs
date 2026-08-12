@@ -33,7 +33,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<IEnumerable<Gestor>> GetByIdSocio(int idSocio)
         {
-            return await _context.Gestores
+            var list = await _context.Gestores
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
@@ -41,6 +41,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .OrderBy(g => g.Persona.Nombres)
                 .ThenBy(g => g.Persona.ApellidoPaterno)
                 .ToListAsync();
+
+            return list.GroupBy(g => g.Id).Select(g => g.First()).ToList();
         }
         public async Task<Gestor?> GetByIdAsync(int id)
         {
@@ -64,7 +66,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Gestor>> GetByIdRolAsync(int idRol, int idSocio)
         {
-            return await _context.Gestores
+            var list = await _context.Gestores
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
@@ -74,6 +76,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdRol == idRol && urs.IdSocio == idSocio))
                 )
                 .ToListAsync();
+
+            return list.GroupBy(g => g.Id).Select(g => g.First()).ToList();
         }
         public async Task<Gestor?> GetByIdPersonaAsync(int idPersona)
         {
