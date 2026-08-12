@@ -33,16 +33,14 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         }
         public async Task<IEnumerable<Gestor>> GetByIdSocio(int idSocio)
         {
-            var list = await _context.Gestores
+            return await _context.Gestores
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
-                .Where(g => g.Activo && (g.IdSocio == idSocio || g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio))))
+                .Where(g => g.Activo && g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio)))
                 .OrderBy(g => g.Persona.Nombres)
                 .ThenBy(g => g.Persona.ApellidoPaterno)
                 .ToListAsync();
-
-            return list.GroupBy(g => g.Id).Select(g => g.First()).ToList();
         }
         public async Task<Gestor?> GetByIdAsync(int id)
         {
@@ -66,18 +64,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Gestor>> GetByIdRolAsync(int idRol, int idSocio)
         {
-            var list = await _context.Gestores
+            return await _context.Gestores
                 .Include(g => g.Persona)
                 .Include(g => g.Socio)
                 .Include(g => g.GestorFrenteSubFrente.Where(gf => gf.Activo))
                  .Where(g =>
                     g.Activo &&
-                    (g.IdSocio == idSocio || g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdSocio == idSocio))) &&
                     g.Persona.Users.Any(u => u.Activo && u.UserRolSocios.Any(urs => urs.Activo && urs.IdRol == idRol && urs.IdSocio == idSocio))
                 )
                 .ToListAsync();
-
-            return list.GroupBy(g => g.Id).Select(g => g.First()).ToList();
         }
         public async Task<Gestor?> GetByIdPersonaAsync(int idPersona)
         {
