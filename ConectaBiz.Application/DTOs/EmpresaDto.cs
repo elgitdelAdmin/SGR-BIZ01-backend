@@ -38,6 +38,12 @@ namespace ConectaBiz.Application.DTOs
         public PersonaDto PersonaResponsable { get; set; }
     }
 
+    public class GestorConfiguracionDto
+    {
+        public int IdGestor { get; set; }
+        public List<int> IdsTiposTicket { get; set; } = new List<int>();
+    }
+
     public class CreateEmpresaDto
     {
         //public string Codigo { get; set; } = string.Empty;
@@ -54,6 +60,7 @@ namespace ConectaBiz.Application.DTOs
         public int? IdGestor { get; set; }
         public int? IdGestorPrincipal { get; set; }
         public List<int>? IdsGestores { get; set; }
+        public List<GestorConfiguracionDto>? GestoresAsignados { get; set; }
         public int IdSocio { get; set; }
         public int? IdUser { get; set; }
         public CreatePersonaDto? Persona { get; set; }
@@ -74,6 +81,7 @@ namespace ConectaBiz.Application.DTOs
         public int? IdGestor { get; set; }
         public int? IdGestorPrincipal { get; set; }
         public List<int>? IdsGestores { get; set; }
+        public List<GestorConfiguracionDto>? GestoresAsignados { get; set; }
         public int IdSocio { get; set; }
         public int? IdUser { get; set; }
         public string? CargoResponsable { get; set; }

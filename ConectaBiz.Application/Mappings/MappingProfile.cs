@@ -10,7 +10,7 @@ namespace ConectaBiz.Application.Mappings
         public MappingProfile()
         {
             CreateMap<User, UserDto>()
-                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
+                // .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
                 .ForMember(dest => dest.RolSocios, opt => opt.MapFrom(src => src.UserRolSocios.Where(urs => urs.Activo).Select(urs => new UserRolSocioDto
                 {
@@ -59,8 +59,8 @@ namespace ConectaBiz.Application.Mappings
             // Mapeo de Consultor a ConsultorDto
             CreateMap<Consultor, ConsultorDto>()
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
-                .ForMember(dest => dest.Especializaciones, opt => opt.MapFrom(src => src.ConsultorFrenteSubFrente))
-                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio));
+                .ForMember(dest => dest.Especializaciones, opt => opt.MapFrom(src => src.ConsultorFrenteSubFrente));
+                // .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio));
 
             // Mapeo de ConsultorDto a Consultor
             CreateMap<ConsultorDto, Consultor>()
@@ -153,7 +153,7 @@ namespace ConectaBiz.Application.Mappings
             // NUEVOS MAPEOS PARA LISTADO (sin referencias circulares)
             CreateMap<Consultor, ConsultorListDto>()
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
-                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
+                // .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
                 .ForMember(dest => dest.Especializaciones, opt => opt.MapFrom(src => src.ConsultorFrenteSubFrente));
 
             CreateMap<ConsultorFrenteSubFrente, ConsultorEspecializacionListDto>()
@@ -163,7 +163,7 @@ namespace ConectaBiz.Application.Mappings
             // MAPEOS PARA DETALLE COMPLETO (para GetById)
             CreateMap<Consultor, ConsultorDetailDto>()
                 .ForMember(dest => dest.Persona, opt => opt.MapFrom(src => src.Persona))
-                .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
+                // .ForMember(dest => dest.Socio, opt => opt.MapFrom(src => src.Socio))
                 .ForMember(dest => dest.Especializaciones, opt => opt.MapFrom(src => src.ConsultorFrenteSubFrente));
 
             CreateMap<ConsultorFrenteSubFrente, ConsultorEspecializacionDetailDto>()
@@ -213,13 +213,16 @@ namespace ConectaBiz.Application.Mappings
                 .ForMember(dest => dest.FrenteSubFrentes, opt => opt.Ignore())
                 .ForMember(dest => dest.TicketHistorialEstado, opt => opt.Ignore());
 
-            CreateMap<TicketInsertDto, Ticket>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.FechaActualizacion, opt => opt.Ignore())
-                .ForMember(dest => dest.UsuarioActualizacion, opt => opt.Ignore())
-                .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.Ignore())
-                .ForMember(dest => dest.FrenteSubFrentes, opt => opt.Ignore())
-                .ForMember(dest => dest.TicketHistorialEstado, opt => opt.Ignore());
+            // Comentado: TicketInsertDto -> Ticket ya no se usa.
+            // La construcción de la entidad Ticket ahora es responsabilidad
+            // del método de fábrica Ticket.Crear(...) en el Dominio.
+            // CreateMap<TicketInsertDto, Ticket>()
+            //     .ForMember(dest => dest.Id, opt => opt.Ignore())
+            //     .ForMember(dest => dest.FechaActualizacion, opt => opt.Ignore())
+            //     .ForMember(dest => dest.UsuarioActualizacion, opt => opt.Ignore())
+            //     .ForMember(dest => dest.ConsultorAsignaciones, opt => opt.Ignore())
+            //     .ForMember(dest => dest.FrenteSubFrentes, opt => opt.Ignore())
+            //     .ForMember(dest => dest.TicketHistorialEstado, opt => opt.Ignore());
 
             // Mapeos de TicketConsultorAsignacion
             CreateMap<TicketConsultorAsignacion, TicketConsultorAsignacionDto>();
@@ -291,7 +294,9 @@ namespace ConectaBiz.Application.Mappings
             CreateMap<EmpresaGestor, EmpresaGestorDto>()
                 .ForMember(dest => dest.NombreGestor, opt => opt.MapFrom(src => src.Gestor != null && src.Gestor.Persona != null
                     ? $"{src.Gestor.Persona.Nombres} {src.Gestor.Persona.ApellidoPaterno} {src.Gestor.Persona.ApellidoMaterno}".Trim()
-                    : null));
+                    : null))
+                .ForMember(dest => dest.IdsTiposTicketPermitidos, opt => opt.MapFrom(src => 
+                    src.TiposTicketPermitidos.Where(t => t.Activo).Select(t => t.IdTipoTicket).ToList()));
 
             // Mapeo de Empresa
             CreateMap<Empresa, EmpresaDto>()

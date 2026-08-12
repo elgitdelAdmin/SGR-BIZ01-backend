@@ -108,6 +108,73 @@ public class Ticket
         return ticket;
     }
 
+    public static Ticket Crear(
+        string codTicket,
+        string titulo,
+        DateTime fechaSolicitud,
+        int idTipoTicket,
+        int? idSubTipoTicket,
+        int idEstadoInicial,
+        int idEmpresa,
+        int idUsuarioResponsableCliente,
+        int idPrioridad,
+        int? idGestorConsultoria,
+        string? descripcion,
+        string? repositorios,
+        string usuarioCreacion,
+        int? idGestorPrincipalEmpresa,
+        List<int> gestoresEmpresaActivos,
+        List<int> idGestoresSecundarios,
+        string? codTicketInterno = null,
+        string? codReqSgrCsti = null,
+        int? idReqSgrCsti = null,
+        bool? esCargaMasiva = null)
+    {
+        var ticket = new Ticket
+        {
+            CodTicket = codTicket,
+            CodTicketInterno = string.IsNullOrEmpty(codTicketInterno) ? "" : codTicketInterno,
+            CodReqSgrCsti = codReqSgrCsti,
+            IdReqSgrCsti = idReqSgrCsti,
+            EsCargaMasiva = esCargaMasiva ?? false,
+            Titulo = titulo,
+            FechaSolicitud = DateTime.SpecifyKind(fechaSolicitud, DateTimeKind.Local),
+            IdTipoTicket = idTipoTicket,
+            IdSubTipoTicket = idSubTipoTicket,
+            IdEmpresa = idEmpresa,
+            IdUsuarioResponsableCliente = idUsuarioResponsableCliente,
+            IdPrioridad = idPrioridad,
+            Descripcion = descripcion,
+            IdGestorConsultoria = idGestorConsultoria,
+            Repositorios = repositorios,
+            UsuarioCreacion = usuarioCreacion,
+            Activo = true,
+            FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local)
+        };
+
+        ticket.InicializarEstado(idEstadoInicial, usuarioCreacion);
+
+        if (idGestoresSecundarios != null && idGestoresSecundarios.Any())
+        {
+            foreach (var idGestor in idGestoresSecundarios)
+            {
+                if (gestoresEmpresaActivos.Contains(idGestor)) continue;
+                
+                ticket.GestorAsignaciones.Add(new TicketGestorAsignacion
+                {
+                    IdGestor = idGestor,
+                    IdGestorAsigno = idGestorPrincipalEmpresa ?? 0,
+                    Activo = true,
+                    FechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                    FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
+                    UsuarioCreacion = usuarioCreacion
+                });
+            }
+        }
+
+        return ticket;
+    }
+
     public void InicializarEstado(int idEstadoInicial, string usuario)
     {
         IdEstadoTicket = idEstadoInicial;
@@ -134,6 +201,22 @@ public class Ticket
             FechaCambio = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
             UsuarioCambio = usuario ?? "SYSTEM"
         });
+    }
+    public void CambiarEstado(Parametro estadoActual, Parametro estadoNuevo, string usuario)
+    {
+        if (estadoActual == null || estadoNuevo == null)
+            throw new ArgumentException("Los parámetros de estado no pueden ser nulos.");
+
+        // Validamos con el Valor1
+        var transicionesPermitidas = estadoActual.Valor1?.Split(',') ?? Array.Empty<string>();
+
+        if (!transicionesPermitidas.Contains(estadoNuevo.Codigo))
+        {
+            throw new InvalidOperationException($"Regla de Negocio: No se puede pasar un ticket de {estadoActual.Codigo} a {estadoNuevo.Codigo}.");
+        }
+
+        // Si pasó la validación, llamamos a tu método original para que haga el historial
+        this.CambiarEstado(estadoNuevo.Id, usuario);
     }
 
     public void EvaluarTransicionesAutomaticas(

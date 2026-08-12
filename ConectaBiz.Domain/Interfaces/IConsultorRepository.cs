@@ -12,8 +12,8 @@ namespace ConectaBiz.Domain.Interfaces
         Task<IEnumerable<Consultor>> GetAllAsync();
         Task<Consultor> GetByIdAsync(int id);
         Task<Consultor> GetByIdPersonaAsync(int idPersona);
-        Task<IEnumerable<Consultor>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente);
-        Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio);
+        // Task<IEnumerable<Consultor>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente);
+        // Task<IEnumerable<Consultor>> GetByIdSocioAsync(int idSocio);
         Task<Consultor> GetByIdUserAsync(int iduser);
         Task<Consultor> CreateAsync(Consultor consultor);
         Task<Consultor> UpdateAsync(Consultor consultor);

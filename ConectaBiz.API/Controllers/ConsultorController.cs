@@ -27,7 +27,7 @@ namespace ConectaBiz.API.Controllers
             _mapper = mapper;
         }
 
-        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta},{AppConstants.Roles.Consultor}")]
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<ConsultorListDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -41,7 +41,8 @@ namespace ConectaBiz.API.Controllers
             return Ok(consultoresListDto);
         }
 
-        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
+        /*
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta},{AppConstants.Roles.Consultor}")]
         [HttpGet("byIdSocio/{idSocio}")]
         [ProducesResponseType(typeof(IEnumerable<ConsultorListDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -54,8 +55,9 @@ namespace ConectaBiz.API.Controllers
             var consultoresListDto = _mapper.Map<IEnumerable<ConsultorListDto>>(consultoresDto);
             return Ok(consultoresListDto);
         }
+        */
 
-        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta},{AppConstants.Roles.Consultor}")]
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ConsultorDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -77,7 +79,7 @@ namespace ConectaBiz.API.Controllers
             return Ok(consultorDetailDto);
         }
 
-        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta}")]
+        [Authorize(Roles = $"{AppConstants.Roles.SuperAdmin},{AppConstants.Roles.Admin},{AppConstants.Roles.GestorConsultoria},{AppConstants.Roles.GestorCuenta},{AppConstants.Roles.Consultor}")]
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ConsultorDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

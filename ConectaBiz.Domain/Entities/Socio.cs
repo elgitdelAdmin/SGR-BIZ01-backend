@@ -26,6 +26,6 @@ namespace ConectaBiz.Domain.Entities
         public string? UsuarioModificacion { get; set; }
 
         // Relación: Un socio tiene muchos usuarios
-        public virtual ICollection<User> Users { get; set; }
+        // public virtual ICollection<User> Users { get; set; }
     }
 }

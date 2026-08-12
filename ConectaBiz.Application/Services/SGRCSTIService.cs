@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.DTOs;
+using ConectaBiz.Application.DTOs;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Domain.Constants;
 using ConectaBiz.Domain.Entities;
@@ -97,17 +97,6 @@ namespace ConectaBiz.Application.Services
                 .Where(req => !hashTicketsExistentes.Contains((string)req.codrequerimiento))
                 .ToList();
 
-            // Pruebas: réplica al nuevo Conecta con el 1.er requerimiento de SGR aunque ya exista en Conecta actual (no pasa por CreateAsync). Desactivar en appsettings cuando no pruebes.
-            //if (string.Equals(_configuration["ConectaNuevoTicketDestino:ForzarUnaReplicaConPrimerRequerimiento"], "true", StringComparison.OrdinalIgnoreCase))
-            //{
-            //    var paraPrueba = resultados.FirstOrDefault();
-            //    if (paraPrueba != null)
-            //    {
-            //        Console.WriteLine("[DEBUG Conecta nuevo] ForzarUnaReplicaConPrimerRequerimiento → " + Convert.ToString(paraPrueba.codrequerimiento));
-            //        await ReplicarEnConectaNuevoSiCorrespondeAsync(paraPrueba);
-            //    }
-            //}
-
             foreach (var req in requerimientosNuevos)
             {
                 try
@@ -123,7 +112,7 @@ namespace ConectaBiz.Application.Services
                         IdSocio = 1,
                         IdPais = 1,
                         IdGestor = 47,
-                        UsuarioRegistro = "Migracion",
+                        UsuarioRegistro = "Migracion SGR",
                         Persona = personaDto == null ? null : new DTOs.CreatePersonaDto
                         {
                             Nombres = personaDto.Nombres,
@@ -165,7 +154,7 @@ namespace ConectaBiz.Application.Services
                         IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, 
-                        UsuarioCreacion = "Migracion",
+                        UsuarioCreacion = "Migracion SGR",
                         EsCargaMasiva = true,
                         IdGestorConsultoria = 100
                     };
@@ -258,7 +247,7 @@ namespace ConectaBiz.Application.Services
                         IdSocio = 1,
                         IdPais = 1,
                         IdGestor = 47,
-                        UsuarioRegistro = "Migracion",
+                        UsuarioRegistro = "Migracion SGR",
                         Persona = personaDto == null ? null : new DTOs.CreatePersonaDto
                         {
                             Nombres = personaDto.Nombres,
@@ -300,7 +289,7 @@ namespace ConectaBiz.Application.Services
                         IdPrioridad = MapPrioridadToId(req.prioridad_descripcion),
                         Descripcion = req.detalle ?? "",
                         UrlArchivos = null, 
-                        UsuarioCreacion = "Migracion",
+                        UsuarioCreacion = "Migracion Manual SGR",
                         EsCargaMasiva = true,
                         IdGestorConsultoria = 100
                     };

@@ -20,6 +20,7 @@ namespace ConectaBiz.Domain.Entities
 
         public virtual Empresa Empresa { get; private set; } = null!;
         public virtual Gestor Gestor { get; private set; } = null!;
+        public virtual ICollection<EmpresaGestorTipoTicket> TiposTicketPermitidos { get; private set; } = new List<EmpresaGestorTipoTicket>();
 
         protected EmpresaGestor() { } // Para EF Core
 
@@ -65,6 +66,36 @@ namespace ConectaBiz.Domain.Entities
             EsPrincipal = esPrincipal;
             FechaModificacion = now;
             UsuarioModificacion = usuario;
+        }
+
+        // Comportamiento: Sincronizar Tipos de Ticket permitidos
+        public void SincronizarTiposTicket(List<int> idsTiposTicket, string usuario)
+        {
+            var now = DateTime.Now;
+            var tiposActivos = TiposTicketPermitidos.Where(t => t.Activo).ToList();
+
+            // 1. Desactivar los que ya no están en la nueva lista
+            foreach (var tipoExistente in tiposActivos)
+            {
+                if (!idsTiposTicket.Contains(tipoExistente.IdTipoTicket))
+                {
+                    tipoExistente.Desactivar(usuario, now);
+                }
+            }
+
+            // 2. Agregar o reactivar los nuevos
+            foreach (var idTipo in idsTiposTicket)
+            {
+                var tipoExistente = TiposTicketPermitidos.FirstOrDefault(t => t.IdTipoTicket == idTipo);
+                if (tipoExistente == null)
+                {
+                    TiposTicketPermitidos.Add(EmpresaGestorTipoTicket.Crear(idTipo, usuario, now));
+                }
+                else if (!tipoExistente.Activo)
+                {
+                    tipoExistente.Reactivar(usuario, now);
+                }
+            }
         }
     }
 }

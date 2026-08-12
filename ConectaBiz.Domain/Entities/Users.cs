@@ -15,7 +15,7 @@ namespace ConectaBiz.Domain.Entities
         public string PasswordHash { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLogin { get; set; }
-        public int IdSocio { get; set; } // Clave foránea (socio por defecto)
+        // public int IdSocio { get; set; } // Clave foránea (socio por defecto)
         public int IdPersona { get; set; } // Clave foránea
         public bool Activo { get; set; }
 
@@ -23,7 +23,7 @@ namespace ConectaBiz.Domain.Entities
         public virtual ICollection<PersonaUser> Personas { get; set; } = new List<PersonaUser>();
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public virtual ICollection<UserRolSocio> UserRolSocios { get; set; } = new List<UserRolSocio>();
-        public Socio Socio { get; set; }
+        // public Socio Socio { get; set; }
         public Persona Persona { get; set; }
     }
 

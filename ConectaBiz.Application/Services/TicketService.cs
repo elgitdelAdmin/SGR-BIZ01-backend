@@ -30,6 +30,7 @@ namespace ConectaBiz.Application.Services
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly string _rutaLog;
         private readonly string _rutaBaseArchivos;
+        private readonly ICurrentUserService _currentUserService;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
         private IEnumerable<Parametro> _listaTipoTicket;
@@ -53,7 +54,8 @@ namespace ConectaBiz.Application.Services
             IEmpresaService empresaService,
             IAuthService authService,
             IMapper mapper,
-            IServiceProvider provider
+            IServiceProvider provider,
+            ICurrentUserService currentUserService
             )
         {
             _ticketRepository = ticketRepository;
@@ -70,6 +72,7 @@ namespace ConectaBiz.Application.Services
             _mapper = mapper;
             _rutaLog = configuration["Logging:LogFilePath"];
             _rutaBaseArchivos = configuration["RepositorioArchivos:RutaBase"];
+            _currentUserService = currentUserService;
         }
 
         // 🔹 Cargar todos los datos necesarios
@@ -96,7 +99,7 @@ namespace ConectaBiz.Application.Services
             var ticket = await _ticketRepository.GetByIdWithRelationsAsync(id);
             if (ticket == null) return null;
             var dto = _mapper.Map<TicketDto>(ticket);
-            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            await CargarPlanificacionesEnAsignacionesAsync(new List<TicketDto> { dto });
             return dto;
         }
 
@@ -105,15 +108,24 @@ namespace ConectaBiz.Application.Services
             var ticket = await _ticketRepository.GetByCodTicketAsync(codTicket);
             if (ticket == null) return null;
             var dto = _mapper.Map<TicketDto>(ticket);
-            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            await CargarPlanificacionesEnAsignacionesAsync(new List<TicketDto> { dto });
             return dto;
         }
 
         public async Task<IEnumerable<TicketDto>> GetByEmpresaAsync(int idEmpresa)
         {
+            // 1. Preguntamos de forma invisible quién está llamando (Postman o la IA)
+            var rolDelUsuario = _currentUserService.CodRol;
+            var sociosDelUsuario = _currentUserService.SociosIds; // Lista de ID de Socios
+            // 2. Aplicamos tus Reglas de Negocio Duras
+            if (rolDelUsuario == AppConstants.Roles.Consultor)
+            {
+                return new List<TicketDto>(); 
+            }
+
             var tickets = await _ticketRepository.GetByEmpresaAsync(idEmpresa);
             var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-            await PopulatePlaceholderAssignmentsAsync(dtos);
+            await CargarPlanificacionesEnAsignacionesAsync(dtos);
             return dtos;
         }
 
@@ -121,7 +133,7 @@ namespace ConectaBiz.Application.Services
         {
             var tickets = await _ticketRepository.GetByEstadoAsync(idEstado);
             var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-            await PopulatePlaceholderAssignmentsAsync(dtos);
+            await CargarPlanificacionesEnAsignacionesAsync(dtos);
             return dtos;
         }
         public async Task<TicketDto?> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp)
@@ -129,7 +141,7 @@ namespace ConectaBiz.Application.Services
             var ticket = await _ticketRepository.GetByIdSocioNumContribuyenteEmpAsync(idSocio, numContribuyenteEmp);
             if (ticket == null) return null;
             var dto = _mapper.Map<TicketDto>(ticket);
-            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            await CargarPlanificacionesEnAsignacionesAsync(new List<TicketDto> { dto });
             return dto;
         }
         public async Task<TicketDto?> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp)
@@ -137,7 +149,7 @@ namespace ConectaBiz.Application.Services
             var ticket = await _ticketRepository.GetByNumContribuyenteSocioEmpAsync(numContribuyenteSocio, numContribuyenteEmp);
             if (ticket == null) return null;
             var dto = _mapper.Map<TicketDto>(ticket);
-            await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { dto });
+            await CargarPlanificacionesEnAsignacionesAsync(new List<TicketDto> { dto });
             return dto;
         }
         public async Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null)
@@ -149,7 +161,7 @@ namespace ConectaBiz.Application.Services
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                 .Select(t =>
                 {
@@ -170,7 +182,7 @@ namespace ConectaBiz.Application.Services
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Where(t => t.FrenteSubFrentes != null && t.FrenteSubFrentes.Count > 0)
                .ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                .Select(t =>
                {
@@ -189,7 +201,7 @@ namespace ConectaBiz.Application.Services
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                   .Select(t =>
                   {
@@ -212,7 +224,7 @@ namespace ConectaBiz.Application.Services
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                .Select(t =>
                {
@@ -231,7 +243,7 @@ namespace ConectaBiz.Application.Services
                 int socioIdToUse = idSocio ?? 0;
                 var tickets = await _ticketRepository.GetBySocioAsync(socioIdToUse);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                .Select(t =>
                {
@@ -249,7 +261,7 @@ namespace ConectaBiz.Application.Services
             {
                 var tickets = await _ticketRepository.GetAllAsync();
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-                await PopulatePlaceholderAssignmentsAsync(listadoTickets);
+                await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
                 listadoTickets = listadoTickets
                .Select(t =>
                {
@@ -265,55 +277,45 @@ namespace ConectaBiz.Application.Services
             }
             return listadoTickets;
         }
-        public async Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
-        {
-            var tickets = await _ticketRepository.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
-            var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
-            await PopulatePlaceholderAssignmentsAsync(dtos);
-            return dtos;
-        }
+        //public async Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
+        //{
+        //    var tickets = await _ticketRepository.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
+        //    var dtos = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
+        //    await CargarPlanificacionesEnAsignacionesAsync(dtos);
+        //    return dtos;
+        //}
         public async Task<string> GenerarCodigoTicketAsync(int idTipoTicket)
         {
-            //string codigoTipoTicket = (await _parametroRepository.GetByIdAsync(idTipoTicket)).Codigo;
-            string codigoTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Id.Equals(idTipoTicket)).Codigo; 
-            int nextId = (await _ticketRepository.GetAllAsync()).DefaultIfEmpty().Max(t => t?.Id ?? 0) + 1;
+            var tipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Id == idTipoTicket);
+            if (tipoTicket == null)
+            {
+                throw new InvalidOperationException($"No se encontró un tipo de ticket con el Id {idTipoTicket}");
+            }
+
+            int maxId = await _ticketRepository.GetMaxIdAsync();
+            int nextId = maxId + 1;
+
             string fechaHora = DateTime.Now.ToString("yyyyMMdd");
-            return $"{codigoTipoTicket}-{fechaHora}-{nextId}";
+            return $"{tipoTicket.Codigo}-{fechaHora}-{nextId}";
         }
         public async Task<TicketDto> CreateAsync(TicketInsertDto insertDto)
         {
             await InicializarDatosAsync();
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            var log = new StringBuilder();
-            log.AppendLine("========== INICIO CREACIÓN DE TICKET ==========");
-            log.AppendLine($"Fecha: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
 
             try
             {
 
                 // 1. Obtener empresa
-                var t0 = sw.ElapsedMilliseconds;
                 var empresa = await _empresaRepository.GetByIdAsync(insertDto.IdEmpresa);
-                log.AppendLine($"DB Get Empresa ms={sw.ElapsedMilliseconds - t0}");
 
                 if (empresa == null)
                 {
-                    log.AppendLine("❌ Empresa no encontrada en DB");
                     throw new InvalidOperationException("Empresa no encontrada");
                 }
-                log.AppendLine($"Empresa encontrada: {empresa.NombreComercial} (IdGestor={empresa.IdGestor})");
 
                 // 2. Crear ticket
-                var ticket = _mapper.Map<Ticket>(insertDto);
                 int idEstadoInicial = _listaEstados.First(x => x.Codigo == AppConstants.Estados.PENDIENTE_ATENCION).Id;
-                ticket.InicializarEstado(idEstadoInicial, insertDto.UsuarioCreacion);
-                ticket.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-                ticket.FechaSolicitud = DateTime.SpecifyKind(ticket.FechaSolicitud, DateTimeKind.Local);
-                ticket.UsuarioCreacion = insertDto.UsuarioCreacion;
-                ticket.Activo = true;
-                ticket.UrlArchivos = null;
-                ticket.Repositorios = insertDto.Repositorios;
-                ticket.CodTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
+                string codTicket = await GenerarCodigoTicketAsync(insertDto.IdTipoTicket);
 
                 var gestoresEmpresaActivos = empresa.EmpresaGestores != null
                     ? empresa.EmpresaGestores.Where(eg => eg.Activo).Select(eg => eg.IdGestor).ToList()
@@ -328,40 +330,35 @@ namespace ConectaBiz.Application.Services
                                             ?? empresa.IdGestor 
                                             ?? 0;
 
-                if (insertDto.IdGestoresSecundarios != null && insertDto.IdGestoresSecundarios.Any())
-                {
-                    foreach (var idGestor in insertDto.IdGestoresSecundarios)
-                    {
-                        if (gestoresEmpresaActivos.Contains(idGestor)) continue;
-                        ticket.GestorAsignaciones.Add(new TicketGestorAsignacion
-                        {
-                            IdGestor = idGestor,
-                            IdGestorAsigno = idGestorPrincipalEmpresa,
-                            Activo = true,
-                            FechaAsignacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                            FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
-                            UsuarioCreacion = insertDto.UsuarioCreacion
-                        });
-                    }
-                }
+                var ticket = Ticket.Crear(
+                    codTicket: codTicket,
+                    titulo: insertDto.Titulo,
+                    fechaSolicitud: insertDto.FechaSolicitud,
+                    idTipoTicket: insertDto.IdTipoTicket,
+                    idSubTipoTicket: insertDto.IdSubTipoTicket,
+                    idEstadoInicial: idEstadoInicial,
+                    idEmpresa: insertDto.IdEmpresa,
+                    idUsuarioResponsableCliente: (int)insertDto.IdUsuarioResponsableCliente,
+                    idPrioridad: insertDto.IdPrioridad,
+                    idGestorConsultoria: insertDto.IdGestorConsultoria,
+                    descripcion: insertDto.Descripcion,
+                    repositorios: insertDto.Repositorios,
+                    usuarioCreacion: insertDto.UsuarioCreacion,
+                    idGestorPrincipalEmpresa: idGestorPrincipalEmpresa,
+                    gestoresEmpresaActivos: gestoresEmpresaActivos,
+                    idGestoresSecundarios: insertDto.IdGestoresSecundarios ?? new List<int>(),
+                    codTicketInterno: insertDto.CodTicketInterno,
+                    codReqSgrCsti: insertDto.CodReqSgrCsti,
+                    idReqSgrCsti: insertDto.IdReqSgrCsti,
+                    esCargaMasiva: insertDto.EsCargaMasiva
+                );
 
-                t0 = sw.ElapsedMilliseconds;
                 var createdTicket = await _ticketRepository.CreateAsync(ticket);
-                log.AppendLine($"DB Create Ticket ms={sw.ElapsedMilliseconds - t0}");
-                log.AppendLine($"Ticket creado Id={createdTicket.Id}, CodTicket={ticket.CodTicket}");
-
-
-
-                log.AppendLine("========== FIN EXITOSO ==========");
 
                 // 4. Todas las operaciones secundarias de forma SECUENCIAL
-                t0 = sw.ElapsedMilliseconds;
                 await CreateInitialHistorialAsync(createdTicket.Id, insertDto.IdEstadoTicket);
-                log.AppendLine($"CreateInitialHistorialAsync ms={sw.ElapsedMilliseconds - t0}");
 
                 // 5. Notificaciones (SECUENCIAL - NO en background)
-                t0 = sw.ElapsedMilliseconds;
-                //int[] idsConsultores = insertDto.ConsultorAsignaciones.Select(c => c.IdConsultor).ToArray();
                 await CrearNotificacionesAsignacionTicket(
                     createdTicket.Id,
                     ticket.CodTicket,
@@ -370,28 +367,13 @@ namespace ConectaBiz.Application.Services
                     (int)insertDto.IdGestorConsultoria,
                     []
                 );
-                log.AppendLine($"CrearNotificacionesAsignacionTicket ms={sw.ElapsedMilliseconds - t0}");
 
-                log.AppendLine($"✅ FIN EXITOSO (total ms={sw.ElapsedMilliseconds})");
-
-                // IMPORTANTE: Log también secuencial (sin Task.Run)
-                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
                 return _mapper.Map<TicketDto>(createdTicket);
             }
             catch (Exception ex)
             {
-                var logError = new StringBuilder();
-                logError.AppendLine("========== ERROR EN CREACIÓN DE TICKET ==========");
-                logError.AppendLine($"Fecha: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                logError.AppendLine($"Mensaje: {ex.Message}");
-                logError.AppendLine($"InnerException: {ex.InnerException?.Message}");
-                logError.AppendLine($"InnerInnerException: {ex.InnerException?.InnerException?.Message}");
-                logError.AppendLine($"StackTrace: {ex.StackTrace}");
-                logError.AppendLine("================================================");
-                logError.AppendLine();
-
                 // Log de error también secuencial
-                await File.AppendAllTextAsync(_rutaLog, logError.ToString());
+                await File.AppendAllTextAsync(_rutaLog, ex.ToString());
                 throw;
             }
         }
@@ -407,77 +389,50 @@ namespace ConectaBiz.Application.Services
         }
         private async Task CrearNotificacionesAsignacionTicket(int ticketId, string codTicket, int idUserEmpresa,int idGestor, int idGestorConsultoria, int[] idsConsultores)
         {
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            var log = new StringBuilder();
-            log.AppendLine("========== INICIO CrearNotificacionesAsignacionTicket ==========");
-            log.AppendLine($"Fecha: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+            // Obtener ambos gestores en una sola consulta
+            var gestores = (await _gestorService.GetByIdsAsync(new[] { idGestor, idGestorConsultoria })).ToDictionary(g => g.Id);
 
-            try
+            // Recuperar cada uno (si existe en el diccionario)
+            gestores.TryGetValue(idGestor, out var gestorDto);
+            gestores.TryGetValue(idGestorConsultoria, out var gestorConsultoriaDto);
+
+
+            var candidatos = new List<int> { idUserEmpresa, (int)gestorDto.IdUser, (int)gestorConsultoriaDto.IdUser };
+            candidatos.AddRange(idsConsultores.Where(id => id > 0));
+
+            // 2. Traer notificaciones ya existentes
+            var existentes = await _notificacionTicketService.Value.GetNotificacionesByIdTicketIdUsersAsync(ticketId, candidatos.ToArray());
+
+            // 🔑 Crear set único por (IdTicket, IdUser)
+            var existentesSet = existentes.Select(n => (n.IdTicket, IdUser: (int)n.IdUser)).Distinct().ToHashSet();
+
+            // 3. Filtrar solo los nuevos usuarios
+            var nuevosUsuarios = candidatos.Where(id => !existentesSet.Contains((ticketId, id))).ToList();
+
+            // 4. Crear notificaciones
+            var lstNotificaciones = new List<CrearNotificacionDto>();
+            string mensaje = $"El Ticket: {codTicket} ha sido asignado a usted.";
+
+            foreach (var id in nuevosUsuarios)
             {
-                var t0 = sw.ElapsedMilliseconds;
-                // Obtener ambos gestores en una sola consulta
-                var gestores = (await _gestorService.GetByIdsAsync(new[] { idGestor, idGestorConsultoria })).ToDictionary(g => g.Id);
-
-                log.AppendLine($"GetByIdsAsync({idGestor}, {idGestorConsultoria}) ms={sw.ElapsedMilliseconds - t0}");
-
-                // Recuperar cada uno (si existe en el diccionario)
-                gestores.TryGetValue(idGestor, out var gestorDto);
-                gestores.TryGetValue(idGestorConsultoria, out var gestorConsultoriaDto);
-
-
-                var candidatos = new List<int> { idUserEmpresa, (int)gestorDto.IdUser, (int)gestorConsultoriaDto.IdUser };
-                candidatos.AddRange(idsConsultores.Where(id => id > 0));
-
-                // 2. Traer notificaciones ya existentes
-                t0 = sw.ElapsedMilliseconds;
-                var existentes = await _notificacionTicketService.Value.GetNotificacionesByIdTicketIdUsersAsync(ticketId, candidatos.ToArray());
-                log.AppendLine($"GetNotificacionesByIdTicketIdUsersAsync ms={sw.ElapsedMilliseconds - t0}");
-
-                // 🔑 Crear set único por (IdTicket, IdUser)
-                var existentesSet = existentes.Select(n => (n.IdTicket, IdUser: (int)n.IdUser)).Distinct().ToHashSet();
-
-                // 3. Filtrar solo los nuevos usuarios
-                t0 = sw.ElapsedMilliseconds;
-                var nuevosUsuarios = candidatos.Where(id => !existentesSet.Contains((ticketId, id))).ToList();
-                log.AppendLine($"Filtrado nuevosUsuarios ms={sw.ElapsedMilliseconds - t0}");
-
-                // 4. Crear notificaciones
-                var lstNotificaciones = new List<CrearNotificacionDto>();
-                string mensaje = $"El Ticket: {codTicket} ha sido asignado a usted.";
-
-                t0 = sw.ElapsedMilliseconds;
-                foreach (var id in nuevosUsuarios)
+                if (idsConsultores.Contains(id))
                 {
-                    if (idsConsultores.Contains(id))
+                    var consultorDto = await _consultorService.GetByIdAsync(id);
+                    if (consultorDto != null)
                     {
-                        var consultorDto = await _consultorService.GetByIdAsync(id);
-                        if (consultorDto != null)
-                        {
-                            lstNotificaciones.Add(CrearNotificacion(ticketId, consultorDto.IdUser, codTicket, mensaje));
-                        }
-                    }
-                    else
-                    {
-                        lstNotificaciones.Add(CrearNotificacion(ticketId, id, codTicket, mensaje));
+                        lstNotificaciones.Add(CrearNotificacion(ticketId, consultorDto.IdUser, codTicket, mensaje));
                     }
                 }
-                log.AppendLine($"Construcción lstNotificaciones ms={sw.ElapsedMilliseconds - t0}");
-
-                // 5. Guardar en lote
-                if (lstNotificaciones.Any())
+                else
                 {
-                    t0 = sw.ElapsedMilliseconds;
-                    await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
-                    log.AppendLine($"AddRangeAsync ms={sw.ElapsedMilliseconds - t0}");
+                    lstNotificaciones.Add(CrearNotificacion(ticketId, id, codTicket, mensaje));
                 }
-
-                log.AppendLine($"✅ FIN EXITOSO (total ms={sw.ElapsedMilliseconds})");
-                //await File.AppendAllTextAsync(_rutaLog, log.ToString());
             }
-            catch (Exception ex)
+
+            // 5. Guardar en lote
+            if (lstNotificaciones.Any())
             {
-                log.AppendLine("❌ ERROR: " + ex.Message);
-                log.AppendLine(ex.StackTrace);
+                await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
             }
         }
 
@@ -521,9 +476,7 @@ namespace ConectaBiz.Application.Services
 
         public async Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto)
         {
-            try
-            {
-                await InicializarDatosAsync();
+            await InicializarDatosAsync();
 
                 var lstNotificaciones = new List<CrearNotificacionDto>();
 
@@ -642,33 +595,18 @@ namespace ConectaBiz.Application.Services
 
                 // Retornar el objeto mapeado directamente desde la memoria (Ahorro de consulta SQL)
                 var resultDto = _mapper.Map<TicketDto>(existingTicket);
-                await PopulatePlaceholderAssignmentsAsync(new List<TicketDto> { resultDto });
+                await CargarPlanificacionesEnAsignacionesAsync(new List<TicketDto> { resultDto });
                 return resultDto;
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error al actualizar el ticket con ID: {Id}", id);
-                throw;
-            }
         }
-
 
         public async Task<bool> DeleteAsync(int id)
+
         {
-            try
-            {
-                var exists = await _ticketRepository.GetByIdAsync(id);
-                if (exists == null) return false;
+            var exists = await _ticketRepository.GetByIdAsync(id);
+            if (exists == null) return false;
 
-                return await _ticketRepository.DeleteAsync(id);
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error al eliminar el ticket con ID: {Id}", id);
-                throw;
-            }
+            return await _ticketRepository.DeleteAsync(id);
         }
-
         public async Task<IEnumerable<TicketHistorialEstadoDto>> GetHistorialByTicketIdAsync(int idTicket)
         {
             var historial = await _historialRepository.GetByTicketIdAsync(idTicket);
@@ -1075,11 +1013,11 @@ namespace ConectaBiz.Application.Services
             return await _ticketRepository.GetAllCodTicketInternosAsync();
         }
 
-        private async Task PopulatePlaceholderAssignmentsAsync(IEnumerable<TicketDto> dtos)
+        private async Task CargarPlanificacionesEnAsignacionesAsync(IEnumerable<TicketDto> dtos)
         {
             if (dtos == null || !dtos.Any()) return;
 
-            // 1. Collect all database IDs from active FrenteSubFrentes of all dtos
+            // 1. Recolectar todos los IDs de base de datos de los FrenteSubFrentes activos de todos los DTOs
             var frenteIds = dtos
                 .Where(d => d.FrenteSubFrentes != null)
                 .SelectMany(d => d.FrenteSubFrentes)
@@ -1090,16 +1028,16 @@ namespace ConectaBiz.Application.Services
 
             if (!frenteIds.Any()) return;
 
-            // 2. Fetch those DetallePlanificacionConsultor records by Frente IDs
+            // 2. Obtener los registros de DetallePlanificacionConsultor usando los IDs recolectados
             var planningEntities = await _consultorAsignacionRepository.GetPlanificacionesByFrenteIdsAsync(frenteIds);
             var planningDtos = _mapper.Map<List<DetallePlanificacionConsultorDto>>(planningEntities);
             
-            // Group planning records by IdTicketFrenteSubFrente
+            // Agrupar los registros de planificación por IdTicketFrenteSubFrente
             var planningByFrenteMap = planningDtos
                 .GroupBy(p => p.IdTicketFrenteSubFrente)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // 3. For each TicketDto, reconstruct placeholder assignments if needed, and map planning to real assignments
+            // 3. Para cada TicketDto, reconstruir asignaciones temporales (placeholders) si es necesario, y mapear la planificación a asignaciones reales
             foreach (var ticketDto in dtos)
             {
                 if (ticketDto.FrenteSubFrentes == null) continue;
@@ -1181,5 +1119,40 @@ namespace ConectaBiz.Application.Services
                 }
             }
         }
+
+        public async Task<bool> CambiarEstadoPorCodigoAsync(string codigoTicket, string codigoNuevoEstado)
+        {
+            // 1. Buscar Ticket
+            var ticket = await _ticketRepository.GetByCualquierCodigoAsync(codigoTicket);
+            if (ticket == null) throw new Exception($"No se encontró ningún ticket con el código {codigoTicket}");
+
+            // 2. Buscar Catálogos
+            var estadoActual = _parametrosCatalogo.Current.ListaEstados.FirstOrDefault(e => e.Id == ticket.IdEstadoTicket);
+            // 2b. Buscar el NUEVO estado por CÓDIGO o por NOMBRE
+            var estadoNuevo = _parametrosCatalogo.Current.ListaEstados
+                .FirstOrDefault(e =>
+                    e.Codigo.Equals(codigoNuevoEstado, StringComparison.OrdinalIgnoreCase) ||
+                    (e.Nombre != null && e.Nombre.Equals(codigoNuevoEstado, StringComparison.OrdinalIgnoreCase))
+                );
+
+            if (estadoNuevo == null)
+                throw new Exception($"El estado indicado '{codigoNuevoEstado}' no es válido o no existe en el catálogo.");
+
+            // 3. Dominio hace la magia (valida reglas + genera historial interno)
+            ticket.CambiarEstado(estadoActual, estadoNuevo, "AGENTE_IA");
+
+            // 4. Mapear y Guardar
+            var updateDto = _mapper.Map<TicketUpdateDto>(ticket);
+            updateDto.UsuarioActualizacion = "AGENTE_IA";
+
+            // Rellenamos para pasar validaciones del UpdateAsync
+            updateDto.ConsultorAsignaciones ??= new List<TicketConsultorAsignacionUpdateDto>();
+            updateDto.FrenteSubFrentes ??= new List<TicketFrenteSubFrenteUpdateDto>();
+            updateDto.IdGestoresSecundarios ??= new List<int>();
+
+            await UpdateAsync(ticket.Id, updateDto);
+            return true;
+        }
+
     }
 }

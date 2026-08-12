@@ -148,15 +148,17 @@ namespace ConectaBiz.Domain.Entities
         }
 
         // Comportamiento: Sincronización de Gestores
-        public void SincronizarGestores(List<int> nuevosIdsGestores, int? idGestorPrincipal, string usuario)
+        public void SincronizarGestores(Dictionary<int, List<int>> gestoresConfig, int? idGestorPrincipal, string usuario)
         {
-            nuevosIdsGestores ??= new List<int>();
+            gestoresConfig ??= new Dictionary<int, List<int>>();
             var now = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+            var nuevosIdsGestores = gestoresConfig.Keys.ToList();
 
             if (idGestorPrincipal.HasValue && idGestorPrincipal.Value > 0
                 && !nuevosIdsGestores.Contains(idGestorPrincipal.Value))
             {
                 nuevosIdsGestores.Add(idGestorPrincipal.Value);
+                gestoresConfig[idGestorPrincipal.Value] = new List<int>(); // Sin restricción por defecto
             }
 
             foreach (var eg in EmpresaGestores.Where(e => e.Activo))
@@ -171,14 +173,18 @@ namespace ConectaBiz.Domain.Entities
             {
                 bool esPrincipal = idGestorPrincipal.HasValue && idGestorPrincipal.Value == idG;
                 var existente = EmpresaGestores.FirstOrDefault(e => e.IdGestor == idG);
+                var tiposTicket = gestoresConfig.ContainsKey(idG) ? gestoresConfig[idG] : new List<int>();
 
                 if (existente != null)
                 {
                     existente.Reactivar(esPrincipal, usuario, now);
+                    existente.SincronizarTiposTicket(tiposTicket, usuario);
                 }
                 else
                 {
-                    EmpresaGestores.Add(EmpresaGestor.Crear(Id, idG, esPrincipal, usuario, now));
+                    var nuevoEg = EmpresaGestor.Crear(Id, idG, esPrincipal, usuario, now);
+                    EmpresaGestores.Add(nuevoEg);
+                    nuevoEg.SincronizarTiposTicket(tiposTicket, usuario);
                 }
             }
 

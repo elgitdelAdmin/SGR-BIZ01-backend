@@ -18,7 +18,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<TicketDto?> GetByIdSocioNumContribuyenteEmpAsync(int idSocio, string numContribuyenteEmp);
         Task<TicketDto?> GetByNumContribuyenteSocioEmpAsync(string numContribuyenteSocio, string numContribuyenteEmp);
         Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null);
-        Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
+        //Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
         Task<TicketDto> CreateAsync(TicketInsertDto insertDto);
         //Task<TicketZipFileDto> UploadZipFileAsync(int ticketId, IFormFile zipFile);
         Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto);
@@ -44,5 +44,6 @@ namespace ConectaBiz.Application.Interfaces
             string? estado = null,
             string? nombreConsultor = null,
             string? tipoSubtipo = null);
+        Task<bool> CambiarEstadoPorCodigoAsync(string codigoTicket, string codigoNuevoEstado);
     }
 }

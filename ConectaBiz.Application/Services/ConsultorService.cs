@@ -72,6 +72,7 @@ namespace ConectaBiz.Application.Services
 
             return _mapper.Map<ConsultorDto>(consultor);
         }
+        /*
         public async Task<IEnumerable<ConsultorDto>> GetByNumDocContribuyenteSocioAsync(string numDocContribuyente)
         {
             var consultor = await _consultorRepository.GetByNumDocContribuyenteSocioAsync(numDocContribuyente);
@@ -80,7 +81,9 @@ namespace ConectaBiz.Application.Services
 
             return _mapper.Map<IEnumerable<ConsultorDto>>(consultor);
         }
+        */
 
+        /*
         public async Task<IEnumerable<ConsultorDto>> GetByIdSocioAsync(int idSocio)
         {
             var consultores = await _consultorRepository.GetByIdSocioAsync(idSocio);
@@ -89,6 +92,7 @@ namespace ConectaBiz.Application.Services
 
             return _mapper.Map<IEnumerable<ConsultorDto>>(consultores);
         }
+        */
 
         public async Task<ConsultorDto> UpdateAsync(int id, ConsultorDto consultorDto)
         {
@@ -105,7 +109,8 @@ namespace ConectaBiz.Application.Services
             consultorExistente.ActualizarDatosBasicos(
                 consultorDto.IdNivelExperiencia,
                 consultorDto.IdModalidadLaboral,
-                consultorDto.IdSocio,
+                // consultorDto.IdSocio, // Comentado por instrucción del usuario
+                null,
                 consultorDto.UsuarioActualizacion
             );
 

@@ -250,7 +250,7 @@ namespace ConectaBiz.Application.Services
                 Email = registerRequest.Email,
                 PasswordHash = _passwordHasher.HashPassword(registerRequest.Password),
                 CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
-                IdSocio = registerRequest.IdSocio,
+                // IdSocio = registerRequest.IdSocio,
                 IdPersona = persona.Id,
                 Activo = true
             };
@@ -316,7 +316,7 @@ namespace ConectaBiz.Application.Services
                         PersonaId = persona.Id,
                         IdNivelExperiencia = null,
                         IdModalidadLaboral = null,
-                        IdSocio = registerRequest.IdSocio,
+                        // IdSocio = registerRequest.IdSocio, // Comentado por instrucción del usuario
                         IdUser = userCreado.Id,
                         UsuarioCreacion = registerRequest.UsuarioCreacion,
                         FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),
@@ -387,7 +387,7 @@ namespace ConectaBiz.Application.Services
             // Actualizar datos del usuario
             existingUser.Username = updateUserDto.Username;
             existingUser.Email = updateUserDto.Email;
-            existingUser.IdSocio = updateUserDto.IdSocio;
+            // existingUser.IdSocio = updateUserDto.IdSocio;
 
             var currentRolSocios = existingUser.UserRolSocios.ToList();
 
@@ -462,7 +462,7 @@ namespace ConectaBiz.Application.Services
                         PersonaId = existingUser.IdPersona,
                         IdNivelExperiencia = null,
                         IdModalidadLaboral = null,
-                        IdSocio = updateUserDto.IdSocio,
+                        // IdSocio = updateUserDto.IdSocio, // Comentado por instrucción del usuario
                         IdUser = existingUser.Id,
                         UsuarioCreacion = updateUserDto.UsuarioActualizacion,
                         FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local),

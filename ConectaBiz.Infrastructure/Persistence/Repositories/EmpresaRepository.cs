@@ -27,7 +27,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable) 
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
@@ -36,7 +36,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Empresa>> GetByIdSocio(int idSocio)
         {
-            return await _context.Empresas
+            try
+            {
+                return await _context.Empresas
                 .AsNoTracking()
                 .AsSplitQuery()
                 .Where(e => e.Activo && e.IdSocio == idSocio)
@@ -44,11 +46,18 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
                 .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+
         }
 
         public async Task<IEnumerable<Empresa>> GetByIdGestorCuenta(int idGestorCuenta, int IdSocio)
@@ -61,7 +70,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
@@ -78,7 +87,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
@@ -93,7 +102,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                 .Include(e => e.PersonaResponsable)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.Id == id);
@@ -114,7 +123,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.IdUser == iduser);
@@ -130,7 +139,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.NumDocContribuyente == numDocContribuyente
@@ -148,7 +157,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
                 .Include(e => e.Socio)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.NumDocContribuyente == numDocContribuyente);
@@ -162,7 +171,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .FirstOrDefaultAsync(e => e.Codigo == codigo);
@@ -177,7 +186,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
@@ -193,7 +202,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(e => e.Pais)
                 .Include(e => e.Gestor)
                     .ThenInclude(g => g.Persona)
-                .Include(e => e.EmpresaGestores)
+                .Include(e => e.EmpresaGestores).ThenInclude(eg => eg.TiposTicketPermitidos).Include(e => e.EmpresaGestores)
                     .ThenInclude(eg => eg.Gestor)
                         .ThenInclude(g => g.Persona)
                 .OrderBy(e => e.RazonSocial)
@@ -209,10 +218,19 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<Empresa> UpdateAsync(Empresa empresa)
         {
-            // EF Core ya tiene trackeada la entidad por el GetByIdAsync,
-            // por lo que SaveChangesAsync detectará las propiedades modificadas automáticamente
-            await _context.SaveChangesAsync();
-            return empresa;
+            try
+            {
+                // EF Core ya tiene trackeada la entidad por el GetByIdAsync,
+                // por lo que SaveChangesAsync detectará las propiedades modificadas automáticamente
+                await _context.SaveChangesAsync();
+                return empresa;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+      
         }
 
         public async Task<bool> DeleteAsync(int id)

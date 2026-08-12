@@ -20,45 +20,22 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public async Task<IEnumerable<Ticket>> GetAllAsync()
         {
-
-            return await _context.Ticket
+            try
+            {
+                return await _context.Ticket
                 .Include(t => t.Empresa)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo)) // 👈 Incluye DetalleTareasConsultor
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
                 .ToListAsync();
-        }
-
-      /*  public async Task<IEnumerable<Ticket>> GetAllAsync()
-        {
-            try
-            {
-                var tickets = await _context.Ticket
-                    .Include(t => t.Empresa)
-                    .Include(t => t.ConsultorAsignaciones)
-                    .Include(t => t.FrenteSubFrentes)
-                    .ToListAsync();
-
-                foreach (var ticket in tickets)
-                {
-                    ticket.ConsultorAsignaciones = ticket.ConsultorAsignaciones?
-                        .Where(ca => ca.Activo).ToList();
-
-                    ticket.FrenteSubFrentes = ticket.FrenteSubFrentes?
-                        .Where(fsf => fsf.Activo).ToList();
-                }
-
-                return tickets;
             }
             catch (Exception ex)
             {
-
                 throw;
             }
-       
+
         }
-        */
 
         public async Task<Ticket?> GetByIdAsync(int id)
         {
@@ -152,7 +129,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             var query = _context.Ticket
                 .Where(t => (t.Empresa != null && (t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor) || (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor))) || 
-                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
+                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor))
+                .Where(t => t.Empresa == null || 
+                            !t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor && eg.TiposTicketPermitidos.Any(tp => tp.Activo)) || 
+                            t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor && eg.TiposTicketPermitidos.Any(tp => tp.Activo && tp.IdTipoTicket == t.IdTipoTicket)));
 
             if (idSocio.HasValue && idSocio.Value > 0)
             {
@@ -379,7 +359,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         {
             var query = _context.Ticket
                 .Where(t => (t.Empresa != null && (t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor) || (t.Empresa.IdGestor.HasValue && t.Empresa.IdGestor.Value == idGestor))) || 
-                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor));
+                            t.GestorAsignaciones.Any(ga => ga.Activo && ga.IdGestor == idGestor))
+                .Where(t => t.Empresa == null || 
+                            !t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor && eg.TiposTicketPermitidos.Any(tp => tp.Activo)) || 
+                            t.Empresa.EmpresaGestores.Any(eg => eg.Activo && eg.IdGestor == idGestor && eg.TiposTicketPermitidos.Any(tp => tp.Activo && tp.IdTipoTicket == t.IdTipoTicket)));
 
             if (idSocio.HasValue && idSocio.Value > 0)
             {
@@ -472,6 +455,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Select(t => t.CodTicketInterno)
                 .ToListAsync();
         }
+        public async Task<Ticket?> GetByCualquierCodigoAsync(string codigo)
+        {
+            return await _context.Ticket
+                .FirstOrDefaultAsync(t => t.CodTicket == codigo || t.CodTicketInterno == codigo);
+        }
 
+        public async Task<int> GetMaxIdAsync()
+        {
+            return await _context.Ticket.MaxAsync(t => (int?)t.Id) ?? 0;
+        }
     }
 }

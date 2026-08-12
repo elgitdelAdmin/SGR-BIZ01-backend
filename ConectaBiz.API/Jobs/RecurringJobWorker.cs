@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Application.Services;
 
 namespace ConectaBiz.API.Jobs
@@ -23,13 +25,13 @@ namespace ConectaBiz.API.Jobs
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var sgrcstiService = scope.ServiceProvider.GetRequiredService<SGRCSTIService>();
+                        var sgrcstiService = scope.ServiceProvider.GetRequiredService<ISGRCSTIService>();
                         await sgrcstiService.MigracionRequerimientos();
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Aquí puedes loguear el error si tienes un logger
+                    Console.WriteLine($"[RecurringJobWorker] Error ejecutando tarea programada: {ex.Message}");
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);

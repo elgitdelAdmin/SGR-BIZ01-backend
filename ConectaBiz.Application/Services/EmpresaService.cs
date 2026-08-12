@@ -58,8 +58,12 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.GestorCuenta)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
-                var empresas = await _empresaRepository.GetByIdGestorCuenta(gestorDto.Id, gestorDto.IdSocio);
-                listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+                if (gestorDto != null)
+                {
+                    int socioIdToUse = (idSocio.HasValue && idSocio.Value > 0) ? idSocio.Value : gestorDto.IdSocio;
+                    var empresas = await _empresaRepository.GetByIdGestorCuenta(gestorDto.Id, socioIdToUse);
+                    listadoEmpresas = _mapper.Map<IEnumerable<EmpresaDto>>(empresas);
+                }
             }
             else
             {
@@ -175,9 +179,27 @@ namespace ConectaBiz.Application.Services
                 createDto.CodSgrCsti);
 
             // Sincronizar gestores en la entidad
-            var idsGestores = createDto.IdsGestores ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? new List<int> { createDto.IdGestor.Value } : new List<int>());
+            // Construir el diccionario de gestores y sus tipos de ticket
+            var dictGestores = new Dictionary<int, List<int>>();
+            if (createDto.GestoresAsignados != null && createDto.GestoresAsignados.Any())
+            {
+                foreach (var g in createDto.GestoresAsignados)
+                {
+                    dictGestores[g.IdGestor] = g.IdsTiposTicket ?? new List<int>();
+                }
+            }
+            else
+            {
+                // Fallback para mantener compatibilidad con envíos anteriores o pantallas simples
+                var idsFallback = createDto.IdsGestores ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? new List<int> { createDto.IdGestor.Value } : new List<int>());
+                foreach (var idF in idsFallback)
+                {
+                    dictGestores[idF] = new List<int>();
+                }
+            }
+
             var idPrincipal = createDto.IdGestorPrincipal ?? (createDto.IdGestor.HasValue && createDto.IdGestor.Value > 0 ? createDto.IdGestor : null);
-            empresa.SincronizarGestores(idsGestores, idPrincipal, createDto.UsuarioRegistro ?? "Sistema");
+            empresa.SincronizarGestores(dictGestores, idPrincipal, createDto.UsuarioRegistro ?? "Sistema");
 
             // Crear la empresa en BD (guarda la empresa y los gestores trackeados)
             var createdEmpresa = await _empresaRepository.CreateAsync(empresa);
@@ -238,9 +260,27 @@ namespace ConectaBiz.Application.Services
                 updateDto.UsuarioModificacion);
 
             // Sincronizar gestores en la entidad
-            var idsGestores = updateDto.IdsGestores ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? new List<int> { updateDto.IdGestor.Value } : new List<int>());
+            // Construir el diccionario de gestores y sus tipos de ticket
+            var dictGestores = new Dictionary<int, List<int>>();
+            if (updateDto.GestoresAsignados != null && updateDto.GestoresAsignados.Any())
+            {
+                foreach (var g in updateDto.GestoresAsignados)
+                {
+                    dictGestores[g.IdGestor] = g.IdsTiposTicket ?? new List<int>();
+                }
+            }
+            else
+            {
+                // Fallback para mantener compatibilidad
+                var idsFallback = updateDto.IdsGestores ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? new List<int> { updateDto.IdGestor.Value } : new List<int>());
+                foreach (var idF in idsFallback)
+                {
+                    dictGestores[idF] = new List<int>();
+                }
+            }
+
             var idPrincipal = updateDto.IdGestorPrincipal ?? (updateDto.IdGestor.HasValue && updateDto.IdGestor.Value > 0 ? updateDto.IdGestor : null);
-            existingEmpresa.SincronizarGestores(idsGestores, idPrincipal, updateDto.UsuarioModificacion ?? "Sistema");
+            existingEmpresa.SincronizarGestores(dictGestores, idPrincipal, updateDto.UsuarioModificacion ?? "Sistema");
 
             // EF detectará los cambios
             var updatedEmpresa = await _empresaRepository.UpdateAsync(existingEmpresa);

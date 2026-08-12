@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace ConectaBiz.Application.DTOs
         public int PersonaId { get; set; }
         public int IdNivelExperiencia { get; set; }
         public int IdModalidadLaboral { get; set; }
-        public int IdSocio { get; set; }
+        public int? IdSocio { get; set; }
         public int IdUser { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
@@ -33,7 +33,7 @@ namespace ConectaBiz.Application.DTOs
     {
         public int IdNivelExperiencia { get; set; }
         public int IdModalidadLaboral { get; set; }
-        public int IdSocio { get; set; }
+        public int? IdSocio { get; set; }
         public CreatePersonaDto Persona { get; set; }
         public List<CreateConsultorEspecializacionDto> Especializaciones { get; set; } = new List<CreateConsultorEspecializacionDto>();
     }
@@ -63,7 +63,7 @@ namespace ConectaBiz.Application.DTOs
         public int Id { get; set; }
         public int PersonaId { get; set; }
         public int IdNivelExperiencia { get; set; }
-        public int IdSocio { get; set; }
+        public int? IdSocio { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
         public bool Activo { get; set; }
@@ -98,7 +98,7 @@ namespace ConectaBiz.Application.DTOs
         public int PersonaId { get; set; }
         public int IdNivelExperiencia { get; set; }
         public int IdModalidadLaboral { get; set; }
-        public int IdSocio { get; set; }
+        public int? IdSocio { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaActualizacion { get; set; }
         public bool Activo { get; set; }

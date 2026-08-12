@@ -14,6 +14,7 @@ namespace ConectaBiz.Application.DTOs
         public DateTime? FechaDesasignacion { get; set; }
         public string? UsuarioCreacion { get; set; }
         public string? UsuarioModificacion { get; set; }
+        public List<int> IdsTiposTicketPermitidos { get; set; } = new List<int>();
     }
 
     public class CrearEmpresaGestorDto

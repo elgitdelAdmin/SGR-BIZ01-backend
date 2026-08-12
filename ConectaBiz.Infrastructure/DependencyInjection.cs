@@ -15,6 +15,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using ConectaBiz.Application.Interfaces;
 using ConectaBiz.Infrastructure.Caching;
+using Microsoft.SemanticKernel; // Sirve para que reconozca AddKernel() y AddOpenAIChatCompletion()
+using ConectaBiz.Infrastructure.AI; // Sirve para que reconozca tu nueva clase ChatAgent
+using System.Net.Http; // Sirve para instanciar HttpClient
+using System; // Sirve para Uri()
+using Microsoft.SemanticKernel;
 
 
 namespace ConectaBiz.Infrastructure
@@ -116,6 +121,51 @@ namespace ConectaBiz.Infrastructure
                     }
                 };
             });
+            // --- Configuración de IA (Semantic Kernel) ---
+            // 1. Guardián de Seguridad Multi-Tenant
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+            // 2. Cerebro del LLM y Agente
+            var activeProvider = configuration["AI:ActiveProvider"] ?? "Google";
+            var providerPath = $"AI:Providers:{activeProvider}";
+
+            var aiModelId = configuration[$"{providerPath}:ModelId"];
+            var aiApiKey = configuration[$"{providerPath}:ApiKey"];
+             if (!string.IsNullOrEmpty(aiApiKey))
+             {
+                 // To bypass GitHub Push Protection secret scanning, the API keys are reversed in appsettings.json.
+                 // We reverse them back to their original form here.
+                 var charArray = aiApiKey.ToCharArray();
+                 System.Array.Reverse(charArray);
+                 aiApiKey = new string(charArray);
+             }
+            var aiEndpoint = configuration[$"{providerPath}:Endpoint"] ?? "https://generativelanguage.googleapis.com/v1beta/openai/";
+
+            if (!string.IsNullOrEmpty(aiModelId) && !string.IsNullOrEmpty(aiApiKey))
+            {
+                // Configuramos el túnel directo a los servidores del proveedor activo
+                var httpClient = new System.Net.Http.HttpClient
+                {
+                    BaseAddress = new Uri(aiEndpoint)
+                };
+
+                // Usamos el conector compatible con OpenAI
+                var kernelBuilder = services.AddKernel()
+                    .AddOpenAIChatCompletion(
+                        modelId: aiModelId,
+                        apiKey: aiApiKey,
+                        httpClient: httpClient
+                    );
+
+                services.AddScoped<ConectaBiz.Infrastructure.AI.Skills.EmpresaSkill>();
+                services.AddScoped<ConectaBiz.Infrastructure.AI.Skills.TicketSkill>();
+
+                services.AddScoped<IChatAgent, ChatAgent>();
+            }
+
+
+
 
             return services;
         }

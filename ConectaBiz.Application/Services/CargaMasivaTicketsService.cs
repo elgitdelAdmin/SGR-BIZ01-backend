@@ -57,7 +57,7 @@ namespace ConectaBiz.Application.Services
                 throw new Exception($"No se encontró la empresa con RUC '{strategy.NumDocContribuyenteEmpresa}'");
 
             var ticketsExistentes = await _ticketRepository.GetByNumContribuyenteSocioEmpAsync(AppConstants.Socios.CstiNumDocContribuyente, strategy.NumDocContribuyenteEmpresa);
-            var consultores = (await _consultorService.GetByNumDocContribuyenteSocioAsync(AppConstants.Socios.CstiNumDocContribuyente)).ToList();
+            var consultores = (await _consultorService.GetAllAsync()).ToList();
             var subFrentes = (await _subFrenteRepository.GetActiveAsync()).ToList();
 
             var idTipoMesaDeAyuda = tipoTicketParams.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.MesaDeAyuda, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
@@ -128,7 +128,7 @@ namespace ConectaBiz.Application.Services
 
                 var fecha = strategy.ParsearFecha(reg.FechaSolicitud, reg.CodTicket);
 
-                ticketsParaCrear.Add((reg, idEstado, idPrioridad, idSubTipo, consultor, fecha));
+                ticketsParaCrear.Add((reg, idEstado, idPrioridad, idSubTipo, (ConsultorDto?)consultor, fecha));
             }
 
             if (!ticketsParaCrear.Any())

@@ -37,6 +37,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<NotificacionTicket> NotificacionTickets { get; set; }
         public DbSet<UserRolSocio> UserRolSocios { get; set; }
         public DbSet<EmpresaGestor> EmpresaGestores { get; set; }
+        public DbSet<EmpresaGestorTipoTicket> EmpresaGestorTipoTickets { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -62,10 +63,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.UsuarioModificacion).HasMaxLength(50);
 
                 // Relación con User
+                /*
                 entity.HasMany(e => e.Users)
                     .WithOne(u => u.Socio)
                     .HasForeignKey(u => u.IdSocio)
                     .OnDelete(DeleteBehavior.Restrict); // Evita que se elimine un Socio con Users
+                */
             });
 
 
@@ -81,15 +84,17 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.Property(e => e.LastLogin).HasColumnType("timestamp");
                 entity.HasIndex(e => e.Username).IsUnique();
                 entity.HasIndex(e => e.Email).IsUnique();
-                entity.HasIndex(e => e.IdSocio);
+                // entity.HasIndex(e => e.IdSocio); // Comentado por instrucción del usuario
                 entity.HasIndex(e => e.IdPersona);
                 entity.HasIndex(e => e.Activo);
 
                 // Relación con Socio
+                /*
                 entity.HasOne(e => e.Socio)
                     .WithMany(s => s.Users)
                     .HasForeignKey(e => e.IdSocio)
                     .OnDelete(DeleteBehavior.Restrict);
+                */
 
                 entity.HasOne(e => e.Persona)
                     .WithMany(s => s.Users)
@@ -191,7 +196,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.IdNivelExperiencia);
                 entity.Property(e => e.IdModalidadLaboral);
-                entity.Property(e => e.IdSocio).IsRequired();
+                // entity.Property(e => e.IdSocio).IsRequired(); // Comentado por instrucción del usuario
                 entity.Property(e => e.IdUser).IsRequired();
                 entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").IsRequired();
                 entity.Property(e => e.FechaActualizacion).HasColumnType("timestamp without time zone");
@@ -203,10 +208,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .WithOne(p => p.Consultor)
                     .HasForeignKey<Consultor>(e => e.PersonaId)
                     .OnDelete(DeleteBehavior.Restrict); // O .Cascade si quieres que al borrar Persona se borre el Consultor
-                entity.HasOne(e => e.Socio)
+                /* entity.HasOne(e => e.Socio)
                    .WithMany()
                    .HasForeignKey(e => e.IdSocio)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.Restrict); */
             });
 
             // Configuración de la entidad Frente
@@ -558,6 +563,15 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasDatabaseName("UX_EG_IdEmpresa_Principal_Activo")
                     .IsUnique()
                     .HasFilter("\"Activo\" = true AND \"EsPrincipal\" = true");
+            });
+
+            // Configuración de EmpresaGestorTipoTicket
+            modelBuilder.Entity<EmpresaGestorTipoTicket>(entity =>
+            {
+                entity.ToTable("EmpresaGestorTipoTicket", "conectabiz");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()").IsRequired();
+                entity.Property(e => e.FechaModificacion).HasColumnType("timestamp without time zone");
             });
 
             // Configuración de la entidad Gestor

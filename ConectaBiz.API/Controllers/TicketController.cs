@@ -128,15 +128,15 @@ namespace ConectaBiz.API.Controllers
             return Ok(result);
         }
         
-        [HttpGet("filtros")]
-        [ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<TicketDto>>> GetWithFilters([FromQuery] int? idEmpresa = null,[FromQuery] int? idEstado = null,[FromQuery] bool? urgente = null)
-        {
-            var tickets = await _ticketService.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
-            return Ok(tickets);
-        }
+        //[HttpGet("filtros")]
+        //[ProducesResponseType(typeof(IEnumerable<TicketDto>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        //[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        //public async Task<ActionResult<IEnumerable<TicketDto>>> GetWithFilters([FromQuery] int? idEmpresa = null,[FromQuery] int? idEstado = null,[FromQuery] bool? urgente = null)
+        //{
+        //    var tickets = await _ticketService.GetTicketsWithFiltersAsync(idEmpresa, idEstado, urgente);
+        //    return Ok(tickets);
+        //}
 
         [HttpGet("{id}/historial")]
         [ProducesResponseType(typeof(IEnumerable<TicketHistorialEstadoDto>), StatusCodes.Status200OK)]
