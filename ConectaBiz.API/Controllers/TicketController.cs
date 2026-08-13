@@ -163,6 +163,21 @@ namespace ConectaBiz.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
         }
 
+        [HttpPost("rapido")]
+        [RequestTimeout(120000)]
+        [ProducesResponseType(typeof(TicketDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<TicketDto>> CreateRapido([FromBody] TicketCreacionRapidaDto insertDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var ticket = await _ticketService.CreateRapidoAsync(insertDto);
+            return CreatedAtAction(nameof(GetById), new { id = ticket.Id }, ticket);
+        }
+
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(TicketDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

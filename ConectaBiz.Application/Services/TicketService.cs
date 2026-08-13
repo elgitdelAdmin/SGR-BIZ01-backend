@@ -378,6 +378,94 @@ namespace ConectaBiz.Application.Services
             }
         }
 
+        public async Task<TicketDto> CreateRapidoAsync(TicketCreacionRapidaDto dto)
+        {
+            await InicializarDatosAsync();
+
+            try
+            {
+                // 1. Obtener empresa
+                var empresa = await _empresaRepository.GetByIdAsync(dto.IdEmpresa);
+
+                if (empresa == null)
+                {
+                    throw new InvalidOperationException("Empresa no encontrada");
+                }
+
+                // 2. Map Asignaciones and Frentes
+                var frentes = _mapper.Map<List<TicketFrenteSubFrente>>(dto.FrenteSubFrentes ?? new List<TicketFrenteSubFrenteInsertDto>());
+                var asignaciones = _mapper.Map<List<TicketConsultorAsignacion>>(dto.ConsultorAsignaciones ?? new List<TicketConsultorAsignacionInsertDto>());
+
+                // 3. Crear ticket
+                dto.IdTipoTicket = _listaTipoTicket.First(x => x.Codigo == AppConstants.TipoTicket.MesaDeAyuda).Id;
+
+                int idEstadoInicial = _listaEstados.First(x => x.Codigo == AppConstants.Estados.EN_EJECUCION).Id;
+                string codTicket = await GenerarCodigoTicketAsync(dto.IdTipoTicket);
+
+                var gestoresEmpresaActivos = empresa.EmpresaGestores != null
+                    ? empresa.EmpresaGestores.Where(eg => eg.Activo).Select(eg => eg.IdGestor).ToList()
+                    : new List<int>();
+
+                if (empresa.IdGestor.HasValue && !gestoresEmpresaActivos.Contains(empresa.IdGestor.Value))
+                {
+                    gestoresEmpresaActivos.Add(empresa.IdGestor.Value);
+                }
+
+                int idGestorPrincipalEmpresa = empresa.EmpresaGestores?.FirstOrDefault(eg => eg.Activo && eg.EsPrincipal)?.IdGestor 
+                                            ?? empresa.IdGestor 
+                                            ?? 0;
+
+                var ticket = Ticket.CrearRapido(
+                    codTicket: codTicket,
+                    titulo: dto.Titulo,
+                    fechaSolicitud: dto.FechaSolicitud,
+                    idTipoTicket: dto.IdTipoTicket,
+                    idSubTipoTicket: dto.IdSubTipoTicket,
+                    idEstadoInicial: idEstadoInicial,
+                    idEmpresa: dto.IdEmpresa,
+                    idUsuarioResponsableCliente: (int)dto.IdUsuarioResponsableCliente,
+                    idPrioridad: dto.IdPrioridad,
+                    idGestorConsultoria: dto.IdGestorConsultoria,
+                    descripcion: dto.Descripcion,
+                    repositorios: dto.Repositorios,
+                    usuarioCreacion: dto.UsuarioCreacion,
+                    idGestorPrincipalEmpresa: idGestorPrincipalEmpresa,
+                    gestoresEmpresaActivos: gestoresEmpresaActivos,
+                    idGestoresSecundarios: dto.IdGestoresSecundarios ?? new List<int>(),
+                    asignaciones: asignaciones,
+                    frentesSubFrentes: frentes,
+                    codTicketInterno: dto.CodTicketInterno,
+                    codReqSgrCsti: dto.CodReqSgrCsti,
+                    idReqSgrCsti: dto.IdReqSgrCsti,
+                    esCargaMasiva: dto.EsCargaMasiva
+                );
+
+                var createdTicket = await _ticketRepository.CreateAsync(ticket);
+
+                // 4. Todas las operaciones secundarias de forma SECUENCIAL
+                await CreateInitialHistorialAsync(createdTicket.Id, dto.IdEstadoTicket);
+
+                // 5. Notificaciones (SECUENCIAL - NO en background)
+                var consultoresIds = asignaciones.Where(a => a.IdConsultor.HasValue).Select(a => a.IdConsultor.Value).ToArray();
+                await CrearNotificacionesAsignacionTicket(
+                    createdTicket.Id,
+                    ticket.CodTicket,
+                    (int)empresa.IdUser,
+                    (int)empresa.IdGestor,
+                    (int)dto.IdGestorConsultoria,
+                    consultoresIds
+                );
+
+                return _mapper.Map<TicketDto>(createdTicket);
+            }
+            catch (Exception ex)
+            {
+                // Log de error también secuencial
+                await File.AppendAllTextAsync(_rutaLog, ex.ToString());
+                throw;
+            }
+        }
+
         private CrearNotificacionDto CrearNotificacion(int ticketId, int userId, string codTicket, string mensaje)
         {
             return new CrearNotificacionDto

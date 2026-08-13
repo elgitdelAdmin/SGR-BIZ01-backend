@@ -175,6 +175,65 @@ public class Ticket
         return ticket;
     }
 
+    public static Ticket CrearRapido(
+        string codTicket,
+        string titulo,
+        DateTime fechaSolicitud,
+        int idTipoTicket,
+        int? idSubTipoTicket,
+        int idEstadoInicial,
+        int idEmpresa,
+        int idUsuarioResponsableCliente,
+        int idPrioridad,
+        int? idGestorConsultoria,
+        string? descripcion,
+        string? repositorios,
+        string usuarioCreacion,
+        int? idGestorPrincipalEmpresa,
+        List<int> gestoresEmpresaActivos,
+        List<int> idGestoresSecundarios,
+        List<TicketConsultorAsignacion> asignaciones,
+        List<TicketFrenteSubFrente> frentesSubFrentes,
+        string? codTicketInterno = null,
+        string? codReqSgrCsti = null,
+        int? idReqSgrCsti = null,
+        bool? esCargaMasiva = null)
+    {
+        var ticket = Crear(
+            codTicket, titulo, fechaSolicitud, idTipoTicket, idSubTipoTicket, idEstadoInicial, idEmpresa, idUsuarioResponsableCliente,
+            idPrioridad, idGestorConsultoria, descripcion, repositorios, usuarioCreacion, idGestorPrincipalEmpresa, gestoresEmpresaActivos, 
+            idGestoresSecundarios, codTicketInterno, codReqSgrCsti, idReqSgrCsti, esCargaMasiva);
+
+        if (frentesSubFrentes != null)
+        {
+            foreach (var fsf in frentesSubFrentes)
+            {
+                fsf.FechaCreacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                fsf.UsuarioCreacion = usuarioCreacion;
+                ticket.FrenteSubFrentes.Add(fsf);
+            }
+        }
+
+        if (asignaciones != null)
+        {
+            foreach (var asig in asignaciones)
+                ticket.ConsultorAsignaciones.Add(asig);
+        }
+
+        foreach (var ca in ticket.ConsultorAsignaciones)
+        {
+            if (ca.IdSubFrente.HasValue)
+            {
+                var matchingFsf = ticket.FrenteSubFrentes
+                    .FirstOrDefault(fsf => fsf.IdSubFrente == ca.IdSubFrente.Value);
+                if (matchingFsf != null)
+                    ca.TicketFrenteSubFrente = matchingFsf;
+            }
+        }
+
+        return ticket;
+    }
+
     public void InicializarEstado(int idEstadoInicial, string usuario)
     {
         IdEstadoTicket = idEstadoInicial;

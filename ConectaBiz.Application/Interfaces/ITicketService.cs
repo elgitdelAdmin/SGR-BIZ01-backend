@@ -20,6 +20,7 @@ namespace ConectaBiz.Application.Interfaces
         Task<IEnumerable<TicketDto>> GetByIdUserIdRolAsync(int idUser, string codRol, int? idSocio = null);
         //Task<IEnumerable<TicketDto>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
         Task<TicketDto> CreateAsync(TicketInsertDto insertDto);
+        Task<TicketDto> CreateRapidoAsync(TicketCreacionRapidaDto dto);
         //Task<TicketZipFileDto> UploadZipFileAsync(int ticketId, IFormFile zipFile);
         Task<TicketDto> UpdateAsync(int id, TicketUpdateDto updateDto);
         Task<bool> DeleteAsync(int id);

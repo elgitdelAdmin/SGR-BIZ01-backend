@@ -170,6 +170,12 @@ public class TicketInsertDto
     public List<int>? IdGestoresSecundarios { get; set; }
 }
 
+public class TicketCreacionRapidaDto : TicketInsertDto
+{
+    public List<TicketFrenteSubFrenteInsertDto> FrenteSubFrentes { get; set; } = new List<TicketFrenteSubFrenteInsertDto>();
+    public List<TicketConsultorAsignacionInsertDto> ConsultorAsignaciones { get; set; } = new List<TicketConsultorAsignacionInsertDto>();
+}
+
 public class TicketUpdateDto
 {
     public string CodTicketInterno { get; set; } = string.Empty;
@@ -199,6 +205,9 @@ public class TicketFrenteSubFrenteInsertDto
     public int IdFrente { get; set; }
     public int IdSubFrente { get; set; }
     public int Cantidad { get; set; }
+    public string? Descripcion { get; set; }
+    public DateTime? FechaInicio { get; set; }
+    public DateTime? FechaFin { get; set; }
 }
 
 public class TicketFrenteSubFrenteUpdateDto
