@@ -11,11 +11,16 @@ using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de CORS dinámico por ambiente
+var origenesPermitidos = builder.Configuration
+    .GetSection("ConfiguracionCors:OrigenesPermitidos")
+    .Get<string[]>() ?? new[] { "http://localhost:3006" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3006", "http://154.38.177.31:3000", "http://154.38.177.31:3001")
+        policy.WithOrigins(origenesPermitidos)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()
@@ -23,8 +28,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Forzar escuchar en IPv4 específicamente
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
+// Configuración de URL y Puerto del servidor dinámico por ambiente
+var urlServidor = builder.Configuration["UrlServidor"];
+if (!string.IsNullOrWhiteSpace(urlServidor))
+{
+    builder.WebHost.UseUrls(urlServidor);
+}
 
 // Add services to the container
 builder.Services.AddControllers(options =>
@@ -44,7 +53,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Add Application Layer
 builder.Services.AddApplicationLayer();
 
-
+// Health Checks
+builder.Services.AddHealthChecks();
 
 // Add API Layer
 builder.Services.AddEndpointsApiExplorer();
@@ -112,13 +122,15 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+if (builder.Configuration.GetValue<bool>("HabilitarSwagger", true))
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConectaBiz API V1");
-    c.RoutePrefix = "swagger"; // Swagger estará en /swagger
-});
-
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ConectaBiz API V1");
+        c.RoutePrefix = "swagger"; // Swagger estará en /swagger
+    });
+}
 
 // Global error handling middleware
 app.UseMiddleware<ErrorHandlerMiddleware>();
@@ -129,6 +141,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseResponseCompression();
 
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();
