@@ -160,20 +160,24 @@ var urlSwagger = urlConfig.Split(';')
     .FirstOrDefault(u => u.StartsWith("https://")) 
     ?? urlConfig.Split(';').FirstOrDefault()?.Trim() 
     ?? "http://localhost:5000";
-urlSwagger = urlSwagger.TrimEnd('/') + "/swagger";
+urlSwagger = urlSwagger.Replace("0.0.0.0", "localhost").TrimEnd('/') + "/swagger";
 
 Console.WriteLine($"\n✅  Swagger disponible en: {urlSwagger}\n");
 
-// Abrir el navegador automáticamente en la URL HTTPS correcta
-try
+// Abrir el navegador automáticamente en la URL correcta (solo en Windows)
+if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+        System.Runtime.InteropServices.OSPlatform.Windows))
 {
-    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-    {
-        FileName = urlSwagger,
-        UseShellExecute = true
-    });
+    try 
+    { 
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo 
+        { 
+            FileName = urlSwagger, 
+            UseShellExecute = true 
+        }); 
+    }
+    catch { /* Ignorar errores al abrir navegador */ }
 }
-catch { /* En Linux/servidor no hay navegador, se ignora */ }
 
 app.Run();
 
