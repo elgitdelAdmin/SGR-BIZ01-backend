@@ -153,6 +153,28 @@ app.UseResponseCompression();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
+// Mostrar URL de Swagger en consola y abrir el navegador automáticamente en el puerto correcto
+var urlConfig = builder.Configuration["UrlServidor"] ?? "";
+var urlSwagger = urlConfig.Split(';')
+    .Select(u => u.Trim())
+    .FirstOrDefault(u => u.StartsWith("https://")) 
+    ?? urlConfig.Split(';').FirstOrDefault()?.Trim() 
+    ?? "http://localhost:5000";
+urlSwagger = urlSwagger.TrimEnd('/') + "/swagger";
+
+Console.WriteLine($"\n✅  Swagger disponible en: {urlSwagger}\n");
+
+// Abrir el navegador automáticamente en la URL HTTPS correcta
+try
+{
+    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+    {
+        FileName = urlSwagger,
+        UseShellExecute = true
+    });
+}
+catch { /* En Linux/servidor no hay navegador, se ignora */ }
+
 app.Run();
 
 static string? ObtenerAmbienteSegunRamaGit()

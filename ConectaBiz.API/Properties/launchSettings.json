@@ -2,7 +2,7 @@
   "profiles": {
     "ConectaBiz": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "swagger",
       "dotnetRunMessages": true
     }
