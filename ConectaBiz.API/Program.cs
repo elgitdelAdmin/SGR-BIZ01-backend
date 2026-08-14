@@ -9,7 +9,16 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 
 
-var builder = WebApplication.CreateBuilder(args);
+// Detección automática del ambiente según la rama Git activa (si existe repositorio Git)
+var ambienteDetectado = ObtenerAmbienteSegunRamaGit();
+
+var options = new WebApplicationOptions
+{
+    Args = args,
+    EnvironmentName = ambienteDetectado ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+};
+
+var builder = WebApplication.CreateBuilder(options);
 
 // Configuración de CORS dinámico por ambiente
 var origenesPermitidos = builder.Configuration
@@ -145,3 +154,37 @@ app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 
 app.Run();
+
+static string? ObtenerAmbienteSegunRamaGit()
+{
+    try
+    {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir != null)
+        {
+            var gitHeadPath = Path.Combine(dir.FullName, ".git", "HEAD");
+            if (File.Exists(gitHeadPath))
+            {
+                var headContent = File.ReadAllText(gitHeadPath).Trim();
+                if (headContent.StartsWith("ref: refs/heads/"))
+                {
+                    var branch = headContent.Substring("ref: refs/heads/".Length).Trim().ToLowerInvariant();
+                    return branch switch
+                    {
+                        "qa" => "QA",
+                        "main" => "Production",
+                        "master" => "Production",
+                        _ => "Development"
+                    };
+                }
+                break;
+            }
+            dir = dir.Parent;
+        }
+    }
+    catch
+    {
+        // Si no existe Git o falla, continúa con el ambiente configurado por defecto
+    }
+    return null;
+}
