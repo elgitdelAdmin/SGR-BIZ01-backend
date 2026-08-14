@@ -23,7 +23,6 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaRepository _personaRepository;
         private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly IParametrosCatalogo _parametrosCatalogo;
-        private readonly IConectaNuevoTicketRepository _conectaNuevoTicketRepository;
         private readonly IConfiguration _configuration;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
@@ -43,7 +42,6 @@ namespace ConectaBiz.Application.Services
             IPersonaRepository personaRepository,
             IParametrosCatalogo parametrosCatalogo,
             Lazy<INotificacionTicketService> notificacionTicketService,
-            IConectaNuevoTicketRepository conectaNuevoTicketRepository,
             IConfiguration configuration
             )
         {
@@ -55,7 +53,6 @@ namespace ConectaBiz.Application.Services
             _personaRepository = personaRepository;
             _parametrosCatalogo = parametrosCatalogo;
             _notificacionTicketService = notificacionTicketService;
-            _conectaNuevoTicketRepository = conectaNuevoTicketRepository;
             _configuration = configuration;
         }
 
@@ -160,15 +157,6 @@ namespace ConectaBiz.Application.Services
                     };
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
-
-                    try
-                    {
-                        await ReplicarEnConectaNuevoSiCorrespondeAsync(req);
-                    }
-                    catch(Exception ex)
-                    {
-
-                    }
 
                     await _notificacionTicketService.Value.AddRangeAsync(new[]
                       {
@@ -296,8 +284,6 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await ReplicarEnConectaNuevoSiCorrespondeAsync(req);
-
                     await _notificacionTicketService.Value.AddRangeAsync(new[]
                       {
                         new CrearNotificacionDto
@@ -317,40 +303,6 @@ namespace ConectaBiz.Application.Services
                 }
             }
             return resultadosFinales;
-        }
-
-        /// <summary>
-        /// Réplica hacia el SQL Server del nuevo Conecta solo después de crear el ticket en Conecta actual.
-        /// Los errores aquí no afectan notificaciones ni el resultado de la migración principal.
-        /// </summary>
-        private async Task ReplicarEnConectaNuevoSiCorrespondeAsync(dynamic req)
-        {
-            try
-            {
-                var fechReg = ResolverFechaRegistroDesdeRequerimiento(req);
-                var sync = new ConectaNuevoTicketSync
-                {
-                    CodRequerimiento = Convert.ToString(req.codrequerimiento) ?? "",
-                    Titulo = Convert.ToString(req.titulo) ?? "",
-                    Detalle = req.detalle != null ? Convert.ToString(req.detalle) : null,
-                    FechaRegistro = fechReg
-                };
-                await _conectaNuevoTicketRepository.InsertarTicketAsync(sync);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Conecta nuevo (réplica): " + ex.Message);
-            }
-        }
-
-        private static DateTime ResolverFechaRegistroDesdeRequerimiento(dynamic req)
-        {
-            var v = req.fecharegistro;
-            if (v is DateTime dt)
-                return dt;
-            if (v is DateTimeOffset dto)
-                return dto.DateTime;
-            return Convert.ToDateTime(v, System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }

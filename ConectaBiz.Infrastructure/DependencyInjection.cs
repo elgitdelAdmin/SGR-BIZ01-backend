@@ -39,7 +39,6 @@ namespace ConectaBiz.Infrastructure
 
             //Configuracion de BDSGRCSTI
             Conexiones.ConnectionSGRCSTI = configuration.GetConnectionString("ConnectionSGRCSTI");
-            Conexiones.ConnectionConectaNuevo = configuration.GetConnectionString("ConnectionConectaNuevo");
 
             // Repositorios
             services.AddScoped<IUserRepository, UserRepository>();
@@ -76,7 +75,6 @@ namespace ConectaBiz.Infrastructure
 
             //Integracion
             services.AddScoped<ISGRCSTIRepository, SGRCSTIRepository>();
-            services.AddScoped<IConectaNuevoTicketRepository, ConectaNuevoTicketRepository>();
 
             // Configuración JWT
             services.AddAuthentication(options =>
