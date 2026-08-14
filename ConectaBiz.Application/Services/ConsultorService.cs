@@ -186,10 +186,6 @@ namespace ConectaBiz.Application.Services
 
         private async Task ActualizarEspecializacionesAsync(Consultor consultor, IEnumerable<ConsultorFrenteSubFrenteDto> nuevasEspecializacionesDto)
         {
-            // Obtener especializaciones actuales para el agregado
-            var especializacionesActuales = await _consultorFrenteSubFrenteRepository.GetByConsultorIdAsync(consultor.Id);
-            consultor.ConsultorFrenteSubFrente = especializacionesActuales.ToList();
-
             var nuevasEspecializaciones = nuevasEspecializacionesDto.Select(dto => new ConsultorFrenteSubFrente
             {
                 ConsultorId = consultor.Id,
