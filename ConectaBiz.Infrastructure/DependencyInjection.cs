@@ -59,7 +59,7 @@ namespace ConectaBiz.Infrastructure
             services.AddScoped<IGestorFrenteSubFrenteRepository, GestorFrenteSubFrenteRepository>();
             services.AddScoped<IModuloRepository, ModuloRepository>();
             services.AddScoped<ISocioRepository, SocioRepository>();
-            services.AddScoped<INotificacionTicketRepository, NotificacionTicketRepository>();
+            services.AddScoped<INotificacionSistemaRepository, NotificacionSistemaRepository>();
             services.AddScoped<IReportesRepository, ReportesRepository>();
             services.AddScoped<IReportesService, ReportesService>();
             services.AddScoped<IExcelService, ExcelService>();

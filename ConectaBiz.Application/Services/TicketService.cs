@@ -27,7 +27,7 @@ namespace ConectaBiz.Application.Services
         private readonly IEmpresaService _empresaService;
         private readonly IAuthService _authService;
         private readonly IMapper _mapper;
-        private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
+        private readonly INotificacionSistemaService _notificacionSistemaService;
         private readonly string _rutaLog;
         private readonly string _rutaBaseArchivos;
         private readonly ICurrentUserService _currentUserService;
@@ -44,7 +44,6 @@ namespace ConectaBiz.Application.Services
             IConfiguration configuration,
             ITicketRepository ticketRepository,
             ITicketConsultorAsignacionRepository consultorAsignacionRepository,
-            Lazy<INotificacionTicketService> notificacionTicketService,
             ITicketFrenteSubFrenteRepository frenteSubFrenteRepository,
             ITicketHistorialRepository historialRepository,
             IParametrosCatalogo parametrosCatalogo,
@@ -55,12 +54,12 @@ namespace ConectaBiz.Application.Services
             IAuthService authService,
             IMapper mapper,
             IServiceProvider provider,
-            ICurrentUserService currentUserService
+            ICurrentUserService currentUserService,
+            INotificacionSistemaService notificacionSistemaService
             )
         {
             _ticketRepository = ticketRepository;
             _consultorAsignacionRepository = consultorAsignacionRepository;
-            _notificacionTicketService = notificacionTicketService;
             _frenteSubFrenteRepository = frenteSubFrenteRepository;
             _historialRepository = historialRepository;
             _parametrosCatalogo = parametrosCatalogo;
@@ -70,6 +69,7 @@ namespace ConectaBiz.Application.Services
             _empresaService = empresaService;
             _authService = authService;
             _mapper = mapper;
+            _notificacionSistemaService = notificacionSistemaService;
             _rutaLog = configuration["Logging:LogFilePath"];
             _rutaBaseArchivos = configuration["RepositorioArchivos:RutaBase"];
             _currentUserService = currentUserService;
@@ -359,13 +359,13 @@ namespace ConectaBiz.Application.Services
                 await CreateInitialHistorialAsync(createdTicket.Id, insertDto.IdEstadoTicket);
 
                 // 5. Notificaciones (SECUENCIAL - NO en background)
-                await CrearNotificacionesAsignacionTicket(
+                await NotificarCreacionTicket(
                     createdTicket.Id,
                     ticket.CodTicket,
-                    (int)empresa.IdUser,
-                    (int)empresa.IdGestor,
-                    (int)insertDto.IdGestorConsultoria,
-                    []
+                    insertDto.IdTipoTicket,
+                    empresa,
+                    insertDto.IdGestorConsultoria,
+                    Array.Empty<int>()
                 );
 
                 return _mapper.Map<TicketDto>(createdTicket);
@@ -447,12 +447,12 @@ namespace ConectaBiz.Application.Services
 
                 // 5. Notificaciones (SECUENCIAL - NO en background)
                 var consultoresIds = asignaciones.Where(a => a.IdConsultor.HasValue).Select(a => a.IdConsultor.Value).ToArray();
-                await CrearNotificacionesAsignacionTicket(
+                await NotificarCreacionTicket(
                     createdTicket.Id,
                     ticket.CodTicket,
-                    (int)empresa.IdUser,
-                    (int)empresa.IdGestor,
-                    (int)dto.IdGestorConsultoria,
+                    dto.IdTipoTicket,
+                    empresa,
+                    dto.IdGestorConsultoria,
                     consultoresIds
                 );
 
@@ -466,14 +466,107 @@ namespace ConectaBiz.Application.Services
             }
         }
 
-        private CrearNotificacionDto CrearNotificacion(int ticketId, int userId, string codTicket, string mensaje)
+        private async Task NotificarCreacionTicket(int ticketId, string codTicket, int idTipoTicket, Empresa empresa, int? idGestorConsultoria, int[] idsConsultores)
         {
-            return new CrearNotificacionDto
+            var notificacionesParaEnviar = new List<NotificacionSistemaDto>();
+            var currentUserId = _currentUserService.UserId;
+            var currentUserRole = _currentUserService.CodRol;
+            
+            string nombreCreador = await ObtenerNombreCreadorAsync();
+
+            // 0. Notificar Creador explícitamente
+            if (currentUserId > 0)
             {
-                IdTicket = ticketId,
-                IdUser = userId,
-                Mensaje = mensaje
-            };
+                notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                {
+                    IdUser = currentUserId,
+                    TipoNotificacion = "CREACION_TICKET",
+                    IdReferencia = ticketId,
+                    RutaFrontend = $"/tickets/user/{currentUserId}/rol/{currentUserRole}/Editar/{ticketId}",
+                    MensajeBD = $"Usted ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
+                });
+            }
+
+            // 1. Notificar Gestores
+            var idsGestores = new List<int>();
+            if (empresa.IdGestor.HasValue) idsGestores.Add(empresa.IdGestor.Value);
+            
+            var gestoresMesaAyuda = empresa.EmpresaGestores != null 
+                ? empresa.EmpresaGestores
+                    .Where(eg => eg.Activo && eg.TiposTicketPermitidos.Any(t => t.Activo && t.IdTipoTicket == idTipoTicket))
+                    .Select(eg => eg.IdGestor)
+                    .ToList()
+                : new List<int>();
+                
+            idsGestores.AddRange(gestoresMesaAyuda);
+
+            if (idGestorConsultoria.HasValue) idsGestores.Add(idGestorConsultoria.Value);
+
+            string rutaAdmin = $"/tickets/user/{{0}}/rol/{AppConstants.Roles.Admin}/Editar/{ticketId}";
+            string rutaGestor = $"/tickets/user/{{0}}/rol/{AppConstants.Roles.GestorCuenta}/Editar/{ticketId}";
+            foreach (var idGestor in idsGestores.Distinct())
+            {
+                var gestorDto = await _gestorService.GetByIdAsync(idGestor);
+                if (gestorDto != null && gestorDto.IdUser.HasValue && gestorDto.IdUser.Value > 0)
+                {
+                    if (gestorDto.IdUser.Value == currentUserId) continue; // Ya fue notificado como creador
+
+                    notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                    {
+                        IdUser = gestorDto.IdUser.Value,
+                        TipoNotificacion = "CREACION_TICKET",
+                        IdReferencia = ticketId,
+                        RutaFrontend = string.Format(rutaGestor, gestorDto.IdUser.Value),
+                        MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
+                    });
+                }
+            }
+
+            // 2. Notificar Empresa
+            if (empresa.IdUser.HasValue && empresa.IdUser.Value > 0)
+            {
+                if (empresa.IdUser.Value != currentUserId) // Ya fue notificado como creador
+                {
+                    string rutaCliente = $"/tickets/user/{{0}}/rol/CLIENTE/Editar/{ticketId}";
+                    notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                    {
+                        IdUser = empresa.IdUser.Value,
+                        TipoNotificacion = "CREACION_TICKET",
+                        IdReferencia = ticketId,
+                        RutaFrontend = string.Format(rutaCliente, empresa.IdUser.Value),
+                        MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
+                    });
+                }
+            }
+
+            // 3. Notificar Consultores asignados (Assignment Notification)
+            if (idsConsultores != null && idsConsultores.Any())
+            {
+                string mensajeAsignacion = $"{nombreCreador} le ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+                string rutaConsultor = $"/tickets/user/{{0}}/rol/CONSULTOR/Editar/{ticketId}";
+                foreach (var idConsultor in idsConsultores.Distinct())
+                {
+                    var consultorDto = await _consultorService.GetByIdAsync(idConsultor);
+                    if (consultorDto != null && consultorDto.IdUser > 0)
+                    {
+                        if (consultorDto.IdUser == currentUserId) continue; // Ya sabe que fue asignado porque él mismo lo hizo/creó
+
+                        notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                        {
+                            IdUser = consultorDto.IdUser,
+                            TipoNotificacion = "ASIGNACION_TICKET",
+                            IdReferencia = ticketId,
+                            RutaFrontend = string.Format(rutaConsultor, consultorDto.IdUser),
+                            MensajeBD = mensajeAsignacion
+                        });
+                    }
+                }
+            }
+
+            if (notificacionesParaEnviar.Any())
+            {
+                await _notificacionSistemaService.EnviarLoteAsync(notificacionesParaEnviar);
+            }
         }
         private async Task CrearNotificacionesAsignacionTicket(int ticketId, string codTicket, int idUserEmpresa,int idGestor, int idGestorConsultoria, int[] idsConsultores)
         {
@@ -484,43 +577,70 @@ namespace ConectaBiz.Application.Services
             gestores.TryGetValue(idGestor, out var gestorDto);
             gestores.TryGetValue(idGestorConsultoria, out var gestorConsultoriaDto);
 
-
-            var candidatos = new List<int> { idUserEmpresa, (int)gestorDto.IdUser, (int)gestorConsultoriaDto.IdUser };
+            var candidatos = new List<int> { idUserEmpresa };
+            if (gestorDto?.IdUser != null) candidatos.Add((int)gestorDto.IdUser);
+            if (gestorConsultoriaDto?.IdUser != null) candidatos.Add((int)gestorConsultoriaDto.IdUser);
+            
             candidatos.AddRange(idsConsultores.Where(id => id > 0));
 
             // 2. Traer notificaciones ya existentes
-            var existentes = await _notificacionTicketService.Value.GetNotificacionesByIdTicketIdUsersAsync(ticketId, candidatos.ToArray());
+            var existentes = await _notificacionSistemaService.ObtenerPorReferenciaYUsuariosAsync(ticketId, candidatos.ToArray());
 
-            // 🔑 Crear set único por (IdTicket, IdUser)
-            var existentesSet = existentes.Select(n => (n.IdTicket, IdUser: (int)n.IdUser)).Distinct().ToHashSet();
+            // 🔑 Crear set único por (IdReferencia, IdUser)
+            var existentesSet = existentes.Where(n => n.IdUser.HasValue).Select(n => (n.IdReferencia, IdUser: n.IdUser.Value)).Distinct().ToHashSet();
 
             // 3. Filtrar solo los nuevos usuarios
             var nuevosUsuarios = candidatos.Where(id => !existentesSet.Contains((ticketId, id))).ToList();
 
             // 4. Crear notificaciones
-            var lstNotificaciones = new List<CrearNotificacionDto>();
-            string mensaje = $"El Ticket: {codTicket} ha sido asignado a usted.";
+            var lstNotificaciones = new List<NotificacionSistemaDto>();
+            string nombreCreador = await ObtenerNombreCreadorAsync();
+            string mensaje = $"{nombreCreador} le ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+            var currentUserId = _currentUserService.UserId;
 
-            foreach (var id in nuevosUsuarios)
+            foreach (var id in nuevosUsuarios.Distinct())
             {
+                if (id <= 0) continue; // Evitar IdUser 0
+
                 if (idsConsultores.Contains(id))
                 {
                     var consultorDto = await _consultorService.GetByIdAsync(id);
-                    if (consultorDto != null)
+                    if (consultorDto != null && consultorDto.IdUser > 0)
                     {
-                        lstNotificaciones.Add(CrearNotificacion(ticketId, consultorDto.IdUser, codTicket, mensaje));
+                        if (consultorDto.IdUser == currentUserId) continue; // Evitar auto-notificarse por asignación propia
+
+                        lstNotificaciones.Add(new NotificacionSistemaDto
+                        {
+                            IdUser = consultorDto.IdUser,
+                            TipoNotificacion = "ASIGNACION_TICKET",
+                            IdReferencia = ticketId,
+                            RutaFrontend = $"/tickets/user/{consultorDto.IdUser}/rol/CONSULTOR/Editar/{ticketId}",
+                            MensajeBD = mensaje
+                        });
                     }
                 }
                 else
                 {
-                    lstNotificaciones.Add(CrearNotificacion(ticketId, id, codTicket, mensaje));
+                    if (id == currentUserId) continue; // Evitar auto-notificarse
+
+                    // Asumimos que los que no son consultores (gestores o empresa) 
+                    // pueden usar la ruta de GESTORCUENTA por defecto si no son consultores, 
+                    // ya que el frontend redirige según el codRol real si se requiriese.
+                    lstNotificaciones.Add(new NotificacionSistemaDto
+                    {
+                        IdReferencia = ticketId,
+                        IdUser = id,
+                        TipoNotificacion = "ASIGNACION_TICKET",
+                        RutaFrontend = $"/tickets/user/{id}/rol/{AppConstants.Roles.GestorCuenta}/Editar/{ticketId}", // Default to GestorCuenta
+                        MensajeBD = mensaje
+                    });
                 }
             }
 
             // 5. Guardar en lote
             if (lstNotificaciones.Any())
             {
-                await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
+                await _notificacionSistemaService.EnviarLoteAsync(lstNotificaciones);
             }
         }
 
@@ -566,7 +686,7 @@ namespace ConectaBiz.Application.Services
         {
             await InicializarDatosAsync();
 
-                var lstNotificaciones = new List<CrearNotificacionDto>();
+                var lstNotificaciones = new List<NotificacionSistemaDto>();
 
                 var existingTicket = await _ticketRepository.GetByIdWithRelationsAsync(id);
                 if (existingTicket == null)
@@ -589,33 +709,101 @@ namespace ConectaBiz.Application.Services
                 if (updateDto.FrenteSubFrentes != null)
                 {
                     var frentesNuevos = _mapper.Map<List<TicketFrenteSubFrente>>(updateDto.FrenteSubFrentes);
-                    var (agregados, modificados) = existingTicket.ActualizarFrentes(frentesNuevos, updateDto.UsuarioActualizacion);
-                    huboCambiosFrentes = agregados > 0 || modificados > 0;
+                    var (agregados, modificados, eliminados) = existingTicket.ActualizarFrentes(frentesNuevos, updateDto.UsuarioActualizacion);
+                    huboCambiosFrentes = agregados > 0 || modificados > 0 || eliminados > 0;
                     
                     if (huboCambiosFrentes)
                     {
                         var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
+                        var gestorCuentaId = existingTicket.Empresa?.IdGestor;
+                        var gestorCuenta = gestorCuentaId.HasValue ? await _gestorService.GetByIdAsync(gestorCuentaId.Value) : null;
+                        string nombreCreador = await ObtenerNombreCreadorAsync();
                         
-                        if (agregados > 0)
+                        var usersToNotify = new List<(int IdUser, string Rol)>();
+                        if (gestorConsultoria != null && gestorConsultoria.IdUser > 0 && gestorConsultoria.IdUser != _currentUserService.UserId)
+                            usersToNotify.Add(((int)gestorConsultoria.IdUser, AppConstants.Roles.GestorConsultoria));
+                        if (gestorCuenta != null && gestorCuenta.IdUser > 0 && gestorCuenta.IdUser != _currentUserService.UserId && !usersToNotify.Any(u => u.IdUser == gestorCuenta.IdUser))
+                            usersToNotify.Add(((int)gestorCuenta.IdUser, AppConstants.Roles.GestorCuenta));
+
+                        if (agregados > 0 || modificados > 0 || eliminados > 0)
                         {
-                            for (int i = 0; i < agregados; i++)
+                            List<string> acciones = new List<string>();
+                            if (agregados > 0) acciones.Add("agregado");
+                            if (modificados > 0) acciones.Add("modificado");
+                            if (eliminados > 0) acciones.Add("eliminado");
+
+                            string accionFinal = acciones.Count == 1 ? acciones[0] : 
+                                (acciones.Count == 2 ? $"{acciones[0]} y {acciones[1]}" : 
+                                $"{acciones[0]}, {acciones[1]} y {acciones[2]}");
+
+                            foreach (var (idUser, rol) in usersToNotify)
                             {
-                                lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha agregado una asignación al ticket {existingTicket.CodTicket}"));
-                            }
-                        }
-                        if (modificados > 0)
-                        {
-                            for (int i = 0; i < modificados; i++)
-                            {
-                                lstNotificaciones.Add(CrearNotificacion(id, (int)gestorConsultoria.IdUser, existingTicket.CodTicket, $"Se ha modificado una asignación al ticket {existingTicket.CodTicket}"));
+                                string rutaFrontend = $"/tickets/user/{idUser}/rol/{rol}/Editar/{id}";
+                                lstNotificaciones.Add(new NotificacionSistemaDto
+                                {
+                                    IdReferencia = id,
+                                    IdUser = idUser,
+                                    TipoNotificacion = "MODIFICACION_TICKET",
+                                    RutaFrontend = rutaFrontend,
+                                    MensajeBD = $"{nombreCreador} ha {accionFinal} especializaciones en el ticket {existingTicket.CodTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
+                                });
                             }
                         }
                     }
                 }
 
+
                 // 2️⃣ Validar y actualizar asignaciones de consultores
                 var asignacionesNuevas = _mapper.Map<List<TicketConsultorAsignacion>>(updateDto.ConsultorAsignaciones ?? new());
-                var nuevosIdsConsultores = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
+                var (nuevosIdsConsultores, asigAgregados, asigModificados, asigEliminados) = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
+
+                bool huboCambiosAsignacionesGestor = asigAgregados > 0 || asigModificados > 0 || asigEliminados > 0;
+
+                if (huboCambiosAsignacionesGestor)
+                {
+                    var gestorConsultoria = await _gestorService.GetByIdAsync((int)updateDto.IdGestorConsultoria);
+                    var gestorCuentaId = existingTicket.Empresa?.IdGestor;
+                    var gestorCuenta = gestorCuentaId.HasValue ? await _gestorService.GetByIdAsync(gestorCuentaId.Value) : null;
+                    string nombreCreador = await ObtenerNombreCreadorAsync();
+
+                    var usersToNotify = new List<(int IdUser, string Rol)>();
+                    if (gestorConsultoria != null && gestorConsultoria.IdUser > 0 && gestorConsultoria.IdUser != _currentUserService.UserId)
+                        usersToNotify.Add(((int)gestorConsultoria.IdUser, AppConstants.Roles.GestorConsultoria));
+                    if (gestorCuenta != null && gestorCuenta.IdUser > 0 && gestorCuenta.IdUser != _currentUserService.UserId && !usersToNotify.Any(u => u.IdUser == gestorCuenta.IdUser))
+                        usersToNotify.Add(((int)gestorCuenta.IdUser, AppConstants.Roles.GestorCuenta));
+
+                    if (usersToNotify.Any())
+                    {
+                        List<string> acciones = new List<string>();
+                        if (asigAgregados > 0) acciones.Add("agregado");
+                        if (asigModificados > 0) acciones.Add("modificado");
+                        if (asigEliminados > 0) acciones.Add("eliminado");
+
+                        string accionFinal = acciones.Count == 1 ? acciones[0] : 
+                            (acciones.Count == 2 ? $"{acciones[0]} y {acciones[1]}" : 
+                            $"{acciones[0]}, {acciones[1]} y {acciones[2]}");
+
+                        string mensajeBD = $"{nombreCreador} ha {accionFinal} asignaciones de consultores en el ticket {existingTicket.CodTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+
+                        if (_currentUserService.CodRol == AppConstants.Roles.Consultor && asigEliminados > 0 && asigAgregados == 0 && asigModificados == 0)
+                        {
+                            mensajeBD = $"{nombreCreador} ha rechazado la asignación al ticket {existingTicket.CodTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
+                        }
+
+                        foreach (var (idUser, rol) in usersToNotify)
+                        {
+                            string rutaFrontend = $"/tickets/user/{idUser}/rol/{rol}/Editar/{id}";
+                            lstNotificaciones.Add(new NotificacionSistemaDto
+                            {
+                                IdReferencia = id,
+                                IdUser = idUser,
+                                TipoNotificacion = "MODIFICACION_TICKET",
+                                RutaFrontend = rutaFrontend,
+                                MensajeBD = mensajeBD
+                            });
+                        }
+                    }
+                }
 
                 // Vincular planificaciones con sus respectivas asignaciones de consultores
                 existingTicket.VincularPlanificacionesConAsignaciones();
@@ -678,7 +866,7 @@ namespace ConectaBiz.Application.Services
 
                 if (lstNotificaciones.Any())
                 {
-                    await _notificacionTicketService.Value.AddRangeAsync(lstNotificaciones);
+                    await _notificacionSistemaService.EnviarLoteAsync(lstNotificaciones);
                 }
 
                 // Retornar el objeto mapeado directamente desde la memoria (Ahorro de consulta SQL)
@@ -1242,5 +1430,28 @@ namespace ConectaBiz.Application.Services
             return true;
         }
 
+        private async Task<string> ObtenerNombreCreadorAsync()
+        {
+            var currentUserId = _currentUserService.UserId;
+            var currentUserRole = _currentUserService.CodRol;
+
+            if (currentUserId <= 0) return "El sistema";
+
+            var userDto = await _authService.GetByIdAsync(currentUserId);
+            if (userDto?.Persona == null) return "El sistema";
+
+            string rolDesc = "El usuario(a)";
+            if (currentUserRole == AppConstants.Roles.GestorCuenta || currentUserRole == AppConstants.Roles.GestorConsultoria)
+                rolDesc = "El gestor(a)";
+            else if (currentUserRole == AppConstants.Roles.Consultor)
+                rolDesc = "El consultor(a)";
+            else if (currentUserRole == AppConstants.Roles.Admin)
+                rolDesc = "El administrador(a)";
+            else if (currentUserRole == AppConstants.Roles.Empresa)
+                rolDesc = "El cliente";
+
+            string fullName = $"{userDto.Persona.Nombres} {userDto.Persona.ApellidoPaterno}".Trim();
+            return $"{rolDesc} {fullName}";
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,11 @@ namespace ConectaBiz.Infrastructure.Services
         {
             get
             {
-                var idClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id");
+                var user = _httpContextAccessor.HttpContext?.User;
+                var idClaim = user?.FindFirst(ClaimTypes.NameIdentifier) 
+                           ?? user?.FindFirst("sub") 
+                           ?? user?.FindFirst("id");
+                
                 return idClaim != null ? int.Parse(idClaim.Value) : 0;
             }
         }

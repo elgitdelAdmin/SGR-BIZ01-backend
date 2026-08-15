@@ -17,7 +17,7 @@ namespace ConectaBiz.Application.Services
         private readonly ITicketRepository _ticketRepository;
         private readonly IUserRepository _userRepository;
         private readonly IParametrosCatalogo _parametrosCatalogo;
-        private readonly IWhatsAppService _whatsAppService;
+        private readonly INotificacionSistemaService _notificacionSistemaService;
         private readonly IOptions<WhatsAppJobSettings> _jobSettings;
         private readonly ILogger<NotificacionWhatsAppService> _logger;
 
@@ -28,14 +28,14 @@ namespace ConectaBiz.Application.Services
             ITicketRepository ticketRepository,
             IUserRepository userRepository,
             IParametrosCatalogo parametrosCatalogo,
-            IWhatsAppService whatsAppService,
+            INotificacionSistemaService notificacionSistemaService,
             IOptions<WhatsAppJobSettings> jobSettings,
             ILogger<NotificacionWhatsAppService> logger)
         {
             _ticketRepository = ticketRepository;
             _userRepository = userRepository;
             _parametrosCatalogo = parametrosCatalogo;
-            _whatsAppService = whatsAppService;
+            _notificacionSistemaService = notificacionSistemaService;
             _jobSettings = jobSettings;
             _logger = logger;
         }
@@ -200,24 +200,21 @@ namespace ConectaBiz.Application.Services
                 // Formatear mensaje
                 var mensaje = $"¡Hola {nombreGestor}! 👋 Tienes algunos tickets pendientes de atención esperándote:\n\n{codigosString}\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
 
-                // Configurar el DTO de envío
-                var dto = new EnviarWhatsAppDto
+                // Configurar el DTO de envío del orquestador
+                var dto = new NotificacionSistemaDto
                 {
-                    Telefonos = new List<string> { telefono },
-                    Mensaje = mensaje
+                    TipoNotificacion = "RECORDATORIO_TICKETS_GESTOR_CUENTA",
+                    TelefonosWhatsApp = new List<string> { telefono },
+                    MensajeWhatsApp = mensaje,
+                    MensajeBD = mensaje, // También lo guardamos en el historial
+                    IdUser = gestor.IdUser // Gestor tiene IdUser en lugar de IdPersona
                 };
 
                 _logger.LogInformation("Enviando notificación de WhatsApp al Gestor de Cuenta {Nombre} ({Telefono})...", nombreGestor, telefono);
-                var success = await _whatsAppService.EnviarWhatsAppAsync(dto);
-
-                if (success)
-                {
-                    _logger.LogInformation("Notificación enviada exitosamente al Gestor de Cuenta {Nombre}.", nombreGestor);
-                }
-                else
-                {
-                    _logger.LogError("Fallo al enviar notificación de WhatsApp al Gestor de Cuenta {Nombre}.", nombreGestor);
-                }
+                
+                // No necesitamos evaluar el 'success' individual aquí porque el orquestador ya hace el log de errores.
+                await _notificacionSistemaService.EnviarAsync(dto);
+                _logger.LogInformation("Notificación enviada al Gestor de Cuenta {Nombre}.", nombreGestor);
             }
         }
 
@@ -282,23 +279,19 @@ namespace ConectaBiz.Application.Services
                     }
                     mensajeConsolidado += "\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
 
-                    var dto = new EnviarWhatsAppDto
+                    var dto = new NotificacionSistemaDto
                     {
-                        Telefonos = new List<string> { telefono },
-                        Mensaje = mensajeConsolidado
+                        TipoNotificacion = "RECORDATORIO_TICKETS_GESTOR_CONSULTORIA",
+                        TelefonosWhatsApp = new List<string> { telefono },
+                        MensajeWhatsApp = mensajeConsolidado,
+                        MensajeBD = mensajeConsolidado,
+                        IdUser = gc.Id
                     };
 
                     _logger.LogInformation("Enviando reporte consolidado de WhatsApp al Gestor de Consultoría {Nombre} ({Telefono})...", nombreGc, telefono);
-                    var success = await _whatsAppService.EnviarWhatsAppAsync(dto);
-
-                    if (success)
-                    {
-                        _logger.LogInformation("Reporte consolidado enviado exitosamente al Gestor de Consultoría {Nombre}.", nombreGc);
-                    }
-                    else
-                    {
-                        _logger.LogError("Fallo al enviar reporte consolidado al Gestor de Consultoría {Nombre}.", nombreGc);
-                    }
+                    
+                    await _notificacionSistemaService.EnviarAsync(dto);
+                    _logger.LogInformation("Reporte consolidado enviado al Gestor de Consultoría {Nombre}.", nombreGc);
                 }
 
                 // 2. Enviar al Teléfono Adicional configurado (excluyendo a los gestores de cuenta)
@@ -318,23 +311,18 @@ namespace ConectaBiz.Application.Services
                     }
                     mensajeAdicional += "\n\n¡Échales un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí, recuerda actualizar tus tickets directamente en el sistema. ¡Gracias!";
 
-                    var dto = new EnviarWhatsAppDto
+                    var dto = new NotificacionSistemaDto
                     {
-                        Telefonos = new List<string> { telefonoLimpio },
-                        Mensaje = mensajeAdicional
+                        TipoNotificacion = "RECORDATORIO_TICKETS_ADICIONAL",
+                        TelefonosWhatsApp = new List<string> { telefonoLimpio },
+                        MensajeWhatsApp = mensajeAdicional
+                        // No guardamos en BD para el teléfono adicional genérico, a menos que quieras
                     };
 
                     _logger.LogInformation("Enviando reporte consolidado al Teléfono Adicional ({Telefono})...", telefonoLimpio);
-                    var success = await _whatsAppService.EnviarWhatsAppAsync(dto);
-
-                    if (success)
-                    {
-                        _logger.LogInformation("Reporte consolidado enviado exitosamente al Teléfono Adicional {Telefono}.", telefonoLimpio);
-                    }
-                    else
-                    {
-                        _logger.LogError("Fallo al enviar reporte consolidado al Teléfono Adicional {Telefono}.", telefonoLimpio);
-                    }
+                    
+                    await _notificacionSistemaService.EnviarAsync(dto);
+                    _logger.LogInformation("Reporte consolidado enviado al Teléfono Adicional {Telefono}.", telefonoLimpio);
                 }
             }
         }

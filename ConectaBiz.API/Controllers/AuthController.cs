@@ -13,18 +13,18 @@ namespace ConectaBiz.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly INotificacionTicketService _notificacionTicketService;        
+        private readonly INotificacionSistemaService _notificacionSistemaService;        
         private readonly ILogger<AuthController> _logger;
         private readonly IMapper _mapper;
 
         public AuthController(IAuthService authService,
-                        INotificacionTicketService notificacionTicketService,
+                        INotificacionSistemaService notificacionSistemaService,
                         ILogger<AuthController> logger,
                         IMapper mapper
         )
         {
             _authService = authService;
-            _notificacionTicketService = notificacionTicketService;
+            _notificacionSistemaService = notificacionSistemaService;
             _logger = logger;
             _mapper = mapper;
         }
@@ -153,13 +153,16 @@ namespace ConectaBiz.API.Controllers
         }
 
         [HttpPost("MarcarNotificacionComoLeida")]
-        [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<AuthResponseDto>> MarcarComoLeidaAsync([FromBody] MarcarNotificacionesLeidaDto dto)
+        public async Task<ActionResult<bool>> MarcarComoLeidaAsync([FromBody] MarcarNotificacionesLeidaDto dto)
         {
-            var response = await _notificacionTicketService.MarcarComoLeidaAsync(dto.IdUser, dto.IdsNotificaciones);
-            return Ok(response);
+            if (dto.IdsNotificaciones == null || !dto.IdsNotificaciones.Any())
+                return Ok(false);
+
+            await _notificacionSistemaService.MarcarComoLeidaAsync(dto.IdUser, dto.IdsNotificaciones.ToList());
+            return Ok(true);
         }
 
         [AllowAnonymous]

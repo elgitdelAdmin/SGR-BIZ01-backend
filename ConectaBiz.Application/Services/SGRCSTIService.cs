@@ -21,9 +21,9 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly ITicketService _ticketService;
         private readonly IPersonaRepository _personaRepository;
-        private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly IParametrosCatalogo _parametrosCatalogo;
         private readonly IConfiguration _configuration;
+        private readonly INotificacionSistemaService _notificacionSistemaService;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
         private IEnumerable<Parametro> _listaTipoTicket = Array.Empty<Parametro>();
@@ -41,8 +41,8 @@ namespace ConectaBiz.Application.Services
             ITicketService ticketService,
             IPersonaRepository personaRepository,
             IParametrosCatalogo parametrosCatalogo,
-            Lazy<INotificacionTicketService> notificacionTicketService,
-            IConfiguration configuration
+            IConfiguration configuration,
+            INotificacionSistemaService notificacionSistemaService
             )
         {
             _sgrcstiRepository = sGRCSTIRepository;
@@ -52,8 +52,8 @@ namespace ConectaBiz.Application.Services
             _ticketService = ticketService;
             _personaRepository = personaRepository;
             _parametrosCatalogo = parametrosCatalogo;
-            _notificacionTicketService = notificacionTicketService;
             _configuration = configuration;
+            _notificacionSistemaService = notificacionSistemaService;
         }
 
         private async Task InicializarDatosAsync()
@@ -158,13 +158,15 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await _notificacionTicketService.Value.AddRangeAsync(new[]
+                    await _notificacionSistemaService.EnviarLoteAsync(new[]
                       {
-                        new CrearNotificacionDto
+                        new NotificacionSistemaDto
                         {
-                            IdTicket = ticketGuardado.Id,
+                            IdReferencia = ticketGuardado.Id,
                             IdUser = 32,
-                            Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
+                            TipoNotificacion = "ASIGNACION_TICKET",
+                            RutaFrontend = $"/tickets/user/32/rol/CONSULTOR/Editar/{ticketGuardado.Id}",
+                            MensajeBD = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
                         }
                     });
                     resultadosFinales.Add(req);
@@ -284,13 +286,15 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await _notificacionTicketService.Value.AddRangeAsync(new[]
+                    await _notificacionSistemaService.EnviarLoteAsync(new[]
                       {
-                        new CrearNotificacionDto
+                        new NotificacionSistemaDto
                         {
-                            IdTicket = ticketGuardado.Id,
+                            IdReferencia = ticketGuardado.Id,
                             IdUser = 32,
-                            Mensaje = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
+                            TipoNotificacion = "ASIGNACION_TICKET",
+                            RutaFrontend = $"/tickets/user/32/rol/CONSULTOR/Editar/{ticketGuardado.Id}",
+                            MensajeBD = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
                         }
                     });
                     resultadosFinales.Add(req);

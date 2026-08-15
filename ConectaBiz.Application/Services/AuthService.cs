@@ -16,9 +16,9 @@ namespace ConectaBiz.Application.Services
         private readonly IPersonaService _personaService;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
-        private readonly Lazy<INotificacionTicketService> _notificacionTicketService;
         private readonly Lazy<ITicketService> _ticketService;
-        private readonly IEmailService _emailService;
+        private readonly Lazy<IEmailService> _emailService;
+        private readonly INotificacionSistemaService _notificacionSistemaService;
         private readonly IPasswordHasher _passwordHasher;
 
         public AuthService(
@@ -28,9 +28,9 @@ namespace ConectaBiz.Application.Services
             ITokenService tokenService, 
             IMapper mapper, 
             IPersonaService personaService,
-            Lazy<INotificacionTicketService> notificacionTicketService,
             Lazy<ITicketService> ticketService,
             IEmailService emailService,
+            INotificacionSistemaService notificacionSistemaService,
             IPasswordHasher passwordHasher
         )
         {
@@ -40,11 +40,9 @@ namespace ConectaBiz.Application.Services
             _tokenService = tokenService;
             _mapper = mapper;
             _personaService = personaService;
-            _notificacionTicketService = notificacionTicketService;
             _ticketService = ticketService;
-            _notificacionTicketService = notificacionTicketService;
-            _ticketService = ticketService;
-            _emailService = emailService;
+            _emailService = new Lazy<IEmailService>(() => emailService);
+            _notificacionSistemaService = notificacionSistemaService;
             _passwordHasher = passwordHasher;
         }
         public async Task<IEnumerable<UserDto>> GetAllAsync()
@@ -100,7 +98,18 @@ namespace ConectaBiz.Application.Services
                     throw new UnauthorizedAccessException("Credenciales inválidas");
                 }
 
-                var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
+                var notificacionesDb = await _notificacionSistemaService.ObtenerTodasPorUsuarioAsync(user.Id);
+                var notificacionTicketDto = notificacionesDb.Select(n => new NotificacionTicketDto
+                {
+                    Id = n.Id,
+                    IdTicket = n.IdReferencia ?? 0,
+                    IdUser = n.IdUser ?? 0,
+                    Mensaje = n.Mensaje,
+                    Leido = n.Leido,
+                    FechaCreacion = n.FechaCreacion,
+                    FechaLectura = n.FechaLectura,
+                    Activo = n.Activo
+                }).ToList();
 
                 user.LastLogin = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
                 await _userRepository.UpdateAsync(user);
@@ -212,7 +221,18 @@ namespace ConectaBiz.Application.Services
             await _userRepository.AddRefreshTokenAsync(refreshTokenEntity);
 
             var consultor = await _consultorRepository.GetByIdUserAsync(user.Id);
-            var notificacionTicketDto = await _notificacionTicketService.Value.GetNotificacionesByUserIdAsync(user.Id);
+            var notificacionesDb = await _notificacionSistemaService.ObtenerTodasPorUsuarioAsync(user.Id);
+            var notificacionTicketDto = notificacionesDb.Select(n => new NotificacionTicketDto
+            {
+                Id = n.Id,
+                IdTicket = n.IdReferencia ?? 0,
+                IdUser = n.IdUser ?? 0,
+                Mensaje = n.Mensaje,
+                Leido = n.Leido,
+                FechaCreacion = n.FechaCreacion,
+                FechaLectura = n.FechaLectura,
+                Activo = n.Activo
+            }).ToList();
 
             return new AuthResponseDto
             {
@@ -720,7 +740,7 @@ namespace ConectaBiz.Application.Services
                                 </body>
                                 </html>";
 
-                await _emailService.EnviarCorreosAsync(
+                await _emailService.Value.EnviarCorreosAsync(
                     new[] { user.Persona.Correo },
                     "Recuperación de Contraseña - Código de Seguridad",
                     mensaje
@@ -781,7 +801,7 @@ namespace ConectaBiz.Application.Services
             <p>Tu contraseña ha sido actualizada exitosamente.</p>
             <p>Si no realizaste este cambio, contacta inmediatamente con soporte.</p>";
 
-                await _emailService.EnviarCorreosAsync(
+                await _emailService.Value.EnviarCorreosAsync(
                     new[] { resetToken.User.Persona.Correo},
                     "Contraseña Actualizada",
                     mensaje
@@ -871,7 +891,7 @@ namespace ConectaBiz.Application.Services
 </table>";
 
 
-                await _emailService.EnviarCorreosAsync(
+                await _emailService.Value.EnviarCorreosAsync(
                     new[] { verifyEmailDto.Email },
                     "Código de Verificación",
                     mensaje

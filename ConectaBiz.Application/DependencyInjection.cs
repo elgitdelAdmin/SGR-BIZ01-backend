@@ -26,9 +26,9 @@ namespace ConectaBiz.Application
             services.AddScoped<IGestorService, GestorService>();
             services.AddScoped<IModuloService, ModuloService>();
             services.AddScoped<ISocioService, SocioService>();
-            services.AddScoped<INotificacionTicketService, NotificacionTicketService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<INotificacionWhatsAppService, NotificacionWhatsAppService>();
+            services.AddScoped<INotificacionSistemaService, NotificacionSistemaService>();
             services.AddScoped<ISGRCSTIService, SGRCSTIService>();
             services.AddScoped<ICargaMasivaTicketsService, CargaMasivaTicketsService>();
 
@@ -39,11 +39,6 @@ namespace ConectaBiz.Application
             services.AddScoped<ConectaBiz.Domain.Strategies.CargaMasiva.CargaMasivaStrategyResolver>();
 
             // Registrar Lazy para dependencias circulares (si aplican)
-            services.AddScoped(provider =>
-                new Lazy<INotificacionTicketService>(
-                    () => provider.GetRequiredService<INotificacionTicketService>()
-                )
-            );
             services.AddScoped(provider =>
                 new Lazy<ITicketService>(() =>
                     provider.GetRequiredService<ITicketService>()

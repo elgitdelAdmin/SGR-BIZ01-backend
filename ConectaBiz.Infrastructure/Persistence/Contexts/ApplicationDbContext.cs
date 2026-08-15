@@ -34,10 +34,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
         public DbSet<Modulo> Modulos { get; set; }
         public DbSet<RolPermisoModulo> RolPermisoModulos { get; set; }
         public DbSet<Socio> Socios { get; set; }
-        public DbSet<NotificacionTicket> NotificacionTickets { get; set; }
         public DbSet<UserRolSocio> UserRolSocios { get; set; }
         public DbSet<EmpresaGestor> EmpresaGestores { get; set; }
         public DbSet<EmpresaGestorTipoTicket> EmpresaGestorTipoTickets { get; set; }
+        public DbSet<NotificacionSistema> NotificacionesSistema { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -136,6 +136,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
+
+            modelBuilder.Entity<NotificacionSistema>(entity =>
+            {
+                entity.ToTable("NotificacionesSistema", "conectabiz");
+            });
+
             modelBuilder.Entity<Rol>(entity =>
             {
                 entity.ToTable("Rol", "conectabiz");
@@ -684,34 +690,6 @@ namespace ConectaBiz.Infrastructure.Persistence.Contexts
                       .HasForeignKey(e => e.IdModulo)
                       .OnDelete(DeleteBehavior.Cascade);
             });
-            modelBuilder.Entity<NotificacionTicket>(entity =>
-            {
-                entity.ToTable("NotificacionTicket", "conectabiz");
-                entity.HasKey(e => e.Id);
-
-                entity.Property(e => e.IdTicket).IsRequired();
-                entity.Property(e => e.IdUser).IsRequired();
-                //entity.Property(e => e.TipoDestinatario).IsRequired().HasMaxLength(50);
-                //entity.Property(e => e.Titulo).HasMaxLength(200);
-                entity.Property(e => e.Mensaje).HasColumnType("text");
-                entity.Property(e => e.Leido).IsRequired().HasDefaultValue(false);
-                entity.Property(e => e.FechaCreacion).HasColumnType("timestamp without time zone").IsRequired().HasDefaultValueSql("now()");
-                entity.Property(e => e.FechaLectura).HasColumnType("timestamp without time zone");
-                entity.Property(e => e.Activo).IsRequired().HasDefaultValue(true);
-
-                // Índices para mejorar rendimiento
-                entity.HasIndex(e => e.IdUser).HasDatabaseName("IX_NotificacionTicket_IdUser");
-                entity.HasIndex(e => e.IdTicket).HasDatabaseName("IX_NotificacionTicket_IdTicket");
-                entity.HasIndex(e => new { e.IdUser, e.Leido }).HasDatabaseName("IX_NotificacionTicket_User_Leido");
-
-                // Relación con Ticket
-                entity.HasOne(e => e.Ticket)
-                    .WithMany()
-                    .HasForeignKey(e => e.IdTicket)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .HasConstraintName("FK_NotificacionTicket_Ticket");
-            });
-
             // Configuración de UserRolSocio
             modelBuilder.Entity<UserRolSocio>(entity =>
             {

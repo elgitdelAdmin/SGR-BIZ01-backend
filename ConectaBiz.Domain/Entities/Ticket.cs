@@ -351,12 +351,13 @@ public class Ticket
         public string? Url { get; set; }
         public DateTime? FechaInsert { get; set; }
     }
-    public (int Agregados, int Modificados) ActualizarFrentes(IEnumerable<TicketFrenteSubFrente> frentesNuevos, string usuarioActualizacion)
+    public (int Agregados, int Modificados, int Eliminados) ActualizarFrentes(IEnumerable<TicketFrenteSubFrente> frentesNuevos, string usuarioActualizacion)
     {
         int agregados = 0;
         int modificados = 0;
+        int eliminados = 0;
 
-        if (frentesNuevos == null) return (0, 0);
+        if (frentesNuevos == null) return (0, 0, 0);
 
         foreach (var frente in frentesNuevos)
         {
@@ -386,6 +387,14 @@ public class Ticket
                 var existente = this.FrenteSubFrentes.FirstOrDefault(f => f.Id == frente.Id);
                 if (existente != null)
                 {
+                    bool recienEliminado = existente.Activo && !frente.Activo;
+                    bool modificado = existente.IdFrente != frente.IdFrente ||
+                                      existente.IdSubFrente != frente.IdSubFrente ||
+                                      existente.Cantidad != frente.Cantidad ||
+                                      existente.Descripcion != frente.Descripcion ||
+                                      existente.FechaInicio != frente.FechaInicio ||
+                                      existente.FechaFin != frente.FechaFin;
+
                     existente.IdFrente = frente.IdFrente;
                     existente.IdSubFrente = frente.IdSubFrente;
                     existente.Cantidad = frente.Cantidad;
@@ -394,8 +403,11 @@ public class Ticket
                     existente.FechaFin = frente.FechaFin;
                     existente.Activo = frente.Activo;
 
-                    existente.UsuarioModificacion = usuarioActualizacion;
-                    existente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    if (modificado || recienEliminado)
+                    {
+                        existente.UsuarioModificacion = usuarioActualizacion;
+                        existente.FechaModificacion = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+                    }
 
                     if (frente.Activo && frente.DetallePlanificacionConsultor != null)
                     {
@@ -404,12 +416,24 @@ public class Ticket
                             if (planNuevo.Id == 0)
                             {
                                 existente.DetallePlanificacionConsultor.Add(planNuevo);
+                                modificado = true;
                             }
                             else
                             {
                                 var planExistente = existente.DetallePlanificacionConsultor.FirstOrDefault(p => p.Id == planNuevo.Id);
                                 if (planExistente != null)
                                 {
+                                    if (planExistente.IdTipoActividad != planNuevo.IdTipoActividad ||
+                                        planExistente.FechaInicio != planNuevo.FechaInicio ||
+                                        planExistente.FechaFin != planNuevo.FechaFin ||
+                                        planExistente.Horas != planNuevo.Horas ||
+                                        planExistente.Descripcion != planNuevo.Descripcion ||
+                                        planExistente.Activo != planNuevo.Activo ||
+                                        (planNuevo.IdTicketConsultorAsignacion > 0 && planExistente.IdTicketConsultorAsignacion != planNuevo.IdTicketConsultorAsignacion))
+                                    {
+                                        modificado = true;
+                                    }
+
                                     planExistente.IdTipoActividad = planNuevo.IdTipoActividad;
                                     planExistente.FechaInicio = planNuevo.FechaInicio;
                                     planExistente.FechaFin = planNuevo.FechaFin;
@@ -424,16 +448,27 @@ public class Ticket
                             }
                         }
                     }
-                    modificados++;
+                    if (recienEliminado)
+                    {
+                        eliminados++;
+                    }
+                    else if (modificado)
+                    {
+                        modificados++;
+                    }
                 }
             }
         }
-        return (agregados, modificados);
+        return (agregados, modificados, eliminados);
     }
-    public HashSet<int> ActualizarAsignaciones(IEnumerable<TicketConsultorAsignacion> asignacionesNuevas)
+    public (HashSet<int> NuevosIdsConsultores, int Agregados, int Modificados, int Eliminados) ActualizarAsignaciones(IEnumerable<TicketConsultorAsignacion> asignacionesNuevas)
     {
         var nuevosIdsConsultores = new HashSet<int>();
-        if (asignacionesNuevas == null) return nuevosIdsConsultores;
+        int agregados = 0;
+        int modificados = 0;
+        int eliminados = 0;
+
+        if (asignacionesNuevas == null) return (nuevosIdsConsultores, agregados, modificados, eliminados);
 
         // 1. Crear diccionarios de frentes activos para asociarlos a las asignaciones
         var frentesActivos = this.FrenteSubFrentes.Where(f => f.Activo).ToList();
@@ -488,6 +523,7 @@ public class Ticket
                         else asignacion.TicketFrenteSubFrente = frenteAsociado; // Referencia en memoria para EF
                     }
                     this.ConsultorAsignaciones.Add(asignacion);
+                    agregados++;
 
                     if (asignacion.IdConsultor.HasValue && asignacion.IdConsultor.Value > 0)
                     {
@@ -502,6 +538,14 @@ public class Ticket
                     var existente = this.ConsultorAsignaciones.FirstOrDefault(a => a.Id == asignacion.Id);
                     if (existente != null)
                     {
+                        bool recienEliminado = existente.Activo && !asignacion.Activo;
+                        bool modificado = existente.IdConsultor != asignacion.IdConsultor ||
+                                          existente.IdFrente != asignacion.IdFrente ||
+                                          existente.IdSubFrente != asignacion.IdSubFrente ||
+                                          existente.IdTipoActividad != asignacion.IdTipoActividad ||
+                                          existente.FechaAsignacion != asignacion.FechaAsignacion ||
+                                          existente.FechaDesasignacion != asignacion.FechaDesasignacion;
+
                         // Mapeo manual de campos escalares
                         existente.IdConsultor = asignacion.IdConsultor;
                         existente.IdFrente = asignacion.IdFrente;
@@ -513,8 +557,16 @@ public class Ticket
 
                         if (frenteAsociado != null)
                         {
-                            if (frenteAsociado.Id > 0) existente.IdTicketFrenteSubFrente = frenteAsociado.Id;
-                            else existente.TicketFrenteSubFrente = frenteAsociado;
+                            if (frenteAsociado.Id > 0 && existente.IdTicketFrenteSubFrente != frenteAsociado.Id)
+                            {
+                                existente.IdTicketFrenteSubFrente = frenteAsociado.Id;
+                                modificado = true;
+                            }
+                            else if (existente.TicketFrenteSubFrente != frenteAsociado)
+                            {
+                                existente.TicketFrenteSubFrente = frenteAsociado;
+                                modificado = true;
+                            }
                         }
 
                         // Actualizar detalles de tareas (hijos)
@@ -525,12 +577,23 @@ public class Ticket
                                 if (tarea.Id == 0)
                                 {
                                     existente.DetalleTareasConsultor.Add(tarea);
+                                    modificado = true;
                                 }
                                 else
                                 {
                                     var tareaExistente = existente.DetalleTareasConsultor.FirstOrDefault(t => t.Id == tarea.Id);
                                     if (tareaExistente != null)
                                     {
+                                        if (tareaExistente.IdTipoActividad != tarea.IdTipoActividad ||
+                                            tareaExistente.FechaInicio != tarea.FechaInicio ||
+                                            tareaExistente.FechaFin != tarea.FechaFin ||
+                                            tareaExistente.Horas != tarea.Horas ||
+                                            tareaExistente.Descripcion != tarea.Descripcion ||
+                                            tareaExistente.Activo != tarea.Activo)
+                                        {
+                                            modificado = true;
+                                        }
+
                                         tareaExistente.IdTipoActividad = tarea.IdTipoActividad;
                                         tareaExistente.FechaInicio = tarea.FechaInicio;
                                         tareaExistente.FechaFin = tarea.FechaFin;
@@ -541,11 +604,13 @@ public class Ticket
                                 }
                             }
                         }
+                        if (recienEliminado) eliminados++;
+                        else if (modificado) modificados++;
                     }
                 }
             }
         }
-        return nuevosIdsConsultores;
+        return (nuevosIdsConsultores, agregados, modificados, eliminados);
     }
     public void VincularPlanificacionesConAsignaciones()
     {
