@@ -288,12 +288,12 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             }
         }
 
-        public async Task<IEnumerable<Ticket>> UpdateRangeAsync(IEnumerable<Ticket> tickets)
-        {
-            _context.Ticket.UpdateRange(tickets);
-            await _context.SaveChangesAsync();
-            return tickets;
-        }
+        //public async Task<IEnumerable<Ticket>> UpdateRangeAsync(IEnumerable<Ticket> tickets)
+        //{
+        //    _context.Ticket.UpdateRange(tickets);
+        //    await _context.SaveChangesAsync();
+        //    return tickets;
+        //}
 
         public async Task<bool> DeleteAsync(int id)
         {
@@ -307,42 +307,42 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> ExistsAsync(string codTicket, int? excludeId = null)
-        {
-            return await _context.Ticket
-                .AnyAsync(t => t.CodTicket == codTicket && (excludeId == null || t.Id != excludeId));
-        }
+        //public async Task<bool> ExistsAsync(string codTicket, int? excludeId = null)
+        //{
+        //    return await _context.Ticket
+        //        .AnyAsync(t => t.CodTicket == codTicket && (excludeId == null || t.Id != excludeId));
+        //}
 
-        public async Task<IEnumerable<Ticket>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
-        {
-            var query = _context.Ticket.AsQueryable();
+        //public async Task<IEnumerable<Ticket>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null)
+        //{
+        //    var query = _context.Ticket.AsQueryable();
 
-            if (idEmpresa.HasValue)
-                query = query.Where(t => t.IdEmpresa == idEmpresa.Value);
+        //    if (idEmpresa.HasValue)
+        //        query = query.Where(t => t.IdEmpresa == idEmpresa.Value);
 
-            if (idEstado.HasValue)
-                query = query.Where(t => t.IdEstadoTicket == idEstado.Value);
+        //    if (idEstado.HasValue)
+        //        query = query.Where(t => t.IdEstadoTicket == idEstado.Value);
 
-            return await query
-                .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
-                .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
-                    .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
-                .ToListAsync();
-        }
-        public async Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket)
-        {
-            return await _context.TicketConsultorAsignacion
-                .AsNoTracking() // 👈 Esto evita el rastreo
-                .Where(x => x.IdTicket == idTicket && x.Activo)
-                .ToListAsync();
-        }
+        //    return await query
+        //        .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
+        //        .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
+        //            .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
+        //        .ToListAsync();
+        //}
+        //public async Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket)
+        //{
+        //    return await _context.TicketConsultorAsignacion
+        //        .AsNoTracking() // 👈 Esto evita el rastreo
+        //        .Where(x => x.IdTicket == idTicket && x.Activo)
+        //        .ToListAsync();
+        //}
 
-        public async Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket)
-        {
-            return await _context.Set<TicketFrenteSubFrente>()
-                .Where(x => x.IdTicket == idTicket && x.Activo)
-                .ToListAsync();
-        }
+        //public async Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket)
+        //{
+        //    return await _context.Set<TicketFrenteSubFrente>()
+        //        .Where(x => x.IdTicket == idTicket && x.Activo)
+        //        .ToListAsync();
+        //}
 
         public async Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti)
         {
@@ -381,8 +381,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
 
         public IQueryable<Ticket> GetQueryableByGestorConsultoria(int idGestor, int? idSocio = null)
         {
-            var query = _context.Ticket
-                .Where(t => t.IdGestorConsultoria == idGestor);
+            var query = _context.Ticket.AsQueryable();
 
             if (idSocio.HasValue && idSocio.Value > 0)
             {

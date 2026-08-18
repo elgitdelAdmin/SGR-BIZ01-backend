@@ -24,12 +24,12 @@ namespace ConectaBiz.Domain.Interfaces
         Task<Ticket> CreateAsync(Ticket ticket);
         Task<List<Ticket>> CreateRangeAsync(List<Ticket> tickets);
         Task<Ticket> UpdateAsync(Ticket ticket);
-        Task<IEnumerable<Ticket>> UpdateRangeAsync(IEnumerable<Ticket> tickets);
+        //Task<IEnumerable<Ticket>> UpdateRangeAsync(IEnumerable<Ticket> tickets);
         Task<bool> DeleteAsync(int id);
-        Task<bool> ExistsAsync(string codTicket, int? excludeId = null);
-        Task<IEnumerable<Ticket>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
-        Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket);
-        Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket);
+        //Task<bool> ExistsAsync(string codTicket, int? excludeId = null);
+        //Task<IEnumerable<Ticket>> GetTicketsWithFiltersAsync(int? idEmpresa = null, int? idEstado = null, bool? urgente = null);
+        //Task<IEnumerable<TicketConsultorAsignacion>> GetConsultorAsignacionesActivasByTicketIdAsync(int idTicket);
+        //Task<IEnumerable<TicketFrenteSubFrente>> GetFrenteSubFrentesActivosByTicketIdAsync(int idTicket);
         Task<Ticket?> GetByCodReqSgrCstiAsync(string codReqSgrCsti);
 
         // ── Métodos IQueryable para paginación server-side ──

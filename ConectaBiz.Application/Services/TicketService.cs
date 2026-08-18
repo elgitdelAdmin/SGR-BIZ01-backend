@@ -996,8 +996,6 @@ namespace ConectaBiz.Application.Services
                 Console.WriteLine("[DEBUG] Role detected: GestorConsultoria");
                 var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
                 query = _ticketRepository.GetQueryableByGestorConsultoria(gestorDto.Id, idSocio);
-                // GestorConsultoria filtra por FrenteSubFrentes
-                query = query.Where(t => t.FrenteSubFrentes.Any(fsf => fsf.Activo));
             }
             else if (codRol == AppConstants.Roles.Consultor)
             {
