@@ -16,17 +16,20 @@ namespace ConectaBiz.Application.Services
         private readonly IWhatsAppService _whatsAppService;
         private readonly IEmailService _emailService;
         private readonly ILogger<NotificacionSistemaService> _logger;
+        private readonly IRealTimeNotificationService _realTimeNotificationService;
 
         public NotificacionSistemaService(
             INotificacionSistemaRepository notificacionRepository,
             IWhatsAppService whatsAppService,
             IEmailService emailService,
-            ILogger<NotificacionSistemaService> logger)
+            ILogger<NotificacionSistemaService> logger,
+            IRealTimeNotificationService realTimeNotificationService)
         {
             _notificacionRepository = notificacionRepository;
             _whatsAppService = whatsAppService;
             _emailService = emailService;
             _logger = logger;
+            _realTimeNotificationService = realTimeNotificationService;
         }
 
         public async Task EnviarAsync(NotificacionSistemaDto request)
@@ -93,6 +96,16 @@ namespace ConectaBiz.Application.Services
                     
                     await _notificacionRepository.AddAsync(notificacion);
                     canalesUtilizados.Add("BD");
+
+                    // Notificar en tiempo real por SignalR
+                    try 
+                    {
+                        await _realTimeNotificationService.SendNotificationToUserAsync(notificacion.IdUser ?? 0, notificacion);
+                    }
+                    catch (Exception exSignalR)
+                    {
+                        _logger.LogError(exSignalR, "Error al enviar notificación por SignalR en EnviarAsync.");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -170,6 +183,16 @@ namespace ConectaBiz.Application.Services
                 try
                 {
                     await _notificacionRepository.AddRangeAsync(notificacionesDb);
+                    
+                    // Notificar en tiempo real por SignalR
+                    try 
+                    {
+                        await _realTimeNotificationService.SendNotificationsToUsersAsync(notificacionesDb);
+                    }
+                    catch (Exception exSignalR)
+                    {
+                        _logger.LogError(exSignalR, "Error al enviar notificaciones por SignalR.");
+                    }
                 }
                 catch (Exception ex)
                 {

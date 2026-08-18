@@ -99,7 +99,13 @@ namespace ConectaBiz.Infrastructure
                 {
                     OnMessageReceived = context =>
                     {
-                        if (string.IsNullOrEmpty(context.Token))
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notificaciones"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        else if (string.IsNullOrEmpty(context.Token))
                         {
                             var cookieToken = context.Request.Cookies["jwt"];
                             if (!string.IsNullOrEmpty(cookieToken))

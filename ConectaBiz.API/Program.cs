@@ -7,7 +7,10 @@ using ConectaBiz.Application;
 using ConectaBiz.Application.DTOs;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
-
+using ConectaBiz.API.Hubs;
+using ConectaBiz.API.Services;
+using ConectaBiz.Application.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
 // Detección automática del ambiente según la rama Git activa (si existe repositorio Git)
 var ambienteDetectado = ObtenerAmbienteSegunRamaGit();
@@ -127,6 +130,9 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueLimit = 0;
     });
 });
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, UserIdProvider>();
+builder.Services.AddScoped<IRealTimeNotificationService, SignalRNotificationService>();
 
 var app = builder.Build();
 
@@ -152,6 +158,7 @@ app.UseResponseCompression();
 
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
+app.MapHub<NotificacionHub>("/hubs/notificaciones");
 
 // Mostrar URL de Swagger en consola y abrir el navegador automáticamente en el puerto correcto
 var urlConfig = builder.Configuration["UrlServidor"] ?? "";
