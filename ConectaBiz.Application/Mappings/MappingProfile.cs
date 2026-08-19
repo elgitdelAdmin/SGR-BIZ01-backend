@@ -270,7 +270,8 @@ namespace ConectaBiz.Application.Mappings
 
             CreateMap<TicketFrenteSubFrenteInsertDto, TicketFrenteSubFrente>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Ticket, opt => opt.Ignore());
+                .ForMember(dest => dest.Ticket, opt => opt.Ignore())
+                .ForMember(dest => dest.DetallePlanificacionConsultor, opt => opt.MapFrom(src => src.DetallePlanificacionConsultor));
 
             CreateMap<TicketFrenteSubFrenteUpdateDto, TicketFrenteSubFrente>()
                 .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())

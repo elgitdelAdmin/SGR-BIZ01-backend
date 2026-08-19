@@ -32,6 +32,7 @@ namespace ConectaBiz.Application.Services
         private IEnumerable<Parametro> _listaPrioridades = Array.Empty<Parametro>();
         private IEnumerable<Parametro> _listaParametros = Array.Empty<Parametro>();
         private IEnumerable<Parametro> _listaTipoActividad = Array.Empty<Parametro>();
+        private readonly ConectaBiz.Domain.Interfaces.IUserRepository _userRepository;
 
         public SGRCSTIService(
             ISGRCSTIRepository sGRCSTIRepository, 
@@ -42,7 +43,8 @@ namespace ConectaBiz.Application.Services
             IPersonaRepository personaRepository,
             IParametrosCatalogo parametrosCatalogo,
             IConfiguration configuration,
-            INotificacionSistemaService notificacionSistemaService
+            INotificacionSistemaService notificacionSistemaService,
+            ConectaBiz.Domain.Interfaces.IUserRepository userRepository
             )
         {
             _sgrcstiRepository = sGRCSTIRepository;
@@ -54,6 +56,7 @@ namespace ConectaBiz.Application.Services
             _parametrosCatalogo = parametrosCatalogo;
             _configuration = configuration;
             _notificacionSistemaService = notificacionSistemaService;
+            _userRepository = userRepository;
         }
 
         private async Task InicializarDatosAsync()
@@ -158,17 +161,6 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await _notificacionSistemaService.EnviarLoteAsync(new[]
-                      {
-                        new NotificacionSistemaDto
-                        {
-                            IdReferencia = ticketGuardado.Id,
-                            IdUser = 32,
-                            TipoNotificacion = "ASIGNACION_TICKET",
-                            RutaFrontend = $"/tickets/user/32/rol/CONSULTOR/Editar/{ticketGuardado.Id}",
-                            MensajeBD = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
-                        }
-                    });
                     resultadosFinales.Add(req);
                 }
                 catch (Exception ex)
@@ -286,17 +278,6 @@ namespace ConectaBiz.Application.Services
 
                     var ticketGuardado = await _ticketService.CreateAsync(ticketInsertDto);
 
-                    await _notificacionSistemaService.EnviarLoteAsync(new[]
-                      {
-                        new NotificacionSistemaDto
-                        {
-                            IdReferencia = ticketGuardado.Id,
-                            IdUser = 32,
-                            TipoNotificacion = "ASIGNACION_TICKET",
-                            RutaFrontend = $"/tickets/user/32/rol/CONSULTOR/Editar/{ticketGuardado.Id}",
-                            MensajeBD = $"El Ticket {ticketGuardado.CodTicket} ha sido asignado a usted"
-                        }
-                    });
                     resultadosFinales.Add(req);
                 }
                 catch (Exception ex)

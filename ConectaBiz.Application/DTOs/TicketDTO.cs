@@ -208,6 +208,7 @@ public class TicketFrenteSubFrenteInsertDto
     public string? Descripcion { get; set; }
     public DateTime? FechaInicio { get; set; }
     public DateTime? FechaFin { get; set; }
+    public List<DetallePlanificacionConsultorUpdateDto> DetallePlanificacionConsultor { get; set; } = new();
 }
 
 public class TicketFrenteSubFrenteUpdateDto

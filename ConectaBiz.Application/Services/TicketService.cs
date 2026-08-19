@@ -372,8 +372,12 @@ namespace ConectaBiz.Application.Services
             }
             catch (Exception ex)
             {
-                // Log de error también secuencial
-                await File.AppendAllTextAsync(_rutaLog, ex.ToString());
+                // Log de error tambien secuencial
+                try
+                {
+                    await File.AppendAllTextAsync(_rutaLog, ex.ToString());
+                }
+                catch { } // Ignorar errores de archivo para que no rompan el flujo original
                 throw;
             }
         }
@@ -440,6 +444,8 @@ namespace ConectaBiz.Application.Services
                     esCargaMasiva: dto.EsCargaMasiva
                 );
 
+                ticket.VincularPlanificacionesConAsignaciones();
+
                 var createdTicket = await _ticketRepository.CreateAsync(ticket);
 
                 // 4. Todas las operaciones secundarias de forma SECUENCIAL
@@ -461,7 +467,7 @@ namespace ConectaBiz.Application.Services
             catch (Exception ex)
             {
                 // Log de error también secuencial
-                await File.AppendAllTextAsync(_rutaLog, ex.ToString());
+                //await File.AppendAllTextAsync(_rutaLog, ex.ToString());
                 throw;
             }
         }
@@ -511,14 +517,17 @@ namespace ConectaBiz.Application.Services
                 {
                     if (gestorDto.IdUser.Value == currentUserId) continue; // Ya fue notificado como creador
 
-                    notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                    var dtoGestor = new NotificacionSistemaDto
                     {
                         IdUser = gestorDto.IdUser.Value,
                         TipoNotificacion = "CREACION_TICKET",
                         IdReferencia = ticketId,
                         RutaFrontend = string.Format(rutaGestor, gestorDto.IdUser.Value),
                         MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
-                    });
+                    };
+
+                    ConfigurarWhatsApp(dtoGestor, gestorDto.Telefono, nombreCreador, codTicket, false);
+                    notificacionesParaEnviar.Add(dtoGestor);
                 }
             }
 
@@ -528,14 +537,17 @@ namespace ConectaBiz.Application.Services
                 if (empresa.IdUser.Value != currentUserId) // Ya fue notificado como creador
                 {
                     string rutaCliente = $"/tickets/user/{{0}}/rol/CLIENTE/Editar/{ticketId}";
-                    notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                    var dtoCliente = new NotificacionSistemaDto
                     {
                         IdUser = empresa.IdUser.Value,
                         TipoNotificacion = "CREACION_TICKET",
                         IdReferencia = ticketId,
                         RutaFrontend = string.Format(rutaCliente, empresa.IdUser.Value),
                         MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
-                    });
+                    };
+
+                    ConfigurarWhatsApp(dtoCliente, empresa.Telefono, nombreCreador, codTicket, false);
+                    notificacionesParaEnviar.Add(dtoCliente);
                 }
             }
 
@@ -551,14 +563,17 @@ namespace ConectaBiz.Application.Services
                     {
                         if (consultorDto.IdUser == currentUserId) continue; // Ya sabe que fue asignado porque él mismo lo hizo/creó
 
-                        notificacionesParaEnviar.Add(new NotificacionSistemaDto
+                        var dtoConsultor = new NotificacionSistemaDto
                         {
                             IdUser = consultorDto.IdUser,
                             TipoNotificacion = "ASIGNACION_TICKET",
                             IdReferencia = ticketId,
                             RutaFrontend = string.Format(rutaConsultor, consultorDto.IdUser),
                             MensajeBD = mensajeAsignacion
-                        });
+                        };
+
+                        ConfigurarWhatsApp(dtoConsultor, consultorDto.Persona?.Telefono, nombreCreador, codTicket, true);
+                        notificacionesParaEnviar.Add(dtoConsultor);
                     }
                 }
             }
@@ -566,6 +581,28 @@ namespace ConectaBiz.Application.Services
             if (notificacionesParaEnviar.Any())
             {
                 await _notificacionSistemaService.EnviarLoteAsync(notificacionesParaEnviar);
+            }
+        }
+
+        private static void ConfigurarWhatsApp(NotificacionSistemaDto dto, string? telefonoRaw, string nombreCreador, string codTicket, bool esAsignacion = false)
+        {
+            if (string.IsNullOrWhiteSpace(telefonoRaw)) return;
+            
+            var telefonoLimpio = telefonoRaw.Replace(" ", "").Trim();
+            if (!telefonoLimpio.StartsWith("51"))
+            {
+                telefonoLimpio = "51" + telefonoLimpio;
+            }
+
+            dto.TelefonosWhatsApp = new List<string> { telefonoLimpio };
+            
+            if (esAsignacion)
+            {
+                dto.MensajeWhatsApp = $"¡Hola! 👋 Te informamos que {nombreCreador} te ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
+            }
+            else
+            {
+                dto.MensajeWhatsApp = $"¡Hola! 👋 Te informamos que {nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
             }
         }
         private async Task CrearNotificacionesAsignacionTicket(int ticketId, string codTicket, int idUserEmpresa,int idGestor, int idGestorConsultoria, int[] idsConsultores)
