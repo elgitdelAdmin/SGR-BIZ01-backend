@@ -57,6 +57,10 @@ public class TicketConsultorAsignacionDto
     public List<DetalleTareasConsultorDto> DetalleTareasConsultor { get; set; } = new();
     public List<DetallePlanificacionConsultorDto> DetallePlanificacionConsultor { get; set; } = new();
     public bool? EsPlaceholder { get; set; }
+
+    public bool Rechazado { get; set; }
+    public string? MotivoRechazo { get; set; }
+    public DateTime? FechaRechazo { get; set; }
 }
 
 public class DetalleTareasConsultorDto
@@ -236,6 +240,10 @@ public class TicketConsultorAsignacionInsertDto
     public int? IdTicketFrenteSubFrente { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
+
+    public bool Rechazado { get; set; } = false;
+    public string? MotivoRechazo { get; set; }
+    public DateTime? FechaRechazo { get; set; }
 }
 public class TicketConsultorAsignacionUpdateDto
 {
@@ -248,6 +256,10 @@ public class TicketConsultorAsignacionUpdateDto
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
+
+    public bool Rechazado { get; set; } = false;
+    public string? MotivoRechazo { get; set; }
+    public DateTime? FechaRechazo { get; set; }
     public List<DetalleTareasConsultorUpdateDto> DetalleTareasConsultor { get; set; } = new();
     public List<DetallePlanificacionConsultorUpdateDto> DetallePlanificacionConsultor { get; set; } = new();
 }

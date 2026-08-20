@@ -562,7 +562,9 @@ public class Ticket
                                           existente.IdSubFrente != asignacion.IdSubFrente ||
                                           existente.IdTipoActividad != asignacion.IdTipoActividad ||
                                           existente.FechaAsignacion != asignacion.FechaAsignacion ||
-                                          existente.FechaDesasignacion != asignacion.FechaDesasignacion;
+                                          existente.FechaDesasignacion != asignacion.FechaDesasignacion ||
+                                          existente.Rechazado != asignacion.Rechazado ||
+                                          existente.MotivoRechazo != asignacion.MotivoRechazo;
 
                         // Mapeo manual de campos escalares
                         existente.IdConsultor = asignacion.IdConsultor;
@@ -572,6 +574,9 @@ public class Ticket
                         existente.FechaAsignacion = asignacion.FechaAsignacion;
                         existente.FechaDesasignacion = asignacion.FechaDesasignacion;
                         existente.Activo = asignacion.Activo;
+                        existente.Rechazado = asignacion.Rechazado;
+                        existente.MotivoRechazo = asignacion.MotivoRechazo;
+                        existente.FechaRechazo = asignacion.FechaRechazo;
 
                         if (frenteAsociado != null)
                         {
@@ -622,7 +627,8 @@ public class Ticket
                                 }
                             }
                         }
-                        if (recienEliminado) eliminados++;
+                        bool recienRechazado = !existente.Rechazado && asignacion.Rechazado;
+                        if (recienEliminado || recienRechazado) eliminados++;
                         else if (modificado) modificados++;
                     }
                 }
@@ -739,6 +745,12 @@ public class TicketConsultorAsignacion
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaDesasignacion { get; set; }
     public bool Activo { get; set; } = true;
+
+    // Nuevos campos
+    public bool Rechazado { get; set; } = false;
+    public string? MotivoRechazo { get; set; }
+    public DateTime? FechaRechazo { get; set; }
+
     public virtual Ticket Ticket { get; set; } = null!;
     [ForeignKey(nameof(IdConsultor))]
     public virtual Consultor Consultor { get; set; } = null!;

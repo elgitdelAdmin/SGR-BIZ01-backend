@@ -526,7 +526,7 @@ namespace ConectaBiz.Application.Services
                         MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
                     };
 
-                    ConfigurarWhatsApp(dtoGestor, gestorDto.Telefono, nombreCreador, codTicket, false);
+                    ConfigurarWhatsApp(dtoGestor, gestorDto.Telefono, nombreCreador, codTicket, false, $"{gestorDto.Nombres} {gestorDto.ApellidoPaterno}".Trim());
                     notificacionesParaEnviar.Add(dtoGestor);
                 }
             }
@@ -546,7 +546,7 @@ namespace ConectaBiz.Application.Services
                         MensajeBD = $"{nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}."
                     };
 
-                    ConfigurarWhatsApp(dtoCliente, empresa.Telefono, nombreCreador, codTicket, false);
+                    ConfigurarWhatsApp(dtoCliente, empresa.Telefono, nombreCreador, codTicket, false, $"{empresa.PersonaResponsable?.Nombres} {empresa.PersonaResponsable?.ApellidoPaterno}".Trim());
                     notificacionesParaEnviar.Add(dtoCliente);
                 }
             }
@@ -572,7 +572,7 @@ namespace ConectaBiz.Application.Services
                             MensajeBD = mensajeAsignacion
                         };
 
-                        ConfigurarWhatsApp(dtoConsultor, consultorDto.Persona?.Telefono, nombreCreador, codTicket, true);
+                        ConfigurarWhatsApp(dtoConsultor, consultorDto.Persona?.Telefono, nombreCreador, codTicket, true, $"{consultorDto.Persona?.Nombres} {consultorDto.Persona?.ApellidoPaterno}".Trim());
                         notificacionesParaEnviar.Add(dtoConsultor);
                     }
                 }
@@ -584,7 +584,7 @@ namespace ConectaBiz.Application.Services
             }
         }
 
-        private static void ConfigurarWhatsApp(NotificacionSistemaDto dto, string? telefonoRaw, string nombreCreador, string codTicket, bool esAsignacion = false)
+        private static void ConfigurarWhatsApp(NotificacionSistemaDto dto, string? telefonoRaw, string nombreCreador, string codTicket, bool esAsignacion = false, string nombreDestinatario = "")
         {
             if (string.IsNullOrWhiteSpace(telefonoRaw)) return;
             
@@ -596,13 +596,15 @@ namespace ConectaBiz.Application.Services
 
             dto.TelefonosWhatsApp = new List<string> { telefonoLimpio };
             
+            string saludo = string.IsNullOrWhiteSpace(nombreDestinatario) ? "¡Hola!" : $"¡Hola {nombreDestinatario}!";
+
             if (esAsignacion)
             {
-                dto.MensajeWhatsApp = $"¡Hola! 👋 Te informamos que {nombreCreador} te ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
+                dto.MensajeWhatsApp = $"{saludo} 👋 Te informamos que {nombreCreador} te ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
             }
             else
             {
-                dto.MensajeWhatsApp = $"¡Hola! 👋 Te informamos que {nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
+                dto.MensajeWhatsApp = $"{saludo} 👋 Te informamos que {nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
             }
         }
         private async Task CrearNotificacionesAsignacionTicket(int ticketId, string codTicket, int idUserEmpresa,int idGestor, int idGestorConsultoria, int[] idsConsultores)
@@ -646,14 +648,17 @@ namespace ConectaBiz.Application.Services
                     {
                         if (consultorDto.IdUser == currentUserId) continue; // Evitar auto-notificarse por asignación propia
 
-                        lstNotificaciones.Add(new NotificacionSistemaDto
+                        var dtoConsultor = new NotificacionSistemaDto
                         {
                             IdUser = consultorDto.IdUser,
                             TipoNotificacion = "ASIGNACION_TICKET",
                             IdReferencia = ticketId,
                             RutaFrontend = $"/tickets/user/{consultorDto.IdUser}/rol/CONSULTOR/Editar/{ticketId}",
                             MensajeBD = mensaje
-                        });
+                        };
+                        
+                        ConfigurarWhatsApp(dtoConsultor, consultorDto.Persona?.Telefono, nombreCreador, codTicket, true, $"{consultorDto.Persona?.Nombres} {consultorDto.Persona?.ApellidoPaterno}".Trim());
+                        lstNotificaciones.Add(dtoConsultor);
                     }
                 }
                 else
@@ -792,6 +797,9 @@ namespace ConectaBiz.Application.Services
 
                 // 2️⃣ Validar y actualizar asignaciones de consultores
                 var asignacionesNuevas = _mapper.Map<List<TicketConsultorAsignacion>>(updateDto.ConsultorAsignaciones ?? new());
+                foreach (var dtoA in updateDto.ConsultorAsignaciones ?? new()) {
+                    Console.WriteLine($"DEBUG RECHAZO: Id={dtoA.Id}, Rechazado={dtoA.Rechazado}, Motivo={dtoA.MotivoRechazo}");
+                }
                 var (nuevosIdsConsultores, asigAgregados, asigModificados, asigEliminados) = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
 
                 bool huboCambiosAsignacionesGestor = asigAgregados > 0 || asigModificados > 0 || asigEliminados > 0;

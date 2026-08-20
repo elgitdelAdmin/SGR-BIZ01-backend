@@ -340,7 +340,10 @@ CREATE TABLE conectabiz."TicketConsultorAsignacion" (
     "IdTipoActividad" integer NOT NULL,
     "IdFrente" integer,
     "IdSubFrente" integer,
-    "IdTicketFrenteSubFrente" integer
+    "IdTicketFrenteSubFrente" integer,
+    "Rechazado" bool DEFAULT false NOT NULL,
+    "MotivoRechazo" varchar(5000) NULL,
+    "FechaRechazo" timestamp NULL
 );
 
 CREATE TABLE conectabiz."TicketFrenteSubFrente" (
