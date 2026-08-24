@@ -31,6 +31,7 @@ namespace ConectaBiz.Application.Services
         private readonly string _rutaLog;
         private readonly string _rutaBaseArchivos;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IServiceProvider _provider;
 
         // 🔹 Variables para cachear los datos que cargamos en ProcesarExcelAsync
         private IEnumerable<Parametro> _listaTipoTicket;
@@ -73,6 +74,7 @@ namespace ConectaBiz.Application.Services
             _rutaLog = configuration["Logging:LogFilePath"];
             _rutaBaseArchivos = configuration["RepositorioArchivos:RutaBase"];
             _currentUserService = currentUserService;
+            _provider = provider;
         }
 
         // 🔹 Cargar todos los datos necesarios
@@ -607,6 +609,23 @@ namespace ConectaBiz.Application.Services
                 dto.MensajeWhatsApp = $"{saludo} 👋 Te informamos que {nombreCreador} ha creado el ticket {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
             }
         }
+
+        private static void ConfigurarWhatsAppRechazo(NotificacionSistemaDto dto, string? telefonoRaw, string nombreConsultor, string codTicket, string motivoRechazo, DateTime fechaRechazo, string nombreDestinatario = "")
+        {
+            if (string.IsNullOrWhiteSpace(telefonoRaw)) return;
+            
+            var telefonoLimpio = telefonoRaw.Replace(" ", "").Trim();
+            if (!telefonoLimpio.StartsWith("51"))
+            {
+                telefonoLimpio = "51" + telefonoLimpio;
+            }
+
+            dto.TelefonosWhatsApp = new List<string> { telefonoLimpio };
+            
+            string saludo = string.IsNullOrWhiteSpace(nombreDestinatario) ? "¡Hola!" : $"¡Hola {nombreDestinatario}!";
+
+            dto.MensajeWhatsApp = $"{saludo} 👋 Te informamos que {nombreConsultor} ha *rechazado* la asignación al Ticket: {codTicket} el {fechaRechazo:dd/MM/yyyy HH:mm}.\n\n*Motivo de rechazo:* {motivoRechazo}\n\n¡Por favor, ingresa al sistema para reasignarlo! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
+        }
         private async Task CrearNotificacionesAsignacionTicket(int ticketId, string codTicket, int idUserEmpresa,int idGestor, int idGestorConsultoria, int[] idsConsultores)
         {
             // Obtener ambos gestores en una sola consulta
@@ -797,10 +816,12 @@ namespace ConectaBiz.Application.Services
 
                 // 2️⃣ Validar y actualizar asignaciones de consultores
                 var asignacionesNuevas = _mapper.Map<List<TicketConsultorAsignacion>>(updateDto.ConsultorAsignaciones ?? new());
-                foreach (var dtoA in updateDto.ConsultorAsignaciones ?? new()) {
-                    Console.WriteLine($"DEBUG RECHAZO: Id={dtoA.Id}, Rechazado={dtoA.Rechazado}, Motivo={dtoA.MotivoRechazo}");
-                }
+                var rechazosPrevios = existingTicket.ConsultorAsignaciones.ToDictionary(a => a.Id, a => a.Rechazado);
                 var (nuevosIdsConsultores, asigAgregados, asigModificados, asigEliminados) = existingTicket.ActualizarAsignaciones(asignacionesNuevas);
+
+                var rechazosNuevos = existingTicket.ConsultorAsignaciones
+                    .Where(a => a.Rechazado && (!rechazosPrevios.TryGetValue(a.Id, out bool previo) || !previo))
+                    .ToList();
 
                 bool huboCambiosAsignacionesGestor = asigAgregados > 0 || asigModificados > 0 || asigEliminados > 0;
 
@@ -811,11 +832,60 @@ namespace ConectaBiz.Application.Services
                     var gestorCuenta = gestorCuentaId.HasValue ? await _gestorService.GetByIdAsync(gestorCuentaId.Value) : null;
                     string nombreCreador = await ObtenerNombreCreadorAsync();
 
+                    var gestoresInfo = new Dictionary<int, (string Nombres, string Telefono)>();
+                    if (gestorConsultoria != null && gestorConsultoria.IdUser > 0) 
+                        gestoresInfo[(int)gestorConsultoria.IdUser] = ($"{gestorConsultoria.Nombres}".Trim(), gestorConsultoria.Telefono ?? "");
+                    if (gestorCuenta != null && gestorCuenta.IdUser > 0) 
+                        gestoresInfo[(int)gestorCuenta.IdUser] = ($"{gestorCuenta.Nombres}".Trim(), gestorCuenta.Telefono ?? "");
+
                     var usersToNotify = new List<(int IdUser, string Rol)>();
                     if (gestorConsultoria != null && gestorConsultoria.IdUser > 0 && gestorConsultoria.IdUser != _currentUserService.UserId)
                         usersToNotify.Add(((int)gestorConsultoria.IdUser, AppConstants.Roles.GestorConsultoria));
                     if (gestorCuenta != null && gestorCuenta.IdUser > 0 && gestorCuenta.IdUser != _currentUserService.UserId && !usersToNotify.Any(u => u.IdUser == gestorCuenta.IdUser))
                         usersToNotify.Add(((int)gestorCuenta.IdUser, AppConstants.Roles.GestorCuenta));
+
+                    if (rechazosNuevos.Any())
+                    {
+                        if (existingTicket.IdEmpresa != null)
+                        {
+                            var empresaFull = await _empresaRepository.GetByIdAsync((int)existingTicket.IdEmpresa);
+                            if (empresaFull != null && empresaFull.EmpresaGestores != null)
+                            {
+                                var gestoresPermitidos = empresaFull.EmpresaGestores.Where(eg => eg.Activo).ToList();
+                                
+                                foreach (var eg in gestoresPermitidos)
+                                {
+                                    var tiposPermitidos = eg.TiposTicketPermitidos.Where(t => t.Activo).ToList();
+                                    bool tieneAcceso = !tiposPermitidos.Any() || tiposPermitidos.Any(t => t.IdTipoTicket == existingTicket.IdTipoTicket);
+                                    
+                                    if ((tieneAcceso || eg.EsPrincipal) && eg.Gestor != null && eg.Gestor.IdUser > 0)
+                                    {
+                                        if (eg.Gestor.IdUser != _currentUserService.UserId && !usersToNotify.Any(u => u.IdUser == eg.Gestor.IdUser))
+                                        {
+                                            usersToNotify.Add((eg.Gestor.IdUser, AppConstants.Roles.GestorCuenta));
+                                            gestoresInfo[eg.Gestor.IdUser] = ($"{eg.Gestor.Persona?.Nombres}".Trim(), eg.Gestor.Persona?.Telefono ?? "");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Agregar a TODOS los Gestores de Consultoría globales (no necesitan estar en la empresa)
+                        var userRepository = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<ConectaBiz.Domain.Interfaces.IUserRepository>(_provider);
+                        var usuariosAll = await userRepository.GetAllAsync();
+                        var gestoresConsultoriaAll = usuariosAll
+                            .Where(u => u.UserRolSocios.Any(urs => urs.Rol != null && urs.Rol.Codigo == AppConstants.Roles.GestorConsultoria && urs.Activo) && u.Persona != null)
+                            .ToList();
+
+                        foreach (var gc in gestoresConsultoriaAll)
+                        {
+                            if (gc.Id > 0 && gc.Id != _currentUserService.UserId && !usersToNotify.Any(u => u.IdUser == gc.Id))
+                            {
+                                usersToNotify.Add((gc.Id, AppConstants.Roles.GestorConsultoria));
+                                gestoresInfo[gc.Id] = ($"{gc.Persona.Nombres}".Trim(), gc.Persona.Telefono ?? "");
+                            }
+                        }
+                    }
 
                     if (usersToNotify.Any())
                     {
@@ -830,7 +900,7 @@ namespace ConectaBiz.Application.Services
 
                         string mensajeBD = $"{nombreCreador} ha {accionFinal} asignaciones de consultores en el ticket {existingTicket.CodTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
 
-                        if (_currentUserService.CodRol == AppConstants.Roles.Consultor && asigEliminados > 0 && asigAgregados == 0 && asigModificados == 0)
+                        if (_currentUserService.CodRol == AppConstants.Roles.Consultor && rechazosNuevos.Any())
                         {
                             mensajeBD = $"{nombreCreador} ha rechazado la asignación al ticket {existingTicket.CodTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.";
                         }
@@ -838,14 +908,25 @@ namespace ConectaBiz.Application.Services
                         foreach (var (idUser, rol) in usersToNotify)
                         {
                             string rutaFrontend = $"/tickets/user/{idUser}/rol/{rol}/Editar/{id}";
-                            lstNotificaciones.Add(new NotificacionSistemaDto
+                            var notificacionDto = new NotificacionSistemaDto
                             {
                                 IdReferencia = id,
                                 IdUser = idUser,
                                 TipoNotificacion = "MODIFICACION_TICKET",
                                 RutaFrontend = rutaFrontend,
                                 MensajeBD = mensajeBD
-                            });
+                            };
+
+                            if (rechazosNuevos.Any())
+                            {
+                                var rechazoInfo = rechazosNuevos.First();
+                                string telefonoGestor = gestoresInfo.ContainsKey(idUser) ? gestoresInfo[idUser].Telefono : "";
+                                string nombreGestor = gestoresInfo.ContainsKey(idUser) ? gestoresInfo[idUser].Nombres : "";
+
+                                ConfigurarWhatsAppRechazo(notificacionDto, telefonoGestor, nombreCreador, existingTicket.CodTicket, rechazoInfo.MotivoRechazo ?? "Sin motivo especificado", DateTime.Now, nombreGestor);
+                            }
+
+                            lstNotificaciones.Add(notificacionDto);
                         }
                     }
                 }
@@ -1072,17 +1153,8 @@ namespace ConectaBiz.Application.Services
             // 2) Filtro por estados (multiselect)
             if (estadoIds != null && estadoIds.Count > 0)
             {
-                bool isSpecificSearch = !string.IsNullOrWhiteSpace(codTicket) || !string.IsNullOrWhiteSpace(codTicketInterno);
-                
-                if (isSpecificSearch)
-                {
-                    Console.WriteLine("[DEBUG] Specific Code Search detected - Bypassing status filter for all roles.");
-                }
-                else
-                {
-                    query = query.Where(t => estadoIds.Contains(t.IdEstadoTicket));
-                    Console.WriteLine($"[DEBUG] After estadoIds filter: {await query.CountAsync()}");
-                }
+                query = query.Where(t => estadoIds.Contains(t.IdEstadoTicket));
+                Console.WriteLine($"[DEBUG] After estadoIds filter: {await query.CountAsync()}");
             }
 
             // 3) Filtro global (búsqueda de texto)
