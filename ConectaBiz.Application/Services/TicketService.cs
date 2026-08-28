@@ -367,7 +367,8 @@ namespace ConectaBiz.Application.Services
                     insertDto.IdTipoTicket,
                     empresa,
                     insertDto.IdGestorConsultoria,
-                    Array.Empty<int>()
+                    Array.Empty<int>(),
+                    !string.IsNullOrEmpty(insertDto.UsuarioCreacion) && insertDto.UsuarioCreacion.Contains("SGR")
                 );
 
                 return _mapper.Map<TicketDto>(createdTicket);
@@ -461,7 +462,8 @@ namespace ConectaBiz.Application.Services
                     dto.IdTipoTicket,
                     empresa,
                     dto.IdGestorConsultoria,
-                    consultoresIds
+                    consultoresIds,
+                    !string.IsNullOrEmpty(dto.UsuarioCreacion) && dto.UsuarioCreacion.Contains("SGR")
                 );
 
                 return _mapper.Map<TicketDto>(createdTicket);
@@ -474,13 +476,17 @@ namespace ConectaBiz.Application.Services
             }
         }
 
-        private async Task NotificarCreacionTicket(int ticketId, string codTicket, int idTipoTicket, Empresa empresa, int? idGestorConsultoria, int[] idsConsultores)
+        private async Task NotificarCreacionTicket(int ticketId, string codTicket, int idTipoTicket, Empresa empresa, int? idGestorConsultoria, int[] idsConsultores, bool esDesdeSGR = false)
         {
             var notificacionesParaEnviar = new List<NotificacionSistemaDto>();
             var currentUserId = _currentUserService.UserId;
             var currentUserRole = _currentUserService.CodRol;
             
             string nombreCreador = await ObtenerNombreCreadorAsync();
+            if (esDesdeSGR)
+            {
+                nombreCreador = "el SGR";
+            }
 
             // 0. Notificar Creador explícitamente
             if (currentUserId > 0)
