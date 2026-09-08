@@ -204,14 +204,6 @@ public class Ticket
             throw new InvalidOperationException("Debe agregar al menos una especialización para la creación rápida de ticket.");
         }
 
-        foreach (var frente in frentesSubFrentes)
-        {
-            if (frente.DetallePlanificacionConsultor == null || !frente.DetallePlanificacionConsultor.Any())
-            {
-                throw new InvalidOperationException($"La especialización configurada debe tener al menos un registro de planificación de horas.");
-            }
-        }
-
         if (asignaciones == null || !asignaciones.Any(a => a.IdConsultor.HasValue && a.IdConsultor > 0))
         {
             throw new InvalidOperationException("Debe asignar al menos un consultor para la creación rápida de ticket.");

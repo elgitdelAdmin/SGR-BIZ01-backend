@@ -61,6 +61,9 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
                     .ThenInclude(fsf => fsf.DetallePlanificacionConsultor.Where(dp => dp.Activo))
+                .Include(t => t.TicketHistorialEstado)
+                .Include(t => t.Empresa)
+                .Include(t => t.GestorAsignaciones)
                 .FirstOrDefaultAsync(t => t.CodTicket == codTicket);
         }
 
@@ -375,6 +378,8 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                         .ThenInclude(g => g.Persona)
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
@@ -392,6 +397,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo))
                 .Include(t => t.FrenteSubFrentes.Where(fsf => fsf.Activo))
@@ -413,6 +422,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
@@ -424,6 +437,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
@@ -435,6 +452,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
@@ -445,6 +466,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 .Include(t => t.Empresa)
                     .ThenInclude(e => e.Gestor)
                         .ThenInclude(g => g.Persona)
+                .Include(t => t.Empresa)
+                    .ThenInclude(e => e.EmpresaGestores)
+                        .ThenInclude(eg => eg.Gestor)
+                            .ThenInclude(g => g.Persona)
                 .Include(t => t.ConsultorAsignaciones.Where(ca => ca.Activo))
                     .ThenInclude(ca => ca.DetalleTareasConsultor.Where(dt => dt.Activo));
         }
