@@ -147,7 +147,15 @@ namespace ConectaBiz.Application.Services
                         continue; // Omitir la creación del ticket para esta empresa
                     }
 
-                    var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+                    bool esProyecto = req.id_tipo_servicio == 2 && req.id_tipo_requerimiento == 1;
+
+                    var tipoTicketId = esProyecto 
+                        ? _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.Proyectos)).Id 
+                        : _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id;
+
+                    var subTipoTicket = esProyecto 
+                        ? _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.Proyectos.Proyecto)).Id
+                        : MapTipoServicioToTipoTicket((int)req.id_tipo_servicio);
 
                     var ticketInsertDto = new TicketInsertDto
                     {
@@ -156,7 +164,7 @@ namespace ConectaBiz.Application.Services
                         CodTicketInterno = req.codrequerimiento,
                         Titulo = req.titulo,
                         FechaSolicitud = req.fecharegistro,
-                        IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
+                        IdTipoTicket = tipoTicketId,
                         IdSubTipoTicket = subTipoTicket,
                         IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
                         IdEmpresa = idEmpresa,
@@ -264,17 +272,15 @@ namespace ConectaBiz.Application.Services
                         idEmpresa = empresaExistente?.Id ?? (await _empresaService.CreateAsync(createEmpresaDto)).Id;
                     }
 
-                    // Lógica para excluir tickets de ciertas empresas (ID del sistema Conecta)
-                    var empresasConectaExcluidas = _configuration.GetSection("MigracionSGRSettings:EmpresasExcluidas")
-                                                                 .GetChildren()
-                                                                 .Select(x => int.Parse(x.Value ?? "0"))
-                                                                 .ToList();
-                    if (empresasConectaExcluidas.Contains(idEmpresa))
-                    {
-                        continue; // Omitir la creación del ticket para esta empresa
-                    }
+                    bool esProyecto = req.id_tipo_servicio == 2 && req.id_tipo_requerimiento == 1;
 
-                    var subTipoTicket = MapTipoServicioToTipoTicket(req.id_tipo_servicio);
+                    var tipoTicketId = esProyecto 
+                        ? _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.Proyectos)).Id 
+                        : _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id;
+
+                    var subTipoTicket = esProyecto 
+                        ? _listaSubTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.SubtipoTicket.Proyectos.Proyecto)).Id
+                        : MapTipoServicioToTipoTicket((int)req.id_tipo_servicio);
 
                     var ticketInsertDto = new TicketInsertDto
                     {
@@ -283,7 +289,7 @@ namespace ConectaBiz.Application.Services
                         CodTicketInterno = req.codrequerimiento,
                         Titulo = req.titulo,
                         FechaSolicitud = req.fecharegistro,
-                        IdTipoTicket = _listaTipoTicket.FirstOrDefault(t => t.Codigo.Equals(AppConstants.TipoTicket.BolsaDeHoras)).Id,
+                        IdTipoTicket = tipoTicketId,
                         IdSubTipoTicket = subTipoTicket,
                         IdEstadoTicket = _listaEstados.FirstOrDefault(t => t.Codigo.Equals(AppConstants.Estados.PENDIENTE_ATENCION)).Id,
                         IdEmpresa = idEmpresa,

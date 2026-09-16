@@ -63,7 +63,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var resultados = new List<dynamic>();
             using (var context = new NpgsqlConnection(_connectionString))
             {
-                string query = @"select idrequerimiento, codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,
+                string query = @"select idrequerimiento, codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,id_tipo_requerimiento,
                 r.idestadorequerimiento, r.idempresa, r.idusuario, r.idprioridad, detalle, idrequerimiento, codrequerimiento,
                 r.fecharegistro, --requerimiento
                 ts.id as tipo_servicio_id, ts.codigo as tipo_servicio_codigo, ts.descripcion as tipo_servicio_descripcion, -- tipo servicio
@@ -123,7 +123,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             var resultados = new List<dynamic>();
             using (var context = new NpgsqlConnection(_connectionString))
             {
-                string query = @"select idrequerimiento, codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,
+                string query = @"select idrequerimiento, codrequerimiento, titulo, r.fecharegistro, id_tipo_servicio,id_tipo_requerimiento,
                 r.idestadorequerimiento, r.idempresa, r.idusuario, r.idprioridad, detalle, idrequerimiento, codrequerimiento,
                 r.fecharegistro, --requerimiento
                 ts.id as tipo_servicio_id, ts.codigo as tipo_servicio_codigo, ts.descripcion as tipo_servicio_descripcion, -- tipo servicio
