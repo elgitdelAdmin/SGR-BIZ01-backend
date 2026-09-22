@@ -603,6 +603,7 @@ namespace ConectaBiz.Application.Services
             if (esAsignacion)
             {
                 dto.MensajeWhatsApp = $"{saludo} 👋 Te informamos que {nombreCreador} te ha asignado el Ticket: {codTicket} el {DateTime.Now:dd/MM/yyyy HH:mm}.\n\n¡Échale un vistazo cuando puedas! 🚀\n\n🤖 *Soy el asistente automático de Conecta.* Por favor, no me respondas por aquí.";
+                    dto.MensajeWhatsApp += $"\n\n*Detalles de la asignación:*\n{detallesPlanificacion}";
             }
             else
             {
