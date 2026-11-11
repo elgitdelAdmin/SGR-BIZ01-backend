@@ -14,6 +14,7 @@ namespace ConectaBiz.Infrastructure.Services
         private readonly IEmailService _email;
         private readonly IParametrosCatalogo _parametrosCatalogo;
         private readonly IParametroRepository _parametroRepo;
+        private readonly ICurrentUserService _currentUserService;
 
         // Variables para cachear datos de parámetros
         private IEnumerable<Parametro> _listaTipoTicket;
@@ -31,12 +32,14 @@ namespace ConectaBiz.Infrastructure.Services
             IReportesRepository repo,
             IEmailService email,
             IParametrosCatalogo parametrosCatalogo,
-            IParametroRepository parametroRepo)
+            IParametroRepository parametroRepo,
+            ICurrentUserService currentUserService)
         {
             _repo = repo;
             _email = email;
             _parametrosCatalogo = parametrosCatalogo;
             _parametroRepo = parametroRepo;
+            _currentUserService = currentUserService;
         }
 
         private async Task InicializarDatosAsync()
@@ -163,6 +166,12 @@ namespace ConectaBiz.Infrastructure.Services
                     .Replace(":p_id_consultores", "CAST(@p_id_consultores AS integer[])")
                     .Replace(":p_id_empresas", "CAST(@p_id_empresas AS integer[])");
 
+                // Si el usuario es SUPERADMIN: NO se envía el idSocio (se envía null para ver todo).
+                // Si el usuario es DIFERENTE de SUPERADMIN: se envía forzosamente el IdSocio de su sesión activa (token JWT).
+                int? idSocioParaReporte = !_currentUserService.IsSuperAdmin 
+                    ? _currentUserService.IdSocio 
+                    : null;
+
                 var parameters = new
                 {
                     p_fecha_inicio = f.FechaInicio,
@@ -171,7 +180,7 @@ namespace ConectaBiz.Infrastructure.Services
                     p_fecha_fin_1 = f.FechaFin1 ?? f.FechaFin,
                     p_fecha_inicio_2 = f.FechaInicio2,
                     p_fecha_fin_2 = f.FechaFin2,
-                    p_id_socio = (f.IdSocio == null || f.IdSocio == 0) ? null : f.IdSocio,
+                    p_id_socio = idSocioParaReporte,
                     p_id_tickets = (f.IdTickets != null && f.IdTickets.Any()) ? f.IdTickets.ToArray() : null,
                     p_id_tipos = (f.IdTiposTicket != null && f.IdTiposTicket.Any()) ? f.IdTiposTicket.ToArray() : null,
                     p_id_subtipos = (f.IdSubtiposTicket != null && f.IdSubtiposTicket.Any()) ? f.IdSubtiposTicket.ToArray() : null,

@@ -1,4 +1,5 @@
 using ConectaBiz.Application.Interfaces;
+using ConectaBiz.Domain.Constants;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,7 @@ namespace ConectaBiz.Infrastructure.Services
         {
             _httpContextAccessor = httpContextAccessor;
         }
+
         public int UserId
         {
             get
@@ -28,7 +30,44 @@ namespace ConectaBiz.Infrastructure.Services
                 return idClaim != null ? int.Parse(idClaim.Value) : 0;
             }
         }
+
+        public string Username => 
+            _httpContextAccessor.HttpContext?.User?.Identity?.Name 
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst("name")?.Value 
+            ?? "";
+
+        public string Email => 
+            _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value 
+            ?? _httpContextAccessor.HttpContext?.User?.FindFirst("email")?.Value 
+            ?? "";
+
+        public bool IsAuthenticated => 
+            _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+        public int IdRol
+        {
+            get
+            {
+                var claim = _httpContextAccessor.HttpContext?.User?.FindFirst("idRol");
+                return (claim != null && int.TryParse(claim.Value, out var id)) ? id : 0;
+            }
+        }
+
         public string CodRol => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Role)?.Value ?? "";
+
+        public bool IsSuperAdmin => 
+            string.Equals(CodRol, AppConstants.Roles.SuperAdmin, StringComparison.OrdinalIgnoreCase);
+
+        public int? IdSocio
+        {
+            get
+            {
+                var socioClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("idSocio");
+                return (socioClaim != null && int.TryParse(socioClaim.Value, out var id) && id > 0) ? id : null;
+            }
+        }
+
+        public int? IdSocioActual => IdSocio;
 
         public List<int> SociosIds
         {
