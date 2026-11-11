@@ -149,6 +149,10 @@ namespace ConectaBiz.Infrastructure.Services
                 // Reemplazos de placeholders para Dapper (@Param)
                 // Se asume que el template usa sintaxis tipo ":p_nombre"
                 var sqlFinal = sqlTemplate
+                    .Replace(":p_fecha_inicio_1", "CAST(@p_fecha_inicio_1 AS date)")
+                    .Replace(":p_fecha_fin_1", "CAST(@p_fecha_fin_1 AS date)")
+                    .Replace(":p_fecha_inicio_2", "CAST(@p_fecha_inicio_2 AS date)")
+                    .Replace(":p_fecha_fin_2", "CAST(@p_fecha_fin_2 AS date)")
                     .Replace(":p_fecha_inicio", "CAST(@p_fecha_inicio AS date)")
                     .Replace(":p_fecha_fin", "CAST(@p_fecha_fin AS date)")
                     .Replace(":p_id_socio", "CAST(@p_id_socio AS integer)")
@@ -163,6 +167,10 @@ namespace ConectaBiz.Infrastructure.Services
                 {
                     p_fecha_inicio = f.FechaInicio,
                     p_fecha_fin = f.FechaFin,
+                    p_fecha_inicio_1 = f.FechaInicio1 ?? f.FechaInicio,
+                    p_fecha_fin_1 = f.FechaFin1 ?? f.FechaFin,
+                    p_fecha_inicio_2 = f.FechaInicio2,
+                    p_fecha_fin_2 = f.FechaFin2,
                     p_id_socio = (f.IdSocio == null || f.IdSocio == 0) ? null : f.IdSocio,
                     p_id_tickets = (f.IdTickets != null && f.IdTickets.Any()) ? f.IdTickets.ToArray() : null,
                     p_id_tipos = (f.IdTiposTicket != null && f.IdTiposTicket.Any()) ? f.IdTiposTicket.ToArray() : null,

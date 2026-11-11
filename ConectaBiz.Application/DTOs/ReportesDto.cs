@@ -25,6 +25,10 @@ namespace ConectaBiz.Application.DTOs
         public List<int>? IdConsultores { get; set; } = new();
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
+        public DateTime? FechaInicio1 { get; set; }
+        public DateTime? FechaFin1 { get; set; }
+        public DateTime? FechaInicio2 { get; set; }
+        public DateTime? FechaFin2 { get; set; }
         public int? IdSocio { get; set; }
     }
 }

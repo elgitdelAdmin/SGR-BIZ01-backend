@@ -1,4 +1,4 @@
-﻿using ConectaBiz.Domain.Entities;
+using ConectaBiz.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,13 +23,18 @@ namespace ConectaBiz.Domain.Constants
             public const string TipoCargaMasiva = "TipoCargaMasiva";
             public const string TipoReporte = "TipoReporte";
         }
-        public static class IdTipoReporte
+        public static class TipoReporte
         {
             public const string CargabilidadPorCliente = "CARGA_EMPRESA";
             public const string CargabilidadPorTicket = "CARGA_TICKET";
             public const string CargabilidadPorConsultor = "CARGA_CONSULTOR";
             public const string RankingDeConsultoresQueNoRegistranHoras = "RANK_CONSULTOR_SIN_HORAS";
             public const string RankingDeConsultoresRegistranMayorCantidadDeHoras = "RANK_CONSULTOR_CON_HORAS";
+            public const string CapacidadConsultores = "CAPACIDAD_CONS";
+            public const string CapacidadConsultoresComparacion = "CAPACIDAD_CONS_COMP";
+            public const string CapacidadConsultoresComparacionEjecucion = "CAP_CONS_COMP_EJEC";
+            public const string CapacidadConsultoresEjecucion = "CAPACIDAD_CONS_EJEC";
+            public const string AsignacionesGestores = "ASIGNACIONES_GEST";
         }
         public static class Prioridad
         {

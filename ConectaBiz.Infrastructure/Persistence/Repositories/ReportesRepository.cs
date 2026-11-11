@@ -120,7 +120,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
         private async Task<IEnumerable<IDictionary<string, object>>> QueryReporteDinamico(string sql, object? p)
         {
             await using var cn = new NpgsqlConnection(_cs);
-            var r = await cn.QueryAsync(sql, p);
+            await cn.OpenAsync();
+            await using var tx = await cn.BeginTransactionAsync();
+
+            var r = await cn.QueryAsync(sql, p, tx);
             
             var result = new List<IDictionary<string, object>>();
             
@@ -128,7 +131,10 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
             Console.WriteLine($"[DEBUG] QueryReporteDinamico - Rows returned: {((IEnumerable<dynamic>)r).Count()}");
             
             if (!r.Any())
+            {
+                await tx.CommitAsync();
                 return result;
+            }
             
             var firstRow = r.First();
             var rowDict = (IDictionary<string, object>)firstRow;
@@ -139,13 +145,41 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 Console.WriteLine($"[DEBUG]   Column: {kvp.Key}, Type: {kvp.Value?.GetType()?.FullName ?? "NULL"}");
             }
             
-            // Si la función devuelve un solo campo y es un array (caso System.Object[])
+            // Si la función devuelve un solo campo
             if (rowDict.Count == 1)
             {
                 var firstKey = rowDict.Keys.First();
                 var firstValue = rowDict.Values.First();
                 
-                // Si el valor es un array de objetos (composite type de PostgreSQL)
+                // Caso 1: Si es un refcursor de PostgreSQL
+                if (firstValue is string cursorName && !string.IsNullOrWhiteSpace(cursorName))
+                {
+                    var isCursor = await cn.ExecuteScalarAsync<bool>(
+                        "SELECT EXISTS (SELECT 1 FROM pg_cursors WHERE name = @cursorName);",
+                        new { cursorName },
+                        tx
+                    );
+
+                    if (isCursor)
+                    {
+                        Console.WriteLine($"[DEBUG] Detected refcursor '{cursorName}' - fetching all rows");
+                        var cursorRows = await cn.QueryAsync($"FETCH ALL FROM \"{cursorName}\";", transaction: tx);
+                        foreach (var rowCursor in cursorRows)
+                        {
+                            var dictCursor = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                            foreach (var kvp in (IDictionary<string, object>)rowCursor)
+                            {
+                                dictCursor[kvp.Key] = kvp.Value;
+                            }
+                            result.Add(dictCursor);
+                        }
+                        Console.WriteLine($"[DEBUG] Fetched {result.Count} rows from cursor '{cursorName}'");
+                        await tx.CommitAsync();
+                        return result;
+                    }
+                }
+
+                // Caso 2: Si el valor es un array de objetos (composite type de PostgreSQL)
                 if (firstValue is object[] arrayValues)
                 {
                     Console.WriteLine($"[DEBUG] Detected System.Object[] - attempting to rewrite SQL");
@@ -158,7 +192,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     Console.WriteLine($"[DEBUG] Rewritten SQL: {sqlRewritten}");
                     
                     // Re-ejecutar con el SQL reescrito
-                    var r2 = await cn.QueryAsync(sqlRewritten, p);
+                    var r2 = await cn.QueryAsync(sqlRewritten, p, tx);
                     
                     Console.WriteLine($"[DEBUG] Rewritten query returned {((IEnumerable<dynamic>)r2).Count()} rows");
                     
@@ -185,6 +219,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                     }
                     
                     Console.WriteLine($"[DEBUG] Returning {expandedResult.Count} expanded rows");
+                    await tx.CommitAsync();
                     return expandedResult;
                 }
             }
@@ -200,6 +235,7 @@ namespace ConectaBiz.Infrastructure.Persistence.Repositories
                 result.Add(dict);
             }
             
+            await tx.CommitAsync();
             return result;
         }
 

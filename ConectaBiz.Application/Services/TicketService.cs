@@ -161,6 +161,7 @@ namespace ConectaBiz.Application.Services
             if (codRol == AppConstants.Roles.GestorCuenta)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                if (gestorDto == null) return listadoTickets;
                 var tickets = await _ticketRepository.GetByGestorAsync(gestorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
@@ -180,6 +181,7 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.GestorConsultoria)
             {
                 GestorDto gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                if (gestorDto == null) return listadoTickets;
                 var tickets = await _ticketRepository.GetByGestorConsultoriaAsync(gestorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets)
                .Where(t => t.FrenteSubFrentes != null && t.FrenteSubFrentes.Count > 0)
@@ -201,6 +203,7 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.Consultor)
             {
                 ConsultorDto consultorDto = await _consultorService.GetByIdUserAsync(idUser);
+                if (consultorDto == null) return listadoTickets;
                 var tickets = await _ticketRepository.GetByConsultorAsync(consultorDto.Id, idSocio);
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
@@ -224,6 +227,7 @@ namespace ConectaBiz.Application.Services
             else if (codRol == AppConstants.Roles.Empresa)
             {
                 EmpresaDto empresaDto = await _empresaService.GetByIdUserAsync(idUser);
+                if (empresaDto == null) return listadoTickets;
                 var tickets = await _ticketRepository.GetByEmpresaAsync(Convert.ToInt32(empresaDto.Id));
                 listadoTickets = _mapper.Map<IEnumerable<TicketDto>>(tickets).ToList();
                 await CargarPlanificacionesEnAsignacionesAsync(listadoTickets);
@@ -1145,24 +1149,28 @@ namespace ConectaBiz.Application.Services
             {
                 Console.WriteLine("[DEBUG] Role detected: GestorCuenta");
                 var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                if (gestorDto == null) return new PagedResultDto<TicketListItemDto> { Items = new List<TicketListItemDto>(), TotalRecords = 0 };
                 query = _ticketRepository.GetQueryableByGestor(gestorDto.Id, idSocio);
             }
             else if (codRol == AppConstants.Roles.GestorConsultoria)
             {
                 Console.WriteLine("[DEBUG] Role detected: GestorConsultoria");
                 var gestorDto = await _gestorService.GetByIdUserAsync(idUser);
+                if (gestorDto == null) return new PagedResultDto<TicketListItemDto> { Items = new List<TicketListItemDto>(), TotalRecords = 0 };
                 query = _ticketRepository.GetQueryableByGestorConsultoria(gestorDto.Id, idSocio);
             }
             else if (codRol == AppConstants.Roles.Consultor)
             {
                 Console.WriteLine("[DEBUG] Role detected: Consultor");
                 var consultorDto = await _consultorService.GetByIdUserAsync(idUser);
+                if (consultorDto == null) return new PagedResultDto<TicketListItemDto> { Items = new List<TicketListItemDto>(), TotalRecords = 0 };
                 query = _ticketRepository.GetQueryableByConsultor(consultorDto.Id, idSocio);
             }
             else if (codRol == AppConstants.Roles.Empresa)
             {
                 Console.WriteLine("[DEBUG] Role detected: Empresa");
                 var empresaDto = await _empresaService.GetByIdUserAsync(idUser);
+                if (empresaDto == null) return new PagedResultDto<TicketListItemDto> { Items = new List<TicketListItemDto>(), TotalRecords = 0 };
                 query = _ticketRepository.GetQueryableByEmpresa(Convert.ToInt32(empresaDto.Id));
             }
             else if (codRol == AppConstants.Roles.Admin)
